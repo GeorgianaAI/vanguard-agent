@@ -32,15 +32,13 @@ Here is how Vanguard differs from a standard AI chat:
 
 ## 🖼️ Product Snapshot
 
-**Mission Briefing** - _Agentic AI: Phase 2 Operational Autonomy_
+**Vanguard Mission Briefing** - _Agentic AI: Phase 2 Operational Autonomy_
 
 ![Vanguard Home Page](./docs/assets/vanguard-home-page.png)
 
-**Mission Control Terminal** - _Autonomous Reconnaissance Terminal_
+**Vanguard Command Center** - _Autonomous Reconnaissance Terminal_
 
-![Vanguard Dashboard Page](./docs/assets/vanguard-dashboard.png)
-
----
+## ![Vanguard Command Center Page](./docs/assets/vanguard-command-center.png)
 
 ## 🏗️ Core Agentic Architecture
 

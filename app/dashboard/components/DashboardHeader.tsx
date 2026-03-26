@@ -11,17 +11,17 @@ type DashboardHeaderProps = {
 export function DashboardHeader({ loading }: DashboardHeaderProps) {
   return (
     <header className="mx-auto mb-12 flex max-w-4xl items-center justify-between border-b border-slate-800 pb-10">
-      <div className="flex items-center gap-5">
+      <div className="flex items-start gap-5">
         <Satellite
-          className={`h-12 w-12 text-cyan-500 ${loading ? "animate-pulse" : ""}`}
+          className={`h-12 w-12 text-cyan-500 mt-[-4px] ${loading ? "animate-pulse" : ""}`}
         />
         <div>
           <h1 className="text-3xl font-black tracking-tighter uppercase text-white leading-none mb-2">
-            VANGUARD COMMAND <span className="text-cyan-500">🛰️</span>
+            VANGUARD COMMAND CENTER <span className="text-cyan-500">🛰️</span>
           </h1>
-          <div className="flex items-center gap-2 text-[11px] text-cyan-400 font-bold tracking-[0.25em] uppercase opacity-90">
-            <Activity className="w-3.5 h-3.5" /> Agentic AI: Phase 2 Operational
-            Autonomy
+          <div className="flex items-center gap-2 text-[13px] text-cyan-400 font-bold tracking-[0.25em] uppercase opacity-90">
+            <Activity className="w-3.5 h-3.5" /> Autonomous Reconnaissance
+            Terminal
           </div>
         </div>
       </div>
