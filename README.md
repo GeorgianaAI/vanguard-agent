@@ -1,12 +1,25 @@
 # 🛰️ Vanguard Agent: Autonomous Security Reconnaissance & Governance
 
-🚀 **Launch Command Center** | 📂 **View Architecture**
+🚀 **View Live Demo (WIP)** | **[📂 View Codebase](https://github.com/GeorgiDS9/vanguard-agent)**
 
 **Agentic AI | Phase 2 Operational Autonomy | Next.js 16 | LangGraph Orchestration | Red Button HITL | NIST-Aligned Governance**
 
-**Vanguard Agent 🛰️** is an autonomous **Security Reconnaissance Scout** engineered for governed adversarial operations. Unlike traditional "Shield" systems, Vanguard is a proactive intelligence gatherer that utilizes **ReAct (Reason-Action) loops** to independently explore targets, call specialized security tools, and generate mission-critical intelligence.
+**Vanguard Agent 🛰️** is a proactive **Security Reconnaissance Scout** engineered for governed adversarial operations and independent reconnaissance missions. Unlike standard chatbots that just answer questions, Vanguard is a proactive intelligence gatherer that utilizes **ReAct (Reason-Action) loops** to autonomously explore targets, use specialized security tools, and deliver mission-critical intelligence through multi-step execution with minimal operator guidance.
 
-Built on the **Phase 2 Operational Autonomy** standard, Vanguard moves beyond passive assistance into **Governed Execution**. It features a "Red Button" Human-in-the-Loop (HITL) protocol, ensuring that no reconnaissance tool—from Tavily web-scouts to direct RDAP registry queries—is executed without explicit operator authorization. With **Upstash Redis** persistence and **LangSmith** telemetry, Vanguard provides a stateful, verifiable, and cost-aware workflow for modern security teams.
+Built on the **Phase 2 Operational Autonomy** standard, Vanguard operates with "Governed Execution." It uses a **"Red Button" Human-in-the-Loop (HITL)** protocol, meaning the agent will pause and wait for your manual approval before it runs any external security scan. With **Upstash Redis** persistence and **LangSmith** telemetry, Vanguard provides a stateful, verifiable, and cost-aware workflow for modern security teams.
+
+---
+
+## 🧐 What makes Vanguard an "Agent"?
+
+Here is how Vanguard differs from a standard AI chat:
+
+1. **Independent Planning (The Brain):** You give it a target (e.g., "Find the registrar for google.com"), and the agent decides _how_ to get that info. It doesn't just talk; it plans.
+2. **The ReAct Loop (Reasoning + Action):** The agent enters a loop: it **Reasons** ("I need to check the WHOIS records"), takes an **Action** (calls a tool), and then analyzes the result to decide its next move.
+3. **Tool Mastery (The Hands):** Vanguard can actually _use_ software. It "plugs in" to services like Tavily (for web search) and RDAP (Registration Data Access Protocol) for domain data to fetch live intelligence that the AI wasn't originally trained on.
+4. **Self-Correction:** If a tool call fails or returns messy data, the agent recognizes the error and tries a different approach until the mission is complete.
+
+---
 
 > [!TIP]
 >
@@ -20,10 +33,12 @@ Built on the **Phase 2 Operational Autonomy** standard, Vanguard moves beyond pa
 ## 🖼️ Product Snapshot
 
 **Mission Briefing** - _Agentic AI: Phase 2 Operational Autonomy_
-![Vanguard Home Page](https://your-link-here.com)
 
-**Command Center** - _Autonomous Reconnaissance Terminal_
-![Vanguard Dashboard Page](https://your-link-here.com)
+![Vanguard Home Page](./docs/assets/vanguard-home-page.png)
+
+**Mission Control Terminal** - _Autonomous Reconnaissance Terminal_
+
+![Vanguard Dashboard Page](./docs/assets/vanguard-dashboard.png)
 
 ---
 
