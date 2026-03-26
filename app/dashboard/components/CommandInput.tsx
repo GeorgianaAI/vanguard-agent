@@ -12,19 +12,22 @@ export function CommandInput({
   onSubmit,
 }: CommandInputProps) {
   return (
-    <form onSubmit={onSubmit} className="relative">
+    <form onSubmit={onSubmit} className="relative group">
+      <div className="absolute -inset-0.5 bg-cyan-500/10 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+
       <input
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Enter mission instructions..."
-        className="w-full rounded-xl border-2 border-slate-800 bg-slate-900 px-6 py-4 pr-24 text-slate-400 outline-none transition-all focus:border-cyan-500/50"
+        placeholder="Initialize mission sequence..."
+        className="relative w-full rounded-2xl border-2 border-slate-800 bg-slate-900 px-8 py-5 pr-36 text-base font-medium text-slate-100 outline-none transition-all focus:border-cyan-600/50 shadow-xl placeholder:text-slate-500"
       />
+
       <button
         type="submit"
         disabled={loading}
-        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-cyan-500 disabled:opacity-50"
+        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-8 py-2.5 text-[11px] font-black tracking-[0.2em] text-white transition-all hover:bg-cyan-500 disabled:opacity-50 uppercase shadow-lg shadow-cyan-500/20"
       >
-        {loading ? "EXECUTING..." : "SEND"}
+        {loading ? "EXECUTING..." : "DEPLOY"}
       </button>
     </form>
   );

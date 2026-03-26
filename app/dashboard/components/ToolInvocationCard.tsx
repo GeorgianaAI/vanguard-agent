@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle } from "lucide-react";
+import { Globe, Cpu, CheckCircle2, XCircle } from "lucide-react";
 import { getToolName } from "ai";
 import type { ToolActionHandler, ToolPart } from "../lib/types";
 import { getToolQuery, isReconTool, isToolExecuting } from "../lib/utils";
@@ -25,62 +25,92 @@ export function ToolInvocationCard({
   const needsApproval = part.state === "approval-requested";
 
   return (
-    <div className="ml-12 rounded border border-slate-800 bg-slate-950/70 p-3">
-      <div className="mb-2 flex items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2">
-          {reconTool && (
-            <span className="rounded bg-cyan-900/50 px-2 py-0.5 text-cyan-300">
-              📡 Reconnaissance
+    <div className="my-6 ml-6 space-y-4 rounded-2xl border border-slate-800 bg-slate-900/40 p-6 shadow-lg ring-1 ring-inset ring-white/5">
+      {/* 📡 HEADER: Aligned with Satellite Status Logic */}
+      <div className="flex items-center justify-between border-b border-slate-800/50 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-slate-950 p-2 border border-slate-800 shadow-inner">
+            {reconTool ? (
+              <Globe className="h-4 w-4 text-cyan-500" />
+            ) : (
+              <Cpu className="h-4 w-4 text-slate-500" />
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-500/80">
+              {reconTool ? "📡 RECONNAISSANCE" : "⚙️ SYSTEM TOOL"}
+            </span>
+            <span className="text-[11px] font-bold text-slate-400 tracking-tight">
+              {toolName}
+            </span>
+          </div>
+        </div>
+
+        {/* 📊 STATUS INDICATORS: Aligned with Dashboard Header LED */}
+        <div className="text-[9px] font-black uppercase tracking-widest">
+          {executing && (
+            <span className="flex items-center gap-2 text-amber-500">
+              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+              Executing
             </span>
           )}
-          <span className="text-slate-400">{toolName}</span>
+          {completed && (
+            <span className="flex items-center gap-1.5 text-emerald-500">
+              <CheckCircle2 className="h-4 w-4" /> Completed
+            </span>
+          )}
+          {failed && (
+            <span className="flex items-center gap-1.5 text-red-500">
+              <XCircle className="h-4 w-4" /> Failed
+            </span>
+          )}
         </div>
-
-        {executing && (
-          <span className="inline-flex items-center gap-2 text-amber-400">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
-            Executing
-          </span>
-        )}
-
-        {completed && (
-          <span className="inline-flex items-center gap-1 text-emerald-400">
-            <CheckCircle2 className="h-4 w-4" />
-            Completed
-          </span>
-        )}
-
-        {failed && (
-          <span className="inline-flex items-center gap-1 text-red-400">
-            <XCircle className="h-4 w-4" />
-            Failed
-          </span>
-        )}
       </div>
 
+      {/* 🔍 QUERY PARAMETERS */}
       {query && (
-        <div className="mb-2 text-xs text-cyan-200">
-          query: <span className="text-cyan-100">{query}</span>
+        <div className="flex items-start gap-2 text-[12px] font-medium leading-relaxed text-slate-300">
+          <span className="text-cyan-600 font-black uppercase text-[9px] mt-1 tracking-widest">
+            Query:
+          </span>
+          <span className="italic">
+            {'"'}
+            {query}
+            {'"'}
+          </span>
         </div>
       )}
 
-      {/* System log: raw tool data */}
+      {/* 🗄️ SYSTEM LOG: Raw Intel Vault */}
       {"output" in part && part.output !== undefined && (
-        <pre className="overflow-x-auto rounded border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-400">
-          {typeof part.output === "string"
-            ? part.output
-            : JSON.stringify(part.output, null, 2)}
-        </pre>
+        <div className="group relative">
+          <div className="absolute top-2 right-4 px-2 py-1 text-[8px] font-black text-slate-600 uppercase tracking-[0.2em]">
+            Raw Intelligence Log
+          </div>
+          <pre className="custom-scrollbar max-h-64 overflow-auto rounded-xl border border-slate-800 bg-slate-950/80 p-5 text-[11px] leading-relaxed text-slate-400 font-mono shadow-inner border-t-4 border-t-cyan-950/50">
+            {typeof part.output === "string"
+              ? part.output
+              : JSON.stringify(part.output, null, 2)}
+          </pre>
+        </div>
       )}
 
+      {/* ⚠️ ERROR LOG */}
       {"errorText" in part && part.errorText && (
-        <pre className="overflow-x-auto rounded border border-red-950 bg-red-950/20 p-3 text-xs text-red-300">
-          {part.errorText}
+        <pre className="overflow-x-auto rounded-xl border border-red-900/30 bg-red-950/10 p-5 text-[11px] font-bold tracking-tight text-red-400/90">
+          SYSTEM ERROR: {part.errorText}
         </pre>
       )}
 
+      {/* ⚖️ GOVERNANCE: Red Button Overlay */}
       {needsApproval && (
-        <ApprovalCard part={part} onAuthorize={onAuthorize} onAbort={onAbort} />
+        <div className="pt-2 animate-in fade-in zoom-in-95 duration-300">
+          <ApprovalCard
+            part={part}
+            onAuthorize={onAuthorize}
+            onAbort={onAbort}
+          />
+        </div>
       )}
     </div>
   );

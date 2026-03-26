@@ -22,30 +22,32 @@ export default function VanguardDashboard() {
   } = useVanguardChat({ target, input, setInput });
 
   return (
-    <div className="min-h-screen bg-slate-700 p-8 text-slate-100">
-      {/* Header */}
-      <DashboardHeader loading={loading} />
+    <div className="min-h-screen bg-slate-950 p-8 text-slate-100">
+      <div className="max-w-4xl mx-auto px-6 pt-32 pb-24">
+        {/* Header */}
+        <DashboardHeader loading={loading} />
 
-      <main className="mx-auto grid max-w-4xl gap-6">
-        {/* Target */}
-        <TargetInput target={target} setTarget={setTarget} />
+        <main className="mx-auto grid max-w-4xl gap-6">
+          {/* Target */}
+          <TargetInput target={target} setTarget={setTarget} />
 
-        {/* Feed */}
-        <MessageFeed
-          messages={messages}
-          error={error}
-          onAuthorize={authorizeTool}
-          onAbort={abortTool}
-        />
+          {/* Feed */}
+          <MessageFeed
+            messages={messages}
+            error={error}
+            onAuthorize={authorizeTool}
+            onAbort={abortTool}
+          />
 
-        {/* Command */}
-        <CommandInput
-          input={input}
-          loading={loading}
-          setInput={setInputValue}
-          onSubmit={onSubmit}
-        />
-      </main>
+          {/* Command */}
+          <CommandInput
+            input={input}
+            loading={loading}
+            setInput={setInputValue}
+            onSubmit={onSubmit}
+          />
+        </main>
+      </div>
     </div>
   );
 }

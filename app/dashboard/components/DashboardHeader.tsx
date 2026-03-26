@@ -1,4 +1,4 @@
-import { Satellite } from "lucide-react";
+import { Satellite, Activity } from "lucide-react";
 import {
   STATUS_RECON_IN_PROGRESS,
   STATUS_SATELLITE_IDLE,
@@ -10,23 +10,30 @@ type DashboardHeaderProps = {
 
 export function DashboardHeader({ loading }: DashboardHeaderProps) {
   return (
-    <header className="mx-auto mb-8 flex max-w-4xl items-center justify-between border-b border-slate-800 pb-6">
-      <div className="flex items-center gap-3">
+    <header className="mx-auto mb-12 flex max-w-4xl items-center justify-between border-b border-slate-800 pb-10">
+      <div className="flex items-center gap-5">
         <Satellite
-          className={`h-8 w-8 text-cyan-400 ${loading ? "animate-pulse" : ""}`}
+          className={`h-12 w-12 text-cyan-500 ${loading ? "animate-pulse" : ""}`}
         />
         <div>
-          <h1 className="text-2xl font-bold tracking-tighter">
-            VANGUARD AGENT
+          <h1 className="text-3xl font-black tracking-tighter uppercase text-white leading-none mb-2">
+            VANGUARD COMMAND <span className="text-cyan-500">🛰️</span>
           </h1>
-          <p className="text-xs uppercase tracking-widest text-slate-300">
-            Autonomous Security Scout
-          </p>
+          <div className="flex items-center gap-2 text-[11px] text-cyan-400 font-bold tracking-[0.25em] uppercase opacity-90">
+            <Activity className="w-3.5 h-3.5" /> Agentic AI: Phase 2 Operational
+            Autonomy
+          </div>
         </div>
       </div>
-
-      <div className="rounded border border-slate-700 bg-slate-900 px-3 py-1 text-[10px]">
-        {loading ? STATUS_RECON_IN_PROGRESS : STATUS_SATELLITE_IDLE}
+      <div className="rounded-xl border border-slate-800 bg-slate-900/50 px-5 py-2.5 text-[11px] font-black tracking-widest uppercase shadow-lg shadow-black/20">
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-2 h-2 rounded-full ${loading ? "bg-amber-500 animate-ping" : "bg-emerald-500"}`}
+          />
+          <span className="text-slate-300">
+            {loading ? STATUS_RECON_IN_PROGRESS : STATUS_SATELLITE_IDLE}
+          </span>
+        </div>
       </div>
     </header>
   );

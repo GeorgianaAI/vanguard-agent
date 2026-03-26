@@ -21,32 +21,45 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const text = renderMessageText(message);
   const toolParts = message.parts.filter(isToolUIPart) as ToolPart[];
+  const isUser = message.role === "user";
 
   return (
-    <div className={`space-y-3 ${message.role === "user" ? "opacity-80" : ""}`}>
-      <div className="flex gap-4">
+    <div className="group animate-in fade-in slide-in-from-left-2 duration-300 space-y-4">
+      {/* 🛰️ ROLE BADGE: Aligned with Home Page Tracking/Weights */}
+      <div className="flex items-center gap-2">
         <span
-          className={`mt-1 h-fit rounded px-2 py-0.5 text-[10px] ${
-            message.role === "user"
-              ? "bg-slate-800"
-              : "bg-cyan-950 text-cyan-300"
+          className={`text-[9px] font-black px-2 py-0.5 rounded tracking-[0.15em] uppercase shadow-sm border transition-colors ${
+            isUser
+              ? "bg-slate-800 text-slate-400 border-slate-700"
+              : "bg-cyan-950 text-cyan-400 border-cyan-500/10"
           }`}
         >
-          {message.role.toUpperCase()}
+          {isUser ? "Operator" : "Vanguard"}
         </span>
-        <div className="whitespace-pre-wrap text-sm leading-relaxed">
-          {text || NON_TEXT_EVENT_TEXT}
-        </div>
       </div>
 
-      {toolParts.map((part) => (
-        <ToolInvocationCard
-          key={part.toolCallId}
-          part={part}
-          onAuthorize={onAuthorize}
-          onAbort={onAbort}
-        />
-      ))}
+      {/* 📊 MESSAGE BODY: Indented and High-Contrast */}
+      <div className="text-[13px] text-slate-300 font-medium leading-relaxed pl-4 border-l-2 border-slate-800 transition-colors group-hover:border-slate-700 whitespace-pre-wrap">
+        {text || (
+          <span className="italic text-slate-600 tracking-tight">
+            {NON_TEXT_EVENT_TEXT}
+          </span>
+        )}
+      </div>
+
+      {/* 🛠️ TOOL INVOCATIONS */}
+      {toolParts.length > 0 && (
+        <div className="pl-4 space-y-3">
+          {toolParts.map((part) => (
+            <ToolInvocationCard
+              key={part.toolCallId}
+              part={part}
+              onAuthorize={onAuthorize}
+              onAbort={onAbort}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
