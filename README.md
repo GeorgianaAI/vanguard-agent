@@ -38,22 +38,28 @@ Here is how Vanguard differs from a standard AI chat:
 
 **Vanguard Command Center** - _Autonomous Reconnaissance Terminal_
 
-## ![Vanguard Command Center Page](./docs/assets/vanguard-command-center.png)
+> 1. Vanguard Command Stream - Authorization Step
+
+## ![Vanguard Command Stream - Authorization Step](./docs/assets/vanguard-command-authorization.png)
+
+> 2. Vanguard Command Stream - Post-Authorization
+
+## ![Vanguard Command Stream - Post-Authorization](./docs/assets/vanguard-command-stream.png)
 
 ## 🏗️ Core Agentic Architecture
 
 - **Supervisor-Worker Pattern:** Implements a dual-node hierarchy where a **Supervisor (The General)** plans the mission and a **Scout (The Worker)** executes specialized reconnaissance tasks.
-- **The "Red Button" (HITL):** A hard-coded **LangGraph Interrupt** that pauses the agentic loop before any external tool execution, requiring manual operator signature.
+- **Approval-Gated Execution (HITL):** Tool execution is paused until operator authorization, with approval/abort events captured in mission state and UI.
 - **Edge-Native Reconnaissance:** Optimized for the **Vercel Edge Runtime**, providing globally distributed, low-latency intelligence gathering.
 - **Satellite Intelligence (Tavily):** Integration with Tavily AI for real-time, AI-optimized web search to identify live threat indicators and CVE data.
 - **Direct Registry Access (RDAP):** Specialized tools for direct domain reconnaissance, querying global registries for registrar data and registration events.
 - **Mission Persistence:** Powered by **Upstash Redis**, allowing complex reconnaissance missions to "sleep" and "wake" across sessions with 100% context retention.
 - **Economic Shield (Circuit Breaker):** A state-managed `iterationCount` that auto-terminates the agent after 10 loops to prevent "Hallucination Spirals" and budget drain.
-- **Stateful "War Log":** Utilizes LangGraph's message reducers to maintain an immutable history of reasoning, tool calls, and operator approvals.
+- **Stateful Mission Log:** Utilizes **LangGraph** message reducers to maintain an immutable history of reasoning, tool calls, and operator approvals.
 - **Observability as Evidence:** Full integration with **LangSmith** to provide a verifiable audit trail of the agent's "Internal Monologue" and tool outputs.
 - **Grounded Command UI:** A high-contrast, tactical dashboard designed for high-pressure security environments, featuring real-time streaming of reasoning steps.
 - **Schema-Based Intelligence:** Uses **Zod v4** for strict data contracts, ensuring all tool outputs are validated before being ingested into the agent's memory.
-- **Multi-Model Handshake:** Leverages **Claude 4.6 Sonnet** for primary reasoning and **GPT-4o-mini** for secondary mission auditing and final reports.
+- **Multi-Model Configuration:** Leverages **Claude 4.6 Sonnet** for primary reasoning and **GPT-4o-mini** for secondary mission auditing and final reports.
 
 ---
 
@@ -74,15 +80,15 @@ Here is how Vanguard differs from a standard AI chat:
 
 ## 🚀 Project Roadmap
 
-- [x] **The Core Setup:** Implemented basic LangGraph ReAct loop.
-- [x] **Satellite Vision:** Integrated Tavily AI for real-time web reconnaissance.
-- [x] **The Red Button:** Engineered the `interruptBefore` HITL governance gate.
+- [x] **The Core Setup:** Implemented a LangGraph-based agent loop with stateful control flow.
+- [x] **Satellite Vision:** Integrated Tavily AI for real-time public web intelligence.
+- [x] **Approval Gate (HITL):** Implemented operator authorization flow before external tool execution.
 - [x] **Mission Persistence:** Migrated in-memory state to Upstash Redis for multi-session survival.
 - [x] **Tactical Dashboard:** Built the high-contrast Command Center UI with streaming reasoning.
 - [x] **Grounded Alignment:** Synchronized Home and Dashboard visuals to the Phase 2 standard.
-- [ ] **The Supervisor Refactor:** Implementation of the General/Scout dual-agent hierarchy.
+- [~] **Supervisor Refactor:** General/Scout/Auditor hierarchy implemented; routing and approval UX still being hardened.
 - [ ] **MCP Security Server:** Building a dedicated Model Context Protocol server for `nmap` and `whois` tools.
-- [ ] **Adversarial Red-Teaming:** Stress-testing the "Red Button" against jailbreak attempts.
+- [ ] **Adversarial Red-Teaming:** Stress-testing the authorization gate against jailbreak attempts.
 - [ ] **NIST Compliance Export:** Automated generation of PDF audit reports from LangSmith traces.
 
 ---
@@ -137,7 +143,7 @@ npm install
 2.  **Infrastructure Configuration (.env.local):**
 
 ```bash
-# 🧠 Primary Satellite Brain (Anthropic Claude 3.7/4.6)
+# 🧠 Primary Satellite Brain (Anthropic Claude 4.6)
 
 # Powers the core Agentic Reasoning and Tool-Calling logic.
 
@@ -206,4 +212,4 @@ TBC
 
 ## 🧭 **Engineering Philosophy**
 
-Sentinel Docs demonstrates that AI does not have to be a privacy risk. By applying **DLP (Data Loss Prevention)** principles to the RAG pipeline, this project provides a blueprint for **Defensive AI systems** that prioritize **Privacy**, **Safety**, and **Traceability**.
+**Vanguard Agent** demonstrates that **Autonomous Agency** does not have to mean a loss of operational control. By applying **Human-in-the-Loop (HITL)** governance and **Stateful Persistence** to the agentic loop, this project provides a blueprint for **Governed AI Systems** that prioritize **Operator Authority**, **Execution Safety**, and **Mission Traceability.**
