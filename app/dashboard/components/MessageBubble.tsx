@@ -30,7 +30,8 @@ export function MessageBubble({
     (part) => part.state === "approval-requested",
   );
 
-  // Fallback on plain SCOUT token for adapter streams that do not emit approval part state
+  // SCOUT token is safe as fallback now — interruptBefore:["scout"] guarantees
+  // supervisor runs exactly once per mission, so this only fires once.
   const hasStateApprovalSignal =
     !isUser &&
     !hasToolApprovalPart &&
@@ -50,11 +51,10 @@ export function MessageBubble({
     <div className="group animate-in fade-in slide-in-from-left-2 duration-300 space-y-4">
       <div className="flex items-center gap-2">
         <span
-          className={`text-[9px] font-black px-2 py-0.5 rounded tracking-[0.15em] uppercase shadow-sm border transition-colors ${
-            isUser
-              ? "bg-slate-800 text-slate-400 border-slate-700"
-              : "bg-cyan-950 text-cyan-400 border-cyan-500/10"
-          }`}
+          className={`text-[9px] font-black px-2 py-0.5 rounded tracking-[0.15em] uppercase shadow-sm border transition-colors ${isUser
+            ? "bg-slate-800 text-slate-400 border-slate-700"
+            : "bg-cyan-950 text-cyan-400 border-cyan-500/10"
+            }`}
         >
           {isUser ? "Operator" : "Vanguard"}
         </span>

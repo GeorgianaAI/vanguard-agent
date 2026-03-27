@@ -19,7 +19,6 @@ const APPROVAL_SIGNAL_PREFIX = "AUTHORIZATION_REQUIRED:";
 function getSupervisorModel() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("Missing ANTHROPIC_API_KEY");
-
   return new ChatAnthropic({
     model: SUPERVISOR_MODEL,
     temperature: 0,
@@ -31,7 +30,6 @@ function getSupervisorModel() {
 function getScoutModel() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("Missing ANTHROPIC_API_KEY");
-
   return new ChatAnthropic({
     model: SCOUT_MODEL,
     temperature: 0,
@@ -46,16 +44,34 @@ function ensureEndsWithUser(
 ) {
   const prepared = [...messages];
   const last = prepared[prepared.length - 1];
-
   if (!last || !HumanMessage.isInstance(last)) {
     prepared.push(new HumanMessage(fallback));
   }
-
   return prepared;
+}
+
+/**
+ * Entry-point router.
+ * - If mission was aborted: go straight to auditor for closure message.
+ * - If operator just authorized: skip supervisor, go directly to scout.
+ * - If scout already ran: skip to auditor.
+ * - Default: go through supervisor (initial mission start).
+ */
+function routeFromStart(
+  state: VanguardStateType,
+): "supervisor" | "scout" | "auditor" {
+  if (state.missionAborted) return "auditor";
+  if (state.scoutHasRun) return "auditor";
+  if (state.isAuthorized) return "scout";
+  return "supervisor";
 }
 
 async function supervisorNode(state: VanguardStateType) {
   if (state.iterationCount > 10) {
+    return { next: "auditor" };
+  }
+
+  if (state.scoutHasRun) {
     return { next: "auditor" };
   }
 
@@ -93,22 +109,23 @@ async function supervisorNode(state: VanguardStateType) {
     "Evaluate mission state and choose the next step.",
   );
 
-  const decision = await supervisor.invoke([
-    systemPrompt,
-    ...supervisorMessages,
-  ]);
+  const decision = await supervisor.invoke([systemPrompt, ...supervisorMessages]);
   const text =
     AIMessage.isInstance(decision) && typeof decision.content === "string"
       ? decision.content.toUpperCase()
       : "";
 
-  // Internal routing only
   return {
     next: text.includes("AUDITOR") ? "auditor" : "scout",
   };
 }
 
 async function scoutNode(state: VanguardStateType) {
+  // Should not reach here after running — routeFromStart guards this, but be defensive.
+  if (state.scoutHasRun) {
+    return { next: "auditor" };
+  }
+
   if (!state.isAuthorized) {
     return {
       isPendingApproval: true,
@@ -131,6 +148,7 @@ async function scoutNode(state: VanguardStateType) {
       "Tool policy:",
       "- domain_whois for registrar/ownership/registration metadata.",
       "- tavily_search for public corroboration and references.",
+      "You MUST call both domain_whois and tavily_search tools now. Do not skip either.",
       "Do not provide offensive guidance.",
       "Be concise and factual.",
     ].join("\n"),
@@ -138,7 +156,7 @@ async function scoutNode(state: VanguardStateType) {
 
   const scoutMessages = ensureEndsWithUser(
     state.messages,
-    `Target: ${state.target || "unspecified"}. Continue defensive OSINT collection.`,
+    `Target: ${state.target || "unspecified"}. Run domain_whois and tavily_search now.`,
   );
 
   const response = await scout.invoke([systemPrompt, ...scoutMessages]);
@@ -147,29 +165,52 @@ async function scoutNode(state: VanguardStateType) {
     messages: [response],
     iterationCount: 1,
     isPendingApproval: false,
-    // Consume authorization after scout executes once.
     isAuthorized: false,
+    scoutHasRun: true,
   };
 }
 
 async function auditorNode(state: VanguardStateType) {
   const auditor = getSupervisorModel();
 
-  const systemPrompt = new SystemMessage(
-    [
+  const hasEvidence = state.messages.some((m) => m.getType() === "tool");
+  const wasAborted = state.missionAborted === true;
+
+  let systemPromptLines: string[];
+
+  if (wasAborted) {
+    systemPromptLines = [
       "You are Vanguard Auditor.",
-      "Produce concise defensive intelligence summary from collected public evidence.",
+      "The operator aborted this mission before any tools were executed.",
+      "Acknowledge the abort, confirm no external tools were run, and suggest safe next steps in 2-3 sentences.",
+      "Do not include offensive guidance.",
+    ];
+  } else if (hasEvidence) {
+    systemPromptLines = [
+      "You are Vanguard Auditor.",
+      "Produce a concise defensive intelligence summary from the tool results above.",
       "Format:",
       "1) Findings (3-6 bullets)",
       "2) Confidence (low/medium/high + one-line reason)",
       "3) Safe defensive next actions",
       "Do not include offensive guidance.",
-    ].join("\n"),
-  );
+    ];
+  } else {
+    systemPromptLines = [
+      "You are Vanguard Auditor.",
+      "Reconnaissance did not complete — no tool results available.",
+      "State this briefly and list safe next steps only.",
+      "Do not include offensive guidance.",
+    ];
+  }
+
+  const systemPrompt = new SystemMessage(systemPromptLines.join("\n"));
 
   const auditorMessages = ensureEndsWithUser(
     state.messages,
-    "Finalize the defensive mission summary.",
+    wasAborted
+      ? "Mission was aborted by operator. Provide closure."
+      : "Finalize the defensive mission summary.",
   );
 
   const response = await auditor.invoke([systemPrompt, ...auditorMessages]);
@@ -207,7 +248,7 @@ export const vanguardGraph = new StateGraph(VanguardStateAnnotation)
   .addNode("scout", scoutNode)
   .addNode("tools", toolNode)
   .addNode("auditor", auditorNode)
-  .addEdge("__start__", "supervisor")
+  .addConditionalEdges("__start__", routeFromStart)
   .addConditionalEdges("supervisor", routeFromSupervisor)
   .addConditionalEdges("scout", routeFromScout)
   .addEdge("tools", "auditor")

@@ -118,30 +118,24 @@ export async function POST(req: Request) {
 
     if (isApproval) {
       const isAuthorized = approved === true;
-
+      const missionAborted = approved === false;
+      // 1. Patch checkpoint with the operator's decision
       await vanguardGraph.updateState(
         { configurable: { thread_id: threadId } },
         {
           isAuthorized,
           isPendingApproval: false,
+          missionAborted,
+          next: isAuthorized ? "scout" : "auditor",
         },
       );
-
-      const resumeState = {
-        messages: [
-          new HumanMessage(
-            isAuthorized
-              ? "Authorization granted by operator. Continue defensive OSINT."
-              : "Authorization denied by operator. Stop external OSINT and provide safe next steps.",
-          ),
-        ],
-        isAuthorized,
-        isPendingApproval: false,
-        next: "scout",
-      };
-
-      const stream = await vanguardGraph.streamEvents(resumeState, config);
-
+      // 2. Resume: routeFromStart reads isAuthorized/missionAborted and
+      //    routes directly to scout (authorize) or auditor (abort).
+      //    Supervisor is bypassed entirely — no second SCOUT token.
+      const stream = vanguardGraph.streamEvents(
+        { isAuthorized, isPendingApproval: false, missionAborted },
+        config,
+      );
       return createUIMessageStreamResponse({
         stream: toUIMessageStream(stream),
         headers: { "x-vanguard-thread-id": threadId },
@@ -159,7 +153,7 @@ export async function POST(req: Request) {
       isPendingApproval: false,
     };
 
-    const stream = await vanguardGraph.streamEvents(inputState, config);
+    const stream = vanguardGraph.streamEvents(inputState, config);
 
     return createUIMessageStreamResponse({
       stream: toUIMessageStream(stream),
