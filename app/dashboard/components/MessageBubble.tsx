@@ -14,6 +14,7 @@ type MessageBubbleProps = {
   onAuthorize: ToolActionHandler;
   onAbort: ToolActionHandler;
   resolved?: boolean;
+  approvalDisabled?: boolean;
 };
 
 export function MessageBubble({
@@ -21,6 +22,7 @@ export function MessageBubble({
   onAuthorize,
   onAbort,
   resolved = false,
+  approvalDisabled = false,
 }: MessageBubbleProps) {
   const text = renderMessageText(message);
   const toolParts = message.parts.filter(isToolUIPart) as ToolPart[];
@@ -30,13 +32,12 @@ export function MessageBubble({
     (part) => part.state === "approval-requested",
   );
 
-  // SCOUT token is safe as fallback now — interruptBefore:["scout"] guarantees
-  // supervisor runs exactly once per mission, so this only fires once.
+  // Keep fallback deterministic: only the explicit approval signal can trigger
+  // fallback rendering if adapter tool state is unavailable.
   const hasStateApprovalSignal =
     !isUser &&
     !hasToolApprovalPart &&
-    (messageHasApprovalSignal(message) ||
-      text.trim().toUpperCase() === "SCOUT");
+    messageHasApprovalSignal(message);
 
   const showApprovalCard =
     !resolved && (hasToolApprovalPart || hasStateApprovalSignal);
@@ -87,6 +88,7 @@ export function MessageBubble({
             part={hasToolApprovalPart ? toolParts[0] : fallbackApprovalPart}
             onAuthorize={onAuthorize}
             onAbort={onAbort}
+            disabled={approvalDisabled}
           />
         </div>
       )}

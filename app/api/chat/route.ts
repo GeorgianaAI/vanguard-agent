@@ -119,6 +119,7 @@ export async function POST(req: Request) {
     if (isApproval) {
       const isAuthorized = approved === true;
       const missionAborted = approved === false;
+      const safeTarget = target?.trim() || "General Recon";
       // 1. Patch checkpoint with the operator's decision
       await vanguardGraph.updateState(
         { configurable: { thread_id: threadId } },
@@ -126,6 +127,7 @@ export async function POST(req: Request) {
           isAuthorized,
           isPendingApproval: false,
           missionAborted,
+          target: safeTarget,
           next: isAuthorized ? "scout" : "auditor",
         },
       );
@@ -133,7 +135,20 @@ export async function POST(req: Request) {
       //    routes directly to scout (authorize) or auditor (abort).
       //    Supervisor is bypassed entirely — no second SCOUT token.
       const stream = vanguardGraph.streamEvents(
-        { isAuthorized, isPendingApproval: false, missionAborted },
+        {
+          messages: [
+            new HumanMessage(
+              isAuthorized
+                ? `Authorization granted by operator. Continue exactly one defensive reconnaissance pass for target: ${safeTarget}.`
+                : "Authorization denied by operator. Abort external reconnaissance and provide closure.",
+            ),
+          ],
+          target: safeTarget,
+          isAuthorized,
+          isPendingApproval: false,
+          missionAborted,
+          next: isAuthorized ? "scout" : "auditor",
+        },
         config,
       );
       return createUIMessageStreamResponse({

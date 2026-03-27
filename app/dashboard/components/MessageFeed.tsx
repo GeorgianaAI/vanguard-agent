@@ -7,6 +7,7 @@ type MessageFeedProps = {
   error?: Error;
   onAuthorize: ToolActionHandler;
   onAbort: ToolActionHandler;
+  approvalDisabled?: boolean;
 };
 
 function extractMessageText(message: DashboardMessage): string {
@@ -22,6 +23,7 @@ export function MessageFeed({
   error,
   onAuthorize,
   onAbort,
+  approvalDisabled = false,
 }: MessageFeedProps) {
   return (
     <div className="custom-scrollbar h-[520px] space-y-6 overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900/30 p-8 shadow-2xl relative">
@@ -44,6 +46,7 @@ export function MessageFeed({
             onAuthorize={onAuthorize}
             onAbort={onAbort}
             resolved={hasResolutionAfter}
+            approvalDisabled={approvalDisabled}
           />
         );
       })}

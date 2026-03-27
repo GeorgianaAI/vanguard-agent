@@ -34,6 +34,7 @@ export default function VanguardDashboard() {
             error={error}
             onAuthorize={authorizeTool}
             onAbort={abortTool}
+            approvalDisabled={loading}
           />
 
           <CommandInput

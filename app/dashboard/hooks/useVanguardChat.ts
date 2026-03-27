@@ -1,6 +1,6 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_TARGET } from "../lib/constants";
 import type { ToolPart } from "../lib/types";
 import { isLoadingStatus } from "../lib/utils";
@@ -46,6 +46,10 @@ export function useVanguardChat({
   const [threadId, setThreadId] = useState<string | null>(() =>
     readStoredThreadId(),
   );
+
+  // Ref-based guard: prevents double-submission on approval buttons.
+  // A ref is used instead of state to avoid re-render lag between clicks.
+  const approvalInFlight = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -99,29 +103,39 @@ export function useVanguardChat({
   };
 
   async function sendApproval({ approved, toolCallId }: ApprovalAction) {
-    const activeThreadId = ensureThreadId();
+    // Prevent double-click while loading OR while an approval is already in flight.
+    if (loading) return;
+    if (approvalInFlight.current) return;
+    if (!threadId) return;
 
-    await sendMessage(
-      { text: approved ? "Mission authorized" : "Mission aborted" },
-      {
-        body: {
-          isApproval: true,
-          approved,
-          thread_id: activeThreadId,
-          tool_call_id: toolCallId,
-          target: target.trim() || DEFAULT_TARGET,
+    approvalInFlight.current = true;
+    try {
+      await sendMessage(
+        { text: approved ? "Mission authorized" : "Mission aborted" },
+        {
+          body: {
+            isApproval: true,
+            approved,
+            thread_id: threadId,
+            tool_call_id: toolCallId,
+            target: target.trim() || DEFAULT_TARGET,
+          },
         },
-      },
-    );
+      );
+    } finally {
+      approvalInFlight.current = false;
+    }
   }
 
   async function authorizeTool(part: ToolPart) {
+    if (loading || approvalInFlight.current) return;
     const toolCallId = getToolCallId(part);
     if (!toolCallId) return;
     await sendApproval({ approved: true, toolCallId });
   }
 
   async function abortTool(part: ToolPart) {
+    if (loading || approvalInFlight.current) return;
     const toolCallId = getToolCallId(part);
     if (!toolCallId) return;
     await sendApproval({ approved: false, toolCallId });

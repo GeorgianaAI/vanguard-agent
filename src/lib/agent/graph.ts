@@ -3,6 +3,7 @@ import {
   AIMessage,
   HumanMessage,
   SystemMessage,
+  ToolMessage,
 } from "@langchain/core/messages";
 import { END, StateGraph } from "@langchain/langgraph";
 import { getCheckpointer } from "./checkpointer";
@@ -74,50 +75,7 @@ async function supervisorNode(state: VanguardStateType) {
   if (state.scoutHasRun) {
     return { next: "auditor" };
   }
-
-  const hasUsableMessages = state.messages.some((message) => {
-    if (typeof message.content === "string") {
-      return message.content.trim().length > 0;
-    }
-    if (Array.isArray(message.content)) {
-      return message.content.length > 0;
-    }
-    return false;
-  });
-
-  if (!hasUsableMessages) {
-    return { next: "scout" };
-  }
-
-  const supervisor = getSupervisorModel();
-
-  const systemPrompt = new SystemMessage(
-    [
-      "You are Vanguard Supervisor for authorized defensive OSINT workflows.",
-      "Mission is public, non-invasive defensive intelligence only.",
-      "Allowed: WHOIS/RDAP metadata, public web references, defensive summaries.",
-      "Forbidden: exploitation, intrusion instructions, evasion, attack planning.",
-      "Decide next step:",
-      "- SCOUT when additional public evidence is needed.",
-      "- AUDITOR when evidence is sufficient for final defensive summary.",
-      "Respond with one token only: SCOUT or AUDITOR.",
-    ].join("\n"),
-  );
-
-  const supervisorMessages = ensureEndsWithUser(
-    state.messages,
-    "Evaluate mission state and choose the next step.",
-  );
-
-  const decision = await supervisor.invoke([systemPrompt, ...supervisorMessages]);
-  const text =
-    AIMessage.isInstance(decision) && typeof decision.content === "string"
-      ? decision.content.toUpperCase()
-      : "";
-
-  return {
-    next: text.includes("AUDITOR") ? "auditor" : "scout",
-  };
+  return { next: "scout" };
 }
 
 async function scoutNode(state: VanguardStateType) {
@@ -127,15 +85,35 @@ async function scoutNode(state: VanguardStateType) {
   }
 
   if (!state.isAuthorized) {
+    const gateModel = getSupervisorModel();
+    const gateResponse = await gateModel.invoke([
+      new SystemMessage(
+        [
+          "You are Vanguard authorization gate.",
+          "Respond with one concise sentence prefixed by AUTHORIZATION_REQUIRED:.",
+          "Do not add markdown or extra sections.",
+        ].join("\n"),
+      ),
+      new HumanMessage(
+        `Target: ${state.target || "unspecified"}. Manual authorization is required before external tools run.`,
+      ),
+    ]);
+
+    const gateContent =
+      AIMessage.isInstance(gateResponse) && typeof gateResponse.content === "string"
+        ? gateResponse.content.trim()
+        : "";
+
+    const approvalMessage =
+      gateContent.startsWith(APPROVAL_SIGNAL_PREFIX)
+        ? new AIMessage(gateContent)
+        : new AIMessage(
+            `${APPROVAL_SIGNAL_PREFIX} Manual authorization is required before external public-intel tools can run.`,
+          );
+
     return {
       isPendingApproval: true,
-      messages: [
-        new AIMessage({
-          content:
-            `${APPROVAL_SIGNAL_PREFIX} ` +
-            "Manual authorization is required before external public-intel tools can run.",
-        }),
-      ],
+      messages: [approvalMessage],
     };
   }
 
@@ -173,7 +151,7 @@ async function scoutNode(state: VanguardStateType) {
 async function auditorNode(state: VanguardStateType) {
   const auditor = getSupervisorModel();
 
-  const hasEvidence = state.messages.some((m) => m.getType() === "tool");
+  const hasEvidence = state.messages.some((m) => ToolMessage.isInstance(m));
   const wasAborted = state.missionAborted === true;
 
   let systemPromptLines: string[];
@@ -219,6 +197,8 @@ async function auditorNode(state: VanguardStateType) {
     messages: [response],
     next: "end",
     isPendingApproval: false,
+    isAuthorized: false,
+    missionAborted: false,
   };
 }
 
