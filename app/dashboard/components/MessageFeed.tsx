@@ -1,4 +1,5 @@
 import type { DashboardMessage, ToolActionHandler } from "../lib/types";
+import { getMessageSignature } from "../lib/utils";
 import { EmptyState } from "./EmptyState";
 import { MessageBubble } from "./MessageBubble";
 
@@ -7,6 +8,7 @@ type MessageFeedProps = {
   error?: Error;
   onAuthorize: ToolActionHandler;
   onAbort: ToolActionHandler;
+  approvalDisabled?: boolean;
 };
 
 function extractMessageText(message: DashboardMessage): string {
@@ -22,13 +24,20 @@ export function MessageFeed({
   error,
   onAuthorize,
   onAbort,
+  approvalDisabled = false,
 }: MessageFeedProps) {
+  const dedupedMessages = messages.filter((message, index, all) => {
+    if (index === 0) return true;
+    const previous = all[index - 1];
+    return getMessageSignature(previous) !== getMessageSignature(message);
+  });
+
   return (
     <div className="custom-scrollbar h-[520px] space-y-6 overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900/30 p-8 shadow-2xl relative">
-      {messages.length === 0 && <EmptyState />}
+      {dedupedMessages.length === 0 && <EmptyState />}
 
-      {messages.map((message, index) => {
-        const hasResolutionAfter = messages.slice(index + 1).some((m) => {
+      {dedupedMessages.map((message, index) => {
+        const hasResolutionAfter = dedupedMessages.slice(index + 1).some((m) => {
           if (m.role !== "user") return false;
           const txt = extractMessageText(m);
           return (
@@ -44,6 +53,7 @@ export function MessageFeed({
             onAuthorize={onAuthorize}
             onAbort={onAbort}
             resolved={hasResolutionAfter}
+            approvalDisabled={approvalDisabled}
           />
         );
       })}

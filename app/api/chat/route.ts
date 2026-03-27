@@ -23,8 +23,11 @@ const MissionRequestSchema = z.object({
   tool_call_id: z.string().optional(),
 });
 
+const redis = Redis.fromEnv();
+const approvalLocks = new Map<string, number>();
+
 const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
+  redis,
   limiter: Ratelimit.slidingWindow(5, "60 s"),
   analytics: true,
   prefix: "@vanguard/ratelimit",
@@ -87,6 +90,15 @@ function getClientIp(req: Request): string {
   return forwardedFor.split(",")[0]?.trim() || "127.0.0.1";
 }
 
+function acquireLocalApprovalLock(key: string, ttlMs: number): boolean {
+  const now = Date.now();
+  const existing = approvalLocks.get(key);
+  if (typeof existing === "number" && existing > now) return false;
+
+  approvalLocks.set(key, now + ttlMs);
+  return true;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -97,7 +109,8 @@ export async function POST(req: Request) {
       return new Response("Invalid mission payload", { status: 400 });
     }
 
-    const { messages, target, thread_id, isApproval, approved } = parsed.data;
+    const { messages, target, thread_id, isApproval, approved, tool_call_id } =
+      parsed.data;
 
     if (isApproval && !thread_id) {
       return new Response("Missing thread_id for approval", { status: 400 });
@@ -113,35 +126,93 @@ export async function POST(req: Request) {
     const config = {
       configurable: { thread_id: threadId },
       version: "v2" as const,
-      tags: ["vanguard-agent-recon"],
+      tags: [
+        "vanguard-agent",
+        isApproval ? "vanguard-agent-approval" : "vanguard-agent-recon",
+      ],
     };
 
     if (isApproval) {
-      const isAuthorized = approved === true;
+      if (typeof approved !== "boolean") {
+        return new Response("Missing approved boolean for approval request", {
+          status: 400,
+        });
+      }
 
+      const approvalId = tool_call_id?.trim() || "manual-authorization";
+      const approvalLockKey = `vanguard:approval:${threadId}:${approvalId}`;
+      const lockTtlMs = 1000 * 60 * 30;
+
+      if (!acquireLocalApprovalLock(approvalLockKey, lockTtlMs)) {
+        return new Response("Approval already processed", { status: 409 });
+      }
+
+      const lockSet = await redis.set(approvalLockKey, "1", {
+        nx: true,
+        ex: 60 * 30,
+      });
+      if (lockSet !== "OK") {
+        return new Response("Approval already processed", { status: 409 });
+      }
+
+      const currentState = await vanguardGraph.getState({
+        configurable: { thread_id: threadId },
+      });
+      const values = (currentState?.values ?? {}) as {
+        isPendingApproval?: boolean;
+        scoutHasRun?: boolean;
+      };
+      const hasStateSnapshot = Object.keys(values).length > 0;
+
+      if (hasStateSnapshot && (!values.isPendingApproval || values.scoutHasRun)) {
+        return new Response(
+          "Approval already processed or no pending authorization step",
+          { status: 409 },
+        );
+      }
+
+      const isAuthorized = approved === true;
+      const missionAborted = approved === false;
+      const safeTarget = target?.trim() || "General Recon";
+      // 1. Patch checkpoint with the operator's decision
       await vanguardGraph.updateState(
         { configurable: { thread_id: threadId } },
         {
           isAuthorized,
           isPendingApproval: false,
+          missionAborted,
+          target: safeTarget,
+          next: isAuthorized ? "scout" : "auditor",
         },
       );
-
-      const resumeState = {
-        messages: [
-          new HumanMessage(
+      // 2. Resume: routeFromStart reads isAuthorized/missionAborted and
+      //    routes directly to scout (authorize) or auditor (abort).
+      //    Supervisor is bypassed entirely — no second SCOUT token.
+      const stream = vanguardGraph.streamEvents(
+        {
+          messages: [
+            new HumanMessage(
+              isAuthorized
+                ? `Authorization granted by operator. Continue exactly one defensive reconnaissance pass for target: ${safeTarget}.`
+                : "Authorization denied by operator. Abort external reconnaissance and provide closure.",
+            ),
+          ],
+          target: safeTarget,
+          isAuthorized,
+          isPendingApproval: false,
+          missionAborted,
+          next: isAuthorized ? "scout" : "auditor",
+        },
+        {
+          ...config,
+          tags: [
+            ...config.tags,
             isAuthorized
-              ? "Authorization granted by operator. Continue defensive OSINT."
-              : "Authorization denied by operator. Stop external OSINT and provide safe next steps.",
-          ),
-        ],
-        isAuthorized,
-        isPendingApproval: false,
-        next: "scout",
-      };
-
-      const stream = await vanguardGraph.streamEvents(resumeState, config);
-
+              ? "vanguard-agent-approval-authorized"
+              : "vanguard-agent-approval-aborted",
+          ],
+        },
+      );
       return createUIMessageStreamResponse({
         stream: toUIMessageStream(stream),
         headers: { "x-vanguard-thread-id": threadId },
@@ -159,7 +230,10 @@ export async function POST(req: Request) {
       isPendingApproval: false,
     };
 
-    const stream = await vanguardGraph.streamEvents(inputState, config);
+    const stream = vanguardGraph.streamEvents(inputState, {
+      ...config,
+      tags: [...config.tags, "vanguard-agent-recon-start"],
+    });
 
     return createUIMessageStreamResponse({
       stream: toUIMessageStream(stream),

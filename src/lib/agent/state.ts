@@ -33,6 +33,18 @@ export const VanguardStateAnnotation = Annotation.Root({
     reducer: (x, y) => y ?? x,
     default: () => false,
   }),
+
+  // Idempotency guard: prevents scout from re-entering after one authorized run
+  scoutHasRun: Annotation<boolean>({
+    reducer: (x, y) => y ?? x,
+    default: () => false,
+  }),
+
+  // Set when operator aborts — routes directly to auditor closure message
+  missionAborted: Annotation<boolean>({
+    reducer: (x, y) => y ?? x,
+    default: () => false,
+  }),
 });
 
 export type VanguardStateType = typeof VanguardStateAnnotation.State;

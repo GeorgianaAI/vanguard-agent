@@ -14,6 +14,7 @@ type MessageBubbleProps = {
   onAuthorize: ToolActionHandler;
   onAbort: ToolActionHandler;
   resolved?: boolean;
+  approvalDisabled?: boolean;
 };
 
 export function MessageBubble({
@@ -21,6 +22,7 @@ export function MessageBubble({
   onAuthorize,
   onAbort,
   resolved = false,
+  approvalDisabled = false,
 }: MessageBubbleProps) {
   const text = renderMessageText(message);
   const toolParts = message.parts.filter(isToolUIPart) as ToolPart[];
@@ -30,12 +32,12 @@ export function MessageBubble({
     (part) => part.state === "approval-requested",
   );
 
-  // Fallback on plain SCOUT token for adapter streams that do not emit approval part state
+  // Keep fallback deterministic: only the explicit approval signal can trigger
+  // fallback rendering if adapter tool state is unavailable.
   const hasStateApprovalSignal =
     !isUser &&
     !hasToolApprovalPart &&
-    (messageHasApprovalSignal(message) ||
-      text.trim().toUpperCase() === "SCOUT");
+    messageHasApprovalSignal(message);
 
   const showApprovalCard =
     !resolved && (hasToolApprovalPart || hasStateApprovalSignal);
@@ -50,11 +52,10 @@ export function MessageBubble({
     <div className="group animate-in fade-in slide-in-from-left-2 duration-300 space-y-4">
       <div className="flex items-center gap-2">
         <span
-          className={`text-[9px] font-black px-2 py-0.5 rounded tracking-[0.15em] uppercase shadow-sm border transition-colors ${
-            isUser
-              ? "bg-slate-800 text-slate-400 border-slate-700"
-              : "bg-cyan-950 text-cyan-400 border-cyan-500/10"
-          }`}
+          className={`text-[9px] font-black px-2 py-0.5 rounded tracking-[0.15em] uppercase shadow-sm border transition-colors ${isUser
+            ? "bg-slate-800 text-slate-400 border-slate-700"
+            : "bg-cyan-950 text-cyan-400 border-cyan-500/10"
+            }`}
         >
           {isUser ? "Operator" : "Vanguard"}
         </span>
@@ -87,6 +88,7 @@ export function MessageBubble({
             part={hasToolApprovalPart ? toolParts[0] : fallbackApprovalPart}
             onAuthorize={onAuthorize}
             onAbort={onAbort}
+            disabled={approvalDisabled}
           />
         </div>
       )}

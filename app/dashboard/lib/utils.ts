@@ -29,12 +29,33 @@ export function renderMessageText(message: DashboardMessage): string {
   return rawText;
 }
 
-export function messageHasApprovalSignal(message: DashboardMessage): boolean {
-  const lines = message.parts
+export function extractRenderableText(message: DashboardMessage): string {
+  return message.parts
     .filter((part) => part.type === "text" || part.type === "reasoning")
-    .map((part) => part.text ?? "");
+    .map((part) => (part.text ?? "").trim())
+    .filter(Boolean)
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
 
-  const rawText = lines.join("\n").trim();
+export function getMessageSignature(message: DashboardMessage): string {
+  const text = extractRenderableText(message);
+  const toolSignature = message.parts
+    .filter((part) => part.type === "tool-invocation")
+    .map((part) => {
+      const toolCallId = "toolCallId" in part ? String(part.toolCallId ?? "") : "";
+      const state = "state" in part ? String(part.state ?? "") : "";
+      const toolName = "toolName" in part ? String(part.toolName ?? "") : "";
+      return `${toolName}:${toolCallId}:${state}`;
+    })
+    .join("|");
+
+  return `${message.role}::${text}::${toolSignature}`;
+}
+
+export function messageHasApprovalSignal(message: DashboardMessage): boolean {
+  const rawText = extractRenderableText(message);
   return rawText.startsWith(APPROVAL_SIGNAL_PREFIX);
 }
 

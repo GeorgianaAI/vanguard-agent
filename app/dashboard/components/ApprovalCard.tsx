@@ -6,12 +6,14 @@ type ApprovalCardProps = {
   part: ToolPart;
   onAuthorize: ToolActionHandler;
   onAbort: ToolActionHandler;
+  disabled?: boolean;
 };
 
 export function ApprovalCard({
   part,
   onAuthorize,
   onAbort,
+  disabled = false,
 }: ApprovalCardProps) {
   return (
     <div className="my-6 rounded-2xl border border-amber-900/40 bg-amber-950/10 p-6 shadow-xl ring-1 ring-inset ring-amber-500/10">
@@ -30,15 +32,17 @@ export function ApprovalCard({
       <div className="flex gap-4">
         <button
           type="button"
+          disabled={disabled}
           onClick={() => onAuthorize(part)}
-          className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-emerald-500 shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2"
+          className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-emerald-500 shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
         >
           <CheckCircle2 className="h-3.5 w-3.5" /> Authorize Mission
         </button>
         <button
           type="button"
+          disabled={disabled}
           onClick={() => onAbort(part)}
-          className="flex-1 rounded-xl bg-slate-800 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-300 transition-all hover:bg-slate-700 flex items-center justify-center gap-2"
+          className="flex-1 rounded-xl bg-slate-800 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-300 transition-all hover:bg-slate-700 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <XCircle className="h-3.5 w-3.5" /> Abort Action
         </button>
