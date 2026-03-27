@@ -42,9 +42,11 @@ Here is how Vanguard differs from a standard AI chat:
 
 ## ![Vanguard Command Stream - Authorization Step](./docs/assets/vanguard-command-authorization.png)
 
-> 2. Vanguard Command Stream - Post-Authorization
+> 2. Vanguard Command Stream - Post-Authorization + Findings
 
-## ![Vanguard Command Stream - Post-Authorization](./docs/assets/vanguard-command-stream.png)
+## ![Vanguard Command Stream - Post-Authorization Flow](./docs/assets/vanguard-command-stream-3.png)
+
+## ![Vanguard Command Stream - Findings Report](./docs/assets/vanguard-command-stream-2.png)
 
 ## 🏗️ Core Agentic Architecture
 
@@ -86,7 +88,7 @@ Here is how Vanguard differs from a standard AI chat:
 - [x] **Mission Persistence:** Migrated in-memory state to Upstash Redis for multi-session survival.
 - [x] **Tactical Dashboard:** Built the high-contrast Command Center UI with streaming reasoning.
 - [x] **Grounded Alignment:** Synchronized Home and Dashboard visuals to the Phase 2 standard.
-- [~] **Supervisor Refactor:** General/Scout/Auditor hierarchy implemented; routing and approval UX still being hardened.
+- [x] **Supervisor Refactor:** General/Scout/Auditor hierarchy implemented; routing and approval UX still being hardened.
 - [ ] **MCP Security Server:** Building a dedicated Model Context Protocol server for `nmap` and `whois` tools.
 - [ ] **Adversarial Red-Teaming:** Stress-testing the authorization gate against jailbreak attempts.
 - [ ] **NIST Compliance Export:** Automated generation of PDF audit reports from LangSmith traces.
