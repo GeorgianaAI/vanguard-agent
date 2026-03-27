@@ -2,7 +2,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_TARGET } from "../lib/constants";
-import type { ToolPart } from "../lib/types";
+import type { DashboardMessage, ToolPart } from "../lib/types";
 import { isLoadingStatus } from "../lib/utils";
 
 type UseVanguardChatArgs = {
@@ -38,6 +38,42 @@ function getToolCallId(part: ToolPart): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
+function extractMessageText(message: DashboardMessage): string {
+  return message.parts
+    .filter((part) => part.type === "text" || part.type === "reasoning")
+    .map((part) => (part.text ?? "").toLowerCase())
+    .join("\n");
+}
+
+function hasOpenApproval(messages: DashboardMessage[]): boolean {
+  const latestApprovalIndex = messages.findLastIndex((message) => {
+    if (message.role !== "assistant") return false;
+    const text = extractMessageText(message);
+    const hasApprovalSignal = text.includes("authorization_required:");
+    const hasApprovalPart = message.parts.some(
+      (part) =>
+        part.type === "tool-invocation" &&
+        "state" in part &&
+        part.state === "approval-requested",
+    );
+    return hasApprovalSignal || hasApprovalPart;
+  });
+
+  if (latestApprovalIndex < 0) return false;
+
+  return !messages.slice(latestApprovalIndex + 1).some((message) => {
+    if (message.role !== "user") return false;
+    const text = extractMessageText(message);
+    return text.includes("mission authorized") || text.includes("mission aborted");
+  });
+}
+
+function shouldStartFreshMission(messages: DashboardMessage[]): boolean {
+  if (messages.length === 0) return false;
+  if (hasOpenApproval(messages)) return false;
+  return true;
+}
+
 export function useVanguardChat({
   target,
   input,
@@ -53,7 +89,10 @@ export function useVanguardChat({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!threadId) return;
+    if (!threadId) {
+      window.localStorage.removeItem(THREAD_STORAGE_KEY);
+      return;
+    }
     window.localStorage.setItem(THREAD_STORAGE_KEY, threadId);
   }, [threadId]);
 
@@ -88,7 +127,14 @@ export function useVanguardChat({
     if (loading) return;
 
     setInput("");
-    const activeThreadId = ensureThreadId();
+    const activeThreadId = shouldStartFreshMission(messages)
+      ? createThreadId()
+      : ensureThreadId();
+
+    if (activeThreadId !== threadId) {
+      setThreadId(activeThreadId);
+      setMessages([]);
+    }
 
     await sendMessage(
       { text },
@@ -122,6 +168,15 @@ export function useVanguardChat({
           },
         },
       );
+    } catch (error) {
+      const raw = error instanceof Error ? error.message : String(error ?? "");
+      if (
+        raw.includes("Approval already processed") ||
+        raw.includes("409")
+      ) {
+        return;
+      }
+      throw error;
     } finally {
       approvalInFlight.current = false;
     }

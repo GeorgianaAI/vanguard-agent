@@ -84,6 +84,12 @@ async function scoutNode(state: VanguardStateType) {
     return { next: "auditor" };
   }
 
+  // Idempotency guard: if approval is already pending, do not emit another
+  // authorization prompt for accidental duplicate resumes.
+  if (!state.isAuthorized && state.isPendingApproval) {
+    return {};
+  }
+
   if (!state.isAuthorized) {
     const gateModel = getSupervisorModel();
     const gateResponse = await gateModel.invoke([
