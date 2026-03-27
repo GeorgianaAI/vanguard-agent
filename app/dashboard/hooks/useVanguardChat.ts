@@ -1,12 +1,7 @@
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, getToolName } from "ai";
-import { useMemo } from "react";
-import {
-  APPROVAL_ERROR_TEXT,
-  APPROVAL_REASON_AUTH,
-  APPROVAL_REASON_DENY,
-  DEFAULT_TARGET,
-} from "../lib/constants";
+import { DefaultChatTransport } from "ai";
+import { useEffect, useMemo, useState } from "react";
+import { DEFAULT_TARGET } from "../lib/constants";
 import type { ToolPart } from "../lib/types";
 import { isLoadingStatus } from "../lib/utils";
 
@@ -16,11 +11,48 @@ type UseVanguardChatArgs = {
   setInput: (value: string) => void;
 };
 
+type ApprovalAction = {
+  approved: boolean;
+  toolCallId: string;
+};
+
+const THREAD_STORAGE_KEY = "vanguard-thread-id";
+
+function createThreadId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `vanguard-${crypto.randomUUID()}`;
+  }
+  return `vanguard-${Date.now()}`;
+}
+
+function readStoredThreadId(): string | null {
+  if (typeof window === "undefined") return null;
+  const stored = window.localStorage.getItem(THREAD_STORAGE_KEY);
+  return stored && stored.trim().length > 0 ? stored : null;
+}
+
+function getToolCallId(part: ToolPart): string | null {
+  if (!part || typeof part !== "object") return null;
+  if (!("toolCallId" in part)) return null;
+  const value = part.toolCallId;
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
 export function useVanguardChat({
   target,
   input,
   setInput,
 }: UseVanguardChatArgs) {
+  const [threadId, setThreadId] = useState<string | null>(() =>
+    readStoredThreadId(),
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!threadId) return;
+    window.localStorage.setItem(THREAD_STORAGE_KEY, threadId);
+  }, [threadId]);
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -29,29 +61,54 @@ export function useVanguardChat({
     [],
   );
 
-  const {
-    messages,
-    sendMessage,
-    addToolOutput,
-    addToolApprovalResponse,
-    status,
-    error,
-  } = useChat({ transport });
+  const { messages, sendMessage, status, error, setMessages } = useChat({
+    transport,
+    id: threadId ?? undefined,
+    resume: false,
+  });
 
   const loading = isLoadingStatus(status);
 
-  async function onSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
+  function ensureThreadId() {
+    if (threadId) return threadId;
+    const next = createThreadId();
+    setThreadId(next);
+    return next;
+  }
+
+  const onSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const text = input.trim();
     if (!text) return;
+    if (loading) return;
 
     setInput("");
+    const activeThreadId = ensureThreadId();
 
     await sendMessage(
       { text },
       {
         body: {
+          target: target.trim() || DEFAULT_TARGET,
+          thread_id: activeThreadId,
+          isApproval: false,
+        },
+      },
+    );
+  };
+
+  async function sendApproval({ approved, toolCallId }: ApprovalAction) {
+    const activeThreadId = ensureThreadId();
+
+    await sendMessage(
+      { text: approved ? "Mission authorized" : "Mission aborted" },
+      {
+        body: {
+          isApproval: true,
+          approved,
+          thread_id: activeThreadId,
+          tool_call_id: toolCallId,
           target: target.trim() || DEFAULT_TARGET,
         },
       },
@@ -59,41 +116,15 @@ export function useVanguardChat({
   }
 
   async function authorizeTool(part: ToolPart) {
-    if ("approval" in part && part.approval?.id) {
-      await addToolApprovalResponse({
-        id: part.approval.id,
-        approved: true,
-        reason: APPROVAL_REASON_AUTH,
-      });
-      return;
-    }
-
-    // Fallback if approval id is not emitted by backend.
-    await addToolOutput({
-      tool: getToolName(part),
-      toolCallId: part.toolCallId,
-      state: "output-available",
-      output: { approved: true, reason: APPROVAL_REASON_AUTH },
-    });
+    const toolCallId = getToolCallId(part);
+    if (!toolCallId) return;
+    await sendApproval({ approved: true, toolCallId });
   }
 
   async function abortTool(part: ToolPart) {
-    if ("approval" in part && part.approval?.id) {
-      await addToolApprovalResponse({
-        id: part.approval.id,
-        approved: false,
-        reason: APPROVAL_REASON_DENY,
-      });
-      return;
-    }
-
-    // Fallback if approval id is not emitted by backend.
-    await addToolOutput({
-      tool: getToolName(part),
-      toolCallId: part.toolCallId,
-      state: "output-error",
-      errorText: APPROVAL_ERROR_TEXT,
-    });
+    const toolCallId = getToolCallId(part);
+    if (!toolCallId) return;
+    await sendApproval({ approved: false, toolCallId });
   }
 
   function setInputValue(value: string) {
@@ -105,9 +136,12 @@ export function useVanguardChat({
     status,
     error,
     loading,
+    threadId,
+    setThreadId,
     onSubmit,
     authorizeTool,
     abortTool,
     setInputValue,
+    setMessages,
   };
 }
