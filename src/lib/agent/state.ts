@@ -6,15 +6,30 @@ export const VanguardStateAnnotation = Annotation.Root({
     reducer: (x, y) => x.concat(y),
     default: () => [],
   }),
+
   target: Annotation<string>({
     reducer: (x, y) => y ?? x,
     default: () => "",
   }),
+
   iterationCount: Annotation<number>({
     reducer: (x, y) => x + y,
     default: () => 0,
   }),
+
   isPendingApproval: Annotation<boolean>({
+    reducer: (x, y) => y ?? x,
+    default: () => false,
+  }),
+
+  // Orchestrator routing cursor
+  next: Annotation<string>({
+    reducer: (x, y) => y ?? x,
+    default: () => "supervisor",
+  }),
+
+  // Hard authorization key for external tool execution
+  isAuthorized: Annotation<boolean>({
     reducer: (x, y) => y ?? x,
     default: () => false,
   }),
