@@ -31,7 +31,7 @@ export default function LandingPage() {
             <Satellite className="w-5 h-5 group-hover:rotate-12 transition-transform" />
           </Link>
           <Link
-            href="https://github.com"
+            href="https://github.com/GeorgiDS9/vanguard-agent"
             className="px-8 py-4 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold rounded-xl transition-all"
           >
             VIEW ARCHITECTURE

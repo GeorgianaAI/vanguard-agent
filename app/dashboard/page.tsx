@@ -23,15 +23,12 @@ export default function VanguardDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950 p-8 text-slate-100">
-      <div className="max-w-4xl mx-auto px-6 pt-32 pb-24">
-        {/* Header */}
+      <div className="mx-auto max-w-4xl px-6 pb-24 pt-32">
         <DashboardHeader loading={loading} />
 
         <main className="mx-auto grid max-w-4xl gap-6">
-          {/* Target */}
           <TargetInput target={target} setTarget={setTarget} />
 
-          {/* Feed */}
           <MessageFeed
             messages={messages}
             error={error}
@@ -39,7 +36,6 @@ export default function VanguardDashboard() {
             onAbort={abortTool}
           />
 
-          {/* Command */}
           <CommandInput
             input={input}
             loading={loading}

@@ -28,7 +28,7 @@ export function DashboardHeader({ loading }: DashboardHeaderProps) {
       <div className="rounded-xl border border-slate-800 bg-slate-900/50 px-5 py-2.5 text-[11px] font-black tracking-widest uppercase shadow-lg shadow-black/20">
         <div className="flex items-center gap-3">
           <div
-            className={`w-2 h-2 rounded-full ${loading ? "bg-amber-500 animate-ping" : "bg-emerald-500"}`}
+            className={`w-2 h-2 rounded-full shrink-0 -translate-y-[2.5px] ${loading ? "bg-amber-500 animate-ping" : "bg-emerald-500"}`}
           />
           <span className="text-slate-300">
             {loading ? STATUS_RECON_IN_PROGRESS : STATUS_SATELLITE_IDLE}
