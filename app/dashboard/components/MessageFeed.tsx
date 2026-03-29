@@ -6,6 +6,8 @@ import { MessageBubble } from "./MessageBubble";
 type MessageFeedProps = {
   messages: DashboardMessage[];
   error?: Error;
+  /** Transport / governance messages surfaced for the operator */
+  operatorNotice?: string | null;
   onAuthorize: ToolActionHandler;
   onAbort: ToolActionHandler;
   approvalDisabled?: boolean;
@@ -22,6 +24,7 @@ function extractMessageText(message: DashboardMessage): string {
 export function MessageFeed({
   messages,
   error,
+  operatorNotice,
   onAuthorize,
   onAbort,
   approvalDisabled = false,
@@ -58,9 +61,12 @@ export function MessageFeed({
         );
       })}
 
-      {error && (
-        <div className="rounded-xl border border-red-900/50 bg-red-950/20 p-4 text-[10px] font-black tracking-widest uppercase text-red-400">
-          Uplink error: {error.message}
+      {(operatorNotice || error) && (
+        <div
+          data-testid="operator-notice"
+          className="rounded-xl border border-red-900/50 bg-red-950/20 p-4 text-[10px] font-black tracking-widest uppercase text-red-400"
+        >
+          {operatorNotice ?? `Uplink error: ${error?.message ?? ""}`}
         </div>
       )}
     </div>

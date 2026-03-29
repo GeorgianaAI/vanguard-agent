@@ -1,6 +1,6 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createThreadId,
   getToolCallId,
@@ -28,6 +28,23 @@ function readStoredThreadId(): string | null {
   return stored && stored.trim().length > 0 ? stored : null;
 }
 
+function formatChatTransportError(err: Error): string {
+  const msg = err.message ?? "";
+  if (/429|Too many missions|cool down/i.test(msg)) {
+    return "Rate limited — too many missions. Wait and retry, or reduce request frequency.";
+  }
+  if (/409|Approval already processed|no pending authorization/i.test(msg)) {
+    return "This authorization step is no longer valid (already completed or expired). Try refreshing or starting a new mission.";
+  }
+  if (/400|Invalid mission|Missing thread_id|Missing approved boolean/i.test(msg)) {
+    return `Request rejected: ${msg}`;
+  }
+  if (/500|Mission Aborted|Uplink Failure/i.test(msg)) {
+    return "Mission uplink failed. Check connectivity and try again.";
+  }
+  return msg || "Mission uplink error.";
+}
+
 export function useVanguardChat({
   target,
   input,
@@ -36,10 +53,11 @@ export function useVanguardChat({
   const [threadId, setThreadId] = useState<string | null>(() =>
     readStoredThreadId(),
   );
+  const [operatorNotice, setOperatorNotice] = useState<string | null>(null);
 
-  // Ref-based guard: prevents double-submission on approval buttons.
-  // A ref is used instead of state to avoid re-render lag between clicks.
   const approvalInFlight = useRef(false);
+
+  const dismissNotice = useCallback(() => setOperatorNotice(null), []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -62,6 +80,9 @@ export function useVanguardChat({
     transport,
     id: threadId ?? undefined,
     resume: false,
+    onError: (err) => {
+      setOperatorNotice(formatChatTransportError(err));
+    },
   });
 
   const loading = isLoadingStatus(status);
@@ -80,6 +101,7 @@ export function useVanguardChat({
     if (!text) return;
     if (loading) return;
 
+    dismissNotice();
     setInput("");
     const activeThreadId = shouldStartFreshMission(messages)
       ? createThreadId()
@@ -90,25 +112,30 @@ export function useVanguardChat({
       setMessages([]);
     }
 
-    await sendMessage(
-      { text },
-      {
-        body: {
-          target: target.trim() || DEFAULT_TARGET,
-          thread_id: activeThreadId,
-          isApproval: false,
+    try {
+      await sendMessage(
+        { text },
+        {
+          body: {
+            target: target.trim() || DEFAULT_TARGET,
+            thread_id: activeThreadId,
+            isApproval: false,
+          },
         },
-      },
-    );
+      );
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error(String(e));
+      setOperatorNotice(formatChatTransportError(err));
+    }
   };
 
   async function sendApproval({ approved, toolCallId }: ApprovalAction) {
-    // Prevent double-click while loading OR while an approval is already in flight.
     if (loading) return;
     if (approvalInFlight.current) return;
     if (!threadId) return;
 
     approvalInFlight.current = true;
+    dismissNotice();
     try {
       await sendMessage(
         { text: approved ? "Mission authorized" : "Mission aborted" },
@@ -123,14 +150,8 @@ export function useVanguardChat({
         },
       );
     } catch (error) {
-      const raw = error instanceof Error ? error.message : String(error ?? "");
-      if (
-        raw.includes("Approval already processed") ||
-        raw.includes("409")
-      ) {
-        return;
-      }
-      throw error;
+      const err = error instanceof Error ? error : new Error(String(error ?? ""));
+      setOperatorNotice(formatChatTransportError(err));
     } finally {
       approvalInFlight.current = false;
     }
@@ -166,5 +187,7 @@ export function useVanguardChat({
     abortTool,
     setInputValue,
     setMessages,
+    operatorNotice,
+    dismissNotice,
   };
 }

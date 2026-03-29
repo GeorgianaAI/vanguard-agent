@@ -19,6 +19,7 @@ export default function VanguardDashboard() {
     authorizeTool,
     abortTool,
     setInputValue,
+    operatorNotice,
   } = useVanguardChat({ target, input, setInput });
 
   return (
@@ -32,6 +33,7 @@ export default function VanguardDashboard() {
           <MessageFeed
             messages={messages}
             error={error}
+            operatorNotice={operatorNotice}
             onAuthorize={authorizeTool}
             onAbort={abortTool}
             approvalDisabled={loading}
