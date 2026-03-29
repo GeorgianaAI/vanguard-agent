@@ -2,11 +2,11 @@
 
 🚀 **View Live Demo (WIP)** | **[📂 View Codebase](https://github.com/GeorgiDS9/vanguard-agent)**
 
-**Agentic AI | Phase 2 Operational Autonomy | Next.js 16 | LangGraph Orchestration | Red Button HITL | NIST-Aligned Governance**
+**Agentic AI | Phase 2 Operational Autonomy | Next.js 16 | LangGraph Orchestration | HITL (manual authorization) | NIST-Aligned Governance**
 
-**Vanguard Agent 🛰️** is a proactive **Security Reconnaissance Scout** engineered for governed adversarial operations and independent reconnaissance missions. Unlike standard chatbots that just answer questions, Vanguard is a proactive intelligence gatherer that utilizes **ReAct (Reason-Action) loops** to autonomously explore targets, use specialized security tools, and deliver mission-critical intelligence through multi-step execution with minimal operator guidance.
+**Vanguard Agent 🛰️** is a proactive **Security Reconnaissance Scout** engineered for governed adversarial operations and independent reconnaissance missions. Unlike standard chatbots that only answer questions, Vanguard is an **autonomous intelligence gatherer** that uses **ReAct (Reason-Action) loops** to explore targets, apply specialized security tools, and deliver mission-critical intelligence through multi-step execution with minimal operator guidance.
 
-Built on the **Phase 2 Operational Autonomy** standard, Vanguard operates with "Governed Execution." It uses a **"Red Button" Human-in-the-Loop (HITL)** protocol, meaning the agent will pause and wait for your manual approval before it runs any external security scan. With **Upstash Redis** persistence and **LangSmith** telemetry, Vanguard provides a stateful, verifiable, and cost-aware workflow for modern security teams.
+Built on the **Phase 2 Operational Autonomy** standard, Vanguard operates with "Governed Execution." It uses **Human-in-the-Loop (HITL)** governance: before external tools run, the agent pauses until you choose **Authorize Mission** or **Abort Action** in the command stream (the **Manual Authorization Required** gate). With **Upstash Redis** persistence and **LangSmith** telemetry, Vanguard provides a stateful, verifiable, and cost-aware workflow for modern security teams.
 
 ---
 
@@ -18,15 +18,6 @@ Here is how Vanguard differs from a standard AI chat:
 2. **The ReAct Loop (Reasoning + Action):** The agent enters a loop: it **Reasons** ("I need to check the WHOIS records"), takes an **Action** (calls a tool), and then analyzes the result to decide its next move.
 3. **Tool Mastery (The Hands):** Vanguard can actually _use_ software. It "plugs in" to services like Tavily (for web search) and RDAP (Registration Data Access Protocol) for domain data to fetch live intelligence that the AI wasn't originally trained on.
 4. **Self-Correction:** If a tool call fails or returns messy data, the agent recognizes the error and tries a different approach until the mission is complete.
-
----
-
-> [!TIP]
->
-> ### **Strategic & Security Resources**
->
-> - **Architectural Whitepaper:** For the full supervisor-worker case study, state-machine logic, and mission persistence artifacts, see **WHITEPAPER.md**.
-> - **Operational Protocol:** For details on the Phase 2 Governance standard and HITL interrupt logic, see **GOVERNANCE.md**.
 
 ---
 
@@ -60,14 +51,17 @@ Here is how Vanguard differs from a standard AI chat:
 - **Stateful Mission Log:** Utilizes **LangGraph** message reducers to maintain an immutable history of reasoning, tool calls, and operator approvals.
 - **Observability as Evidence:** Full integration with **LangSmith** to provide a verifiable audit trail of the agent's "Internal Monologue" and tool outputs.
 - **Grounded Command UI:** A high-contrast, tactical dashboard designed for high-pressure security environments, featuring real-time streaming of reasoning steps.
+- **Streaming chat (Vercel AI SDK):** Dashboard uses the **`ai`** runtime and **`@ai-sdk/react`** (`useChat`, transport) with **`@ai-sdk/langchain`** to stream LangGraph events to the UI over `/api/chat`.
 - **Schema-Based Intelligence:** Uses **Zod v4** for strict data contracts, ensuring all tool outputs are validated before being ingested into the agent's memory.
 - **Multi-Model Configuration:** Leverages **Claude 4.6 Sonnet** for primary reasoning and **GPT-4o-mini** for secondary mission auditing and final reports.
+- **Operator identity & RBAC (planned):** Authenticated operators with **roles** (e.g. who may deploy missions, authorize tools, or view audit trails), enforced at the UI and API layers alongside HITL.
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Frontend:** Next.js 16 (App Router), Tailwind CSS 4, Lucide Icons (Tactical Set)
+- **Vercel AI SDK:** **`ai`**, **`@ai-sdk/react`**, **`@ai-sdk/langchain`** — streaming UI messages, chat transport, and LangGraph → UI message stream bridging for `/dashboard`.
 - **Agentic Brain:** Anthropic Claude Sonnet 4.6 (Primary Scout)
 - **Autonomous Auditor:** OpenAI GPT-4o-mini (The Judge)
 - **Logic Engine:** LangGraph.js (State Machine Orchestration)
@@ -79,6 +73,7 @@ Here is how Vanguard differs from a standard AI chat:
 - **Runtime:** Vercel Edge Functions (Distributed Compute)
 - **Testing:** **Vitest** (unit tests: Zod request contracts, mission/approval state, dashboard message utilities) · **Playwright** (dashboard e2e smoke: shell UI, empty state, mocked chat errors)
 - **MCP:** **vanguard-mcp-server** (stdio; `vanguard_ping`, `domain_whois` via shared RDAP helper)
+- **Auth & access (planned):** Operator authentication and **RBAC** (role-based authorization for UI and server/API routes; provider TBD—e.g. session-based auth aligned with Next.js App Router).
 
 ---
 
@@ -94,8 +89,10 @@ Here is how Vanguard differs from a standard AI chat:
 - [x] **Automated Unit Testing:** **Vitest** for API request validation (Zod), mission and approval state helpers, and dashboard message utilities.
 - [x] **CI and e2e Smoke:** **GitHub Actions** runs lint, unit tests with coverage, production build, and **Playwright** (Chromium) on pushes and pull requests to `main`; dashboard smoke covers core controls, initial feed state, and a mocked chat POST path. Live HITL/API tests stay optional behind `E2E_LIVE`.
 - [x] **MCP server (stdio):** `mcp-server/` with **`vanguard_ping`** and **`domain_whois`** (RDAP, shared with LangGraph). Expand with **`nmap`** or other tools under explicit policy later.
+- [ ] **Vercel deployment:** Production app hosted on **Vercel**; API keys and service credentials are set as **server-side environment variables** in the Vercel project (not committed to the repo).
 - [ ] **Adversarial Red-Teaming:** Stress-testing the authorization gate against jailbreak attempts.
 - [ ] **NIST Compliance Export:** Automated generation of PDF audit reports from LangSmith traces.
+- [ ] **Auth & RBAC:** Operator authentication (sessions / identity provider) and **role-based access control** for dashboard routes, mission actions (e.g. deploy, approve tools), and audit-sensitive APIs.
 
 ---
 
@@ -252,6 +249,10 @@ npm run mcp
 Runs `vanguard-mcp-server` over stdio for Cursor / Claude Desktop–style clients. Tools: **`vanguard_ping`** (no side effects) and **`domain_whois`** (public RDAP, same logic as `src/lib/recon/rdapDomainSummary.ts`).
 
 **HITL live scenario (optional):** skipped in CI unless you set `E2E_LIVE=1` and supply the keys in `.env.local` required by that test.
+
+### Production (Vercel)
+
+The live demo is deployed on **Vercel**. Configure the same variables as in `.env.local` in the project’s **Settings → Environment Variables** (Production / Preview as needed), then redeploy. Do not expose provider keys in client-side code.
 
 ---
 
