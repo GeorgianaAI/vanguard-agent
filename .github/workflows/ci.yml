@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+# Run official JS actions (checkout, setup-node, upload-artifact) on Node 24 per
+# https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

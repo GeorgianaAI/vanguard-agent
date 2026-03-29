@@ -50,9 +50,8 @@ export function useVanguardChat({
   input,
   setInput,
 }: UseVanguardChatArgs) {
-  const [threadId, setThreadId] = useState<string | null>(() =>
-    readStoredThreadId(),
-  );
+  /** null only until client init runs; avoids passing id: undefined into useChat (recreates Chat every render). */
+  const [threadId, setThreadId] = useState<string | null>(null);
   const [operatorNotice, setOperatorNotice] = useState<string | null>(null);
 
   const approvalInFlight = useRef(false);
@@ -60,11 +59,11 @@ export function useVanguardChat({
   const dismissNotice = useCallback(() => setOperatorNotice(null), []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!threadId) {
-      window.localStorage.removeItem(THREAD_STORAGE_KEY);
-      return;
-    }
+    setThreadId((prev) => prev ?? readStoredThreadId() ?? createThreadId());
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !threadId) return;
     window.localStorage.setItem(THREAD_STORAGE_KEY, threadId);
   }, [threadId]);
 
@@ -78,7 +77,7 @@ export function useVanguardChat({
 
   const { messages, sendMessage, status, error, setMessages } = useChat({
     transport,
-    id: threadId ?? undefined,
+    ...(threadId != null ? { id: threadId } : {}),
     resume: false,
     onError: (err) => {
       setOperatorNotice(formatChatTransportError(err));
