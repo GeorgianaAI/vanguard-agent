@@ -67,6 +67,43 @@ test.describe("Vanguard dashboard", () => {
       timeout: 15_000,
     });
   });
+
+  test("shows operator notice when chat returns 429", async ({ page }) => {
+    await page.route("**/api/chat", async (route) => {
+      if (route.request().method() === "POST") {
+        await route.fulfill({
+          status: 429,
+          contentType: "text/plain",
+          body: "Too many missions. Cool down.",
+        });
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto("/dashboard");
+    await page.getByTestId("mission-input").fill("rate limit probe");
+    await page.getByTestId("deploy-button").click();
+
+    await expect(page.getByTestId("operator-notice")).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByTestId("operator-notice")).toContainText(/rate/i);
+  });
+});
+
+test.describe("Governance API (direct)", () => {
+  test("rejects approval without approved boolean", async ({ request }) => {
+    const res = await request.post("/api/chat", {
+      headers: { "Content-Type": "application/json" },
+      data: {
+        isApproval: true,
+        thread_id: "vanguard-e2e-governance-1",
+        messages: [],
+      },
+    });
+    expect(res.status(), await res.text()).toBe(400);
+  });
 });
 
 test.describe("HITL live flow", () => {
