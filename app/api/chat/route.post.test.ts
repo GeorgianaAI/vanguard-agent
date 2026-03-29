@@ -141,6 +141,7 @@ describe("POST /api/chat governance", () => {
       }),
     );
     expect(res.status).toBe(400);
+    expect(hoisted.ratelimitLimit).not.toHaveBeenCalled();
   });
 
   it("returns 429 when rate limit fails", async () => {

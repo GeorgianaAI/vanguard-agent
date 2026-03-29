@@ -80,6 +80,23 @@ export async function POST(req: Request) {
       );
     }
 
+    if (isApproval && typeof approved !== "boolean") {
+      vanguardChatLog({
+        reqId,
+        phase: "approval",
+        status: 400,
+        threadId: thread_id,
+        message: "Missing approved boolean",
+        isApproval: true,
+      });
+      return withRequestIdHeaders(
+        new Response("Missing approved boolean for approval request", {
+          status: 400,
+        }),
+        reqId,
+      );
+    }
+
     const threadId = thread_id ?? `vanguard-${Date.now()}`;
 
     const { success } = await ratelimit.limit(getClientIp(req));
@@ -108,23 +125,6 @@ export async function POST(req: Request) {
     };
 
     if (isApproval) {
-      if (typeof approved !== "boolean") {
-        vanguardChatLog({
-          reqId,
-          phase: "approval",
-          status: 400,
-          threadId,
-          message: "Missing approved boolean",
-          isApproval: true,
-        });
-        return withRequestIdHeaders(
-          new Response("Missing approved boolean for approval request", {
-            status: 400,
-          }),
-          reqId,
-        );
-      }
-
       const approvalLockKey = formatApprovalLockKey(threadId, tool_call_id);
       const lockTtlMs = 1000 * 60 * 30;
 

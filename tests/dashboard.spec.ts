@@ -57,7 +57,13 @@ test.describe("Vanguard dashboard", () => {
 
     await page.goto("/dashboard");
     await page.getByTestId("mission-input").fill("delayed mission");
+
+    const chatPost = page.waitForRequest(
+      (req) =>
+        req.url().includes("/api/chat") && req.method() === "POST",
+    );
     await page.getByTestId("deploy-button").click();
+    await chatPost;
 
     await expect(page.getByTestId("deploy-button")).toBeDisabled();
     await expect(page.getByTestId("deploy-button")).toHaveText(/EXECUTING/i);
