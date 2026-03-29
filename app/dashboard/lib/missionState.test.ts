@@ -88,4 +88,18 @@ describe("shouldStartFreshMission", () => {
       ]),
     ).toBe(true);
   });
+
+  it("is true when only user messages exist (no assistant approval signal)", () => {
+    expect(shouldStartFreshMission([user("hello")])).toBe(true);
+  });
+});
+
+describe("hasOpenApproval ordering", () => {
+  it("uses latest assistant with signal when multiple assistants", () => {
+    const messages = [
+      assistant("old"),
+      assistant("AUTHORIZATION_REQUIRED: second"),
+    ];
+    expect(hasOpenApproval(messages)).toBe(true);
+  });
 });

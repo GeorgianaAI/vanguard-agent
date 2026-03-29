@@ -77,3 +77,12 @@ export function approvalMissingThreadId(data: MissionRequestInput): boolean {
 export function approvalMissingApprovedFlag(data: MissionRequestInput): boolean {
   return data.isApproval === true && typeof data.approved !== "boolean";
 }
+
+/** Redis + in-process approval lock key (must match route.ts usage). */
+export function formatApprovalLockKey(
+  threadId: string,
+  toolCallId: string | undefined,
+): string {
+  const approvalId = toolCallId?.trim() || "manual-authorization";
+  return `vanguard:approval:${threadId}:${approvalId}`;
+}

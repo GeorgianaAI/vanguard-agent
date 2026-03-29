@@ -33,6 +33,40 @@ test.describe("Vanguard dashboard", () => {
 
     await expect.poll(() => sawChatPost, { timeout: 15_000 }).toBe(true);
   });
+
+  test("deploy shows executing state while chat POST is delayed", async ({
+    page,
+  }) => {
+    let release: (() => void) | undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    await page.route("**/api/chat", async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.continue();
+        return;
+      }
+      await gate;
+      await route.fulfill({
+        status: 500,
+        contentType: "text/plain",
+        body: "x",
+      });
+    });
+
+    await page.goto("/dashboard");
+    await page.getByTestId("mission-input").fill("delayed mission");
+    await page.getByTestId("deploy-button").click();
+
+    await expect(page.getByTestId("deploy-button")).toBeDisabled();
+    await expect(page.getByTestId("deploy-button")).toHaveText(/EXECUTING/i);
+
+    release?.();
+    await expect(page.getByTestId("deploy-button")).toBeEnabled({
+      timeout: 15_000,
+    });
+  });
 });
 
 test.describe("HITL live flow", () => {

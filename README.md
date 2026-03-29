@@ -77,6 +77,8 @@ Here is how Vanguard differs from a standard AI chat:
 - **Observability:** LangSmith (Telemetry & Trace Partitioning)
 - **Validation:** Zod 4 (Strict Data Contracts)
 - **Runtime:** Vercel Edge Functions (Distributed Compute)
+- **Testing:** **Vitest** (unit tests: Zod request contracts, mission/approval state, dashboard message utilities) · **Playwright** (dashboard e2e smoke: shell UI, empty state, mocked chat errors)
+- **MCP:** **vanguard-mcp-server** (stdio; `vanguard_ping`, `domain_whois` via shared RDAP helper)
 
 ---
 
@@ -89,7 +91,9 @@ Here is how Vanguard differs from a standard AI chat:
 - [x] **Tactical Dashboard:** Built the high-contrast Command Center UI with streaming reasoning.
 - [x] **Grounded Alignment:** Synchronized Home and Dashboard visuals to the Phase 2 standard.
 - [x] **Supervisor Refactor:** General/Scout/Auditor hierarchy implemented; routing and approval UX still being hardened.
-- [ ] **MCP Security Server:** Building a dedicated Model Context Protocol server for `nmap` and `whois` tools.
+- [x] **Automated Unit Testing:** **Vitest** for API request validation (Zod), mission and approval state helpers, and dashboard message utilities.
+- [x] **CI and e2e Smoke:** **GitHub Actions** runs lint, unit tests with coverage, production build, and **Playwright** (Chromium) on pushes and pull requests to `main`; dashboard smoke covers core controls, initial feed state, and a mocked chat POST path. Live HITL/API tests stay optional behind `E2E_LIVE`.
+- [x] **MCP server (stdio):** `mcp-server/` with **`vanguard_ping`** and **`domain_whois`** (RDAP, shared with LangGraph). Expand with **`nmap`** or other tools under explicit policy later.
 - [ ] **Adversarial Red-Teaming:** Stress-testing the authorization gate against jailbreak attempts.
 - [ ] **NIST Compliance Export:** Automated generation of PDF audit reports from LangSmith traces.
 
@@ -204,11 +208,50 @@ Launch the Autonomous Reconnaissance Terminal (Next.js 16 / Turbopack):
 npm run dev
 ```
 
-4.  **Automated Security Audits (Vitest + Playwright + Red Team):**
+4.  **Automated security audits (Vitest + Playwright):**
 
-Vanguard utilizes a multi-layered testing strategy to verify both isolated logic and integrated "Governed Autonomy" workflows.
+Vanguard uses **Vitest** for fast unit tests over dashboard helpers, chat request validation, and related logic, and **Playwright** for browser checks on `/dashboard` (including mocked API failure paths). **GitHub Actions** runs lint, unit tests with coverage, production build, and e2e on pushes and pull requests to `main`.
 
-TBC
+**Unit tests (Vitest)**
+
+```bash
+npm run test              # single run
+npm run test:watch        # watch mode
+npm run test:coverage     # coverage report → coverage/ (HTML + JSON)
+```
+
+**End-to-end (Playwright)**
+
+Install browsers once (or after upgrading @playwright/test):
+
+```bash
+npx playwright install
+```
+
+Then:
+
+```bash
+npm run e2e               # local: all projects (Chromium, Firefox, WebKit); starts dev server via config
+npm run e2e:ui            # interactive UI mode
+```
+
+For a quicker local run (Chromium only):
+
+```bash
+npx playwright test --project=chromium
+```
+
+**MCP server (stdio)**
+
+First-time setup: `cd mcp-server && npm install`. From the repo root:
+
+```bash
+npm run mcp
+```
+
+Runs `vanguard-mcp-server` over stdio for Cursor / Claude Desktop–style clients. Tools: **`vanguard_ping`** (no side effects) and **`domain_whois`** (public RDAP, same logic as `src/lib/recon/rdapDomainSummary.ts`).
+
+**HITL live scenario (optional):** skipped in CI unless you set `E2E_LIVE=1` and supply the keys in `.env.local` required by that test.
 
 ---
 

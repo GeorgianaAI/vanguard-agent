@@ -1,9 +1,9 @@
 import { tool } from "@langchain/core/tools";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { z } from "zod";
+import { lookupDomainRdapJson } from "../recon/rdapDomainSummary";
 
 const TAVILY_API_URL = "https://api.tavily.com/search";
-const RDAP_API_BASE = "https://rdap.org/domain";
 
 export const reconTool = tool(
   async ({ query }: { query: string }) => {
@@ -44,71 +44,7 @@ export const reconTool = tool(
 
 export const domainWhoisTool = tool(
   async ({ domain }: { domain: string }) => {
-    const normalizedDomain = domain.trim().toLowerCase();
-
-    const response = await fetch(
-      `${RDAP_API_BASE}/${encodeURIComponent(normalizedDomain)}`,
-      {
-        method: "GET",
-        headers: {
-          accept: "application/json",
-        },
-      },
-    );
-
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`RDAP request failed (${response.status}): ${text}`);
-    }
-
-    const rdap = (await response.json()) as {
-      ldhName?: string;
-      status?: string[];
-      entities?: Array<{
-        roles?: string[];
-        vcardArray?: unknown[];
-      }>;
-      events?: Array<{
-        eventAction?: string;
-        eventDate?: string;
-      }>;
-    };
-
-    // Flatten only key fields to minimize token usage
-    const registrarEntity = (rdap.entities ?? []).find((e) =>
-      (e.roles ?? []).includes("registrar"),
-    );
-
-    let registrar = "unknown";
-    const vcard = registrarEntity?.vcardArray;
-    if (Array.isArray(vcard) && Array.isArray(vcard[1])) {
-      const fnRow = (vcard[1] as unknown[]).find(
-        (row) => Array.isArray(row) && row[0] === "fn",
-      ) as unknown[] | undefined;
-      if (fnRow && typeof fnRow[3] === "string") {
-        registrar = fnRow[3];
-      }
-    }
-
-    const keyEvents = (rdap.events ?? [])
-      .filter((e) =>
-        ["registration", "expiration", "last changed"].includes(
-          (e.eventAction ?? "").toLowerCase(),
-        ),
-      )
-      .map((e) => ({
-        action: e.eventAction ?? "unknown",
-        date: e.eventDate ?? "unknown",
-      }));
-
-    const flattened = {
-      domain: rdap.ldhName ?? normalizedDomain,
-      registrar,
-      status: rdap.status ?? [],
-      events: keyEvents,
-    };
-
-    return JSON.stringify(flattened);
+    return lookupDomainRdapJson(domain);
   },
   {
     name: "domain_whois",

@@ -4,8 +4,10 @@ import { Redis } from "@upstash/redis";
 import { createUIMessageStreamResponse } from "ai";
 import { toUIMessageStream } from "@ai-sdk/langchain";
 import { vanguardGraph } from "../../../src/lib/agent/graph";
+import { shouldRejectApprovalForGraphState } from "./approvalGuards";
 import {
   extractTextFromMessage,
+  formatApprovalLockKey,
   MissionRequestSchema,
 } from "./missionRequest";
 
@@ -75,8 +77,7 @@ export async function POST(req: Request) {
         });
       }
 
-      const approvalId = tool_call_id?.trim() || "manual-authorization";
-      const approvalLockKey = `vanguard:approval:${threadId}:${approvalId}`;
+      const approvalLockKey = formatApprovalLockKey(threadId, tool_call_id);
       const lockTtlMs = 1000 * 60 * 30;
 
       if (!acquireLocalApprovalLock(approvalLockKey, lockTtlMs)) {
@@ -94,13 +95,9 @@ export async function POST(req: Request) {
       const currentState = await vanguardGraph.getState({
         configurable: { thread_id: threadId },
       });
-      const values = (currentState?.values ?? {}) as {
-        isPendingApproval?: boolean;
-        scoutHasRun?: boolean;
-      };
-      const hasStateSnapshot = Object.keys(values).length > 0;
+      const values = (currentState?.values ?? {}) as Record<string, unknown>;
 
-      if (hasStateSnapshot && (!values.isPendingApproval || values.scoutHasRun)) {
+      if (shouldRejectApprovalForGraphState(values)) {
         return new Response(
           "Approval already processed or no pending authorization step",
           { status: 409 },

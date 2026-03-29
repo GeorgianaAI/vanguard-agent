@@ -3,6 +3,7 @@ import {
   approvalMissingApprovedFlag,
   approvalMissingThreadId,
   extractTextFromMessage,
+  formatApprovalLockKey,
   MissionRequestSchema,
 } from "./missionRequest";
 
@@ -72,6 +73,20 @@ describe("approvalMissingThreadId", () => {
         thread_id: "v-1",
       }),
     ).toBe(false);
+  });
+});
+
+describe("formatApprovalLockKey", () => {
+  it("uses manual-authorization when tool id missing", () => {
+    expect(formatApprovalLockKey("v-1", undefined)).toBe(
+      "vanguard:approval:v-1:manual-authorization",
+    );
+  });
+
+  it("trims tool call id", () => {
+    expect(formatApprovalLockKey("v-1", "  tool-a  ")).toBe(
+      "vanguard:approval:v-1:tool-a",
+    );
   });
 });
 

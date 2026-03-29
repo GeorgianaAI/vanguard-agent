@@ -1,6 +1,11 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  createThreadId,
+  getToolCallId,
+  THREAD_STORAGE_KEY,
+} from "../lib/chatHelpers";
 import { DEFAULT_TARGET } from "../lib/constants";
 import { shouldStartFreshMission } from "../lib/missionState";
 import type { ToolPart } from "../lib/types";
@@ -17,26 +22,10 @@ type ApprovalAction = {
   toolCallId: string;
 };
 
-const THREAD_STORAGE_KEY = "vanguard-thread-id";
-
-function createThreadId() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return `vanguard-${crypto.randomUUID()}`;
-  }
-  return `vanguard-${Date.now()}`;
-}
-
 function readStoredThreadId(): string | null {
   if (typeof window === "undefined") return null;
   const stored = window.localStorage.getItem(THREAD_STORAGE_KEY);
   return stored && stored.trim().length > 0 ? stored : null;
-}
-
-function getToolCallId(part: ToolPart): string | null {
-  if (!part || typeof part !== "object") return null;
-  if (!("toolCallId" in part)) return null;
-  const value = part.toolCallId;
-  return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
 export function useVanguardChat({
