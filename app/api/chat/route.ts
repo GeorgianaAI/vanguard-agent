@@ -3,25 +3,13 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { createUIMessageStreamResponse } from "ai";
 import { toUIMessageStream } from "@ai-sdk/langchain";
-import { z } from "zod";
 import { vanguardGraph } from "../../../src/lib/agent/graph";
+import {
+  extractTextFromMessage,
+  MissionRequestSchema,
+} from "./missionRequest";
 
 export const runtime = "edge";
-
-const IncomingMessageSchema = z.looseObject({
-  role: z.string().optional(),
-  content: z.unknown().optional(),
-  parts: z.array(z.unknown()).optional(),
-});
-
-const MissionRequestSchema = z.object({
-  messages: z.array(IncomingMessageSchema).optional().default([]),
-  target: z.string().optional(),
-  thread_id: z.string().optional(),
-  isApproval: z.boolean().optional().default(false),
-  approved: z.boolean().optional(),
-  tool_call_id: z.string().optional(),
-});
 
 const redis = Redis.fromEnv();
 const approvalLocks = new Map<string, number>();
@@ -32,58 +20,6 @@ const ratelimit = new Ratelimit({
   analytics: true,
   prefix: "@vanguard/ratelimit",
 });
-
-function extractTextFromMessage(
-  message: z.infer<typeof IncomingMessageSchema>,
-): string {
-  if (typeof message.content === "string") return message.content.trim();
-
-  if (Array.isArray(message.content)) {
-    const fromContent = message.content
-      .map((part) => {
-        if (
-          part &&
-          typeof part === "object" &&
-          "type" in part &&
-          "text" in part &&
-          (part as { type?: unknown }).type === "text" &&
-          typeof (part as { text?: unknown }).text === "string"
-        ) {
-          return (part as { text: string }).text;
-        }
-        return "";
-      })
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-
-    if (fromContent) return fromContent;
-  }
-
-  if (Array.isArray(message.parts)) {
-    const fromParts = message.parts
-      .map((part) => {
-        if (
-          part &&
-          typeof part === "object" &&
-          "type" in part &&
-          "text" in part &&
-          (part as { type?: unknown }).type === "text" &&
-          typeof (part as { text?: unknown }).text === "string"
-        ) {
-          return (part as { text: string }).text;
-        }
-        return "";
-      })
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-
-    if (fromParts) return fromParts;
-  }
-
-  return "";
-}
 
 function getClientIp(req: Request): string {
   const forwardedFor = req.headers.get("x-forwarded-for") ?? "";

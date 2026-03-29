@@ -16,6 +16,7 @@ export function CommandInput({
       <div className="absolute -inset-0.5 bg-cyan-500/10 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
 
       <input
+        data-testid="mission-input"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder="Initialize mission sequence..."
@@ -24,6 +25,7 @@ export function CommandInput({
 
       <button
         type="submit"
+        data-testid="deploy-button"
         disabled={loading}
         className="absolute right-4 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-8 py-2.5 text-[11px] font-black tracking-[0.2em] text-white transition-all hover:bg-cyan-500 disabled:opacity-50 uppercase shadow-lg shadow-cyan-500/20"
       >

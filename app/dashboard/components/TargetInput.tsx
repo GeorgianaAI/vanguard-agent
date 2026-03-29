@@ -11,6 +11,7 @@ export function TargetInput({ target, setTarget }: TargetInputProps) {
       <Search className="h-5 w-5 text-slate-500" />
       <input
         type="text"
+        data-testid="target-input"
         placeholder="Target Coordinates: e.g. vanguard-security.com"
         value={target}
         onChange={(e) => setTarget(e.target.value)}
