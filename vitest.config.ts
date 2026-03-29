@@ -6,6 +6,18 @@ export default defineConfig({
     environment: "node",
     include: ["app/**/*.test.ts", "src/**/*.test.ts"],
     exclude: ["tests/**/*.spec.ts", "node_modules/**", ".next/**"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      exclude: [
+        "tests/**",
+        "**/*.test.ts",
+        "**/*.config.*",
+        ".next/**",
+        "node_modules/**",
+        "coverage/**",
+      ],
+    },
   },
   resolve: {
     alias: {
