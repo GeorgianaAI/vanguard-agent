@@ -10,6 +10,11 @@ import {
   formatApprovalLockKey,
   MissionRequestSchema,
 } from "./missionRequest";
+import {
+  newRequestId,
+  vanguardChatLog,
+  withRequestIdHeaders,
+} from "./telemetry";
 
 export const runtime = "edge";
 
@@ -38,27 +43,59 @@ function acquireLocalApprovalLock(key: string, ttlMs: number): boolean {
 }
 
 export async function POST(req: Request) {
+  const reqId = newRequestId(req);
+
   try {
     const body = await req.json();
     const parsed = MissionRequestSchema.safeParse(body);
 
     if (!parsed.success) {
       console.error("MissionRequestSchema error:", parsed.error.flatten());
-      return new Response("Invalid mission payload", { status: 400 });
+      vanguardChatLog({
+        reqId,
+        phase: "parse",
+        status: 400,
+        message: "MissionRequestSchema validation failed",
+      });
+      return withRequestIdHeaders(
+        new Response("Invalid mission payload", { status: 400 }),
+        reqId,
+      );
     }
 
     const { messages, target, thread_id, isApproval, approved, tool_call_id } =
       parsed.data;
 
     if (isApproval && !thread_id) {
-      return new Response("Missing thread_id for approval", { status: 400 });
+      vanguardChatLog({
+        reqId,
+        phase: "approval",
+        status: 400,
+        message: "Missing thread_id for approval",
+        isApproval: true,
+      });
+      return withRequestIdHeaders(
+        new Response("Missing thread_id for approval", { status: 400 }),
+        reqId,
+      );
     }
 
     const threadId = thread_id ?? `vanguard-${Date.now()}`;
 
     const { success } = await ratelimit.limit(getClientIp(req));
     if (!success) {
-      return new Response("Too many missions. Cool down.", { status: 429 });
+      vanguardChatLog({
+        reqId,
+        phase: "rate_limit",
+        status: 429,
+        threadId,
+        message: "Rate limit exceeded",
+        isApproval: !!isApproval,
+      });
+      return withRequestIdHeaders(
+        new Response("Too many missions. Cool down.", { status: 429 }),
+        reqId,
+      );
     }
 
     const config = {
@@ -72,16 +109,38 @@ export async function POST(req: Request) {
 
     if (isApproval) {
       if (typeof approved !== "boolean") {
-        return new Response("Missing approved boolean for approval request", {
+        vanguardChatLog({
+          reqId,
+          phase: "approval",
           status: 400,
+          threadId,
+          message: "Missing approved boolean",
+          isApproval: true,
         });
+        return withRequestIdHeaders(
+          new Response("Missing approved boolean for approval request", {
+            status: 400,
+          }),
+          reqId,
+        );
       }
 
       const approvalLockKey = formatApprovalLockKey(threadId, tool_call_id);
       const lockTtlMs = 1000 * 60 * 30;
 
       if (!acquireLocalApprovalLock(approvalLockKey, lockTtlMs)) {
-        return new Response("Approval already processed", { status: 409 });
+        vanguardChatLog({
+          reqId,
+          phase: "approval",
+          status: 409,
+          threadId,
+          message: "Duplicate approval (in-process lock)",
+          isApproval: true,
+        });
+        return withRequestIdHeaders(
+          new Response("Approval already processed", { status: 409 }),
+          reqId,
+        );
       }
 
       const lockSet = await redis.set(approvalLockKey, "1", {
@@ -89,7 +148,18 @@ export async function POST(req: Request) {
         ex: 60 * 30,
       });
       if (lockSet !== "OK") {
-        return new Response("Approval already processed", { status: 409 });
+        vanguardChatLog({
+          reqId,
+          phase: "approval",
+          status: 409,
+          threadId,
+          message: "Duplicate approval (Redis nx)",
+          isApproval: true,
+        });
+        return withRequestIdHeaders(
+          new Response("Approval already processed", { status: 409 }),
+          reqId,
+        );
       }
 
       const currentState = await vanguardGraph.getState({
@@ -98,16 +168,26 @@ export async function POST(req: Request) {
       const values = (currentState?.values ?? {}) as Record<string, unknown>;
 
       if (shouldRejectApprovalForGraphState(values)) {
-        return new Response(
-          "Approval already processed or no pending authorization step",
-          { status: 409 },
+        vanguardChatLog({
+          reqId,
+          phase: "approval",
+          status: 409,
+          threadId,
+          message: "Stale or invalid checkpoint for approval",
+          isApproval: true,
+        });
+        return withRequestIdHeaders(
+          new Response(
+            "Approval already processed or no pending authorization step",
+            { status: 409 },
+          ),
+          reqId,
         );
       }
 
       const isAuthorized = approved === true;
       const missionAborted = approved === false;
       const safeTarget = target?.trim() || "General Recon";
-      // 1. Patch checkpoint with the operator's decision
       await vanguardGraph.updateState(
         { configurable: { thread_id: threadId } },
         {
@@ -118,9 +198,6 @@ export async function POST(req: Request) {
           next: isAuthorized ? "scout" : "auditor",
         },
       );
-      // 2. Resume: routeFromStart reads isAuthorized/missionAborted and
-      //    routes directly to scout (authorize) or auditor (abort).
-      //    Supervisor is bypassed entirely — no second SCOUT token.
       const stream = vanguardGraph.streamEvents(
         {
           messages: [
@@ -146,10 +223,19 @@ export async function POST(req: Request) {
           ],
         },
       );
-      return createUIMessageStreamResponse({
+      vanguardChatLog({
+        reqId,
+        phase: "approval",
+        status: 200,
+        threadId,
+        message: isAuthorized ? "approval_authorized_stream" : "approval_aborted_stream",
+        isApproval: true,
+      });
+      const streamRes = createUIMessageStreamResponse({
         stream: toUIMessageStream(stream),
         headers: { "x-vanguard-thread-id": threadId },
       });
+      return withRequestIdHeaders(streamRes, reqId);
     }
 
     const lastMessage = messages[messages.length - 1];
@@ -163,17 +249,35 @@ export async function POST(req: Request) {
       isPendingApproval: false,
     };
 
+    vanguardChatLog({
+      reqId,
+      phase: "recon",
+      status: 200,
+      threadId,
+      message: "recon_stream_start",
+      isApproval: false,
+    });
     const stream = vanguardGraph.streamEvents(inputState, {
       ...config,
       tags: [...config.tags, "vanguard-agent-recon-start"],
     });
 
-    return createUIMessageStreamResponse({
+    const streamRes = createUIMessageStreamResponse({
       stream: toUIMessageStream(stream),
       headers: { "x-vanguard-thread-id": threadId },
     });
+    return withRequestIdHeaders(streamRes, reqId);
   } catch (error) {
     console.error("Satellite Uplink Error:", error);
-    return new Response("Mission Aborted: Uplink Failure", { status: 500 });
+    vanguardChatLog({
+      reqId,
+      phase: "error",
+      status: 500,
+      message: error instanceof Error ? error.message : "unknown_error",
+    });
+    return withRequestIdHeaders(
+      new Response("Mission Aborted: Uplink Failure", { status: 500 }),
+      reqId,
+    );
   }
 }
