@@ -1,6 +1,33 @@
 import type { DashboardMessage, ToolPart } from "./types";
+import type { ApprovalContextV1 } from "@/src/lib/approval/types";
 
 const APPROVAL_SIGNAL_PREFIX = "AUTHORIZATION_REQUIRED:";
+
+export function parseApprovalContextText(
+  rawText: string,
+): ApprovalContextV1 | null {
+  const trimmed = rawText.trim();
+  if (!trimmed.startsWith(APPROVAL_SIGNAL_PREFIX)) return null;
+  const payload = trimmed.slice(APPROVAL_SIGNAL_PREFIX.length).trim();
+  if (!payload) return null;
+  try {
+    const parsed = JSON.parse(payload) as ApprovalContextV1;
+    if (
+      parsed &&
+      parsed.version === 1 &&
+      typeof parsed.approval_id === "string" &&
+      typeof parsed.thread_id === "string" &&
+      typeof parsed.summary === "string" &&
+      parsed.tool &&
+      typeof parsed.tool.name === "string"
+    ) {
+      return parsed;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
 
 export function isLoadingStatus(status: string): boolean {
   return status === "submitted" || status === "streaming";
@@ -23,6 +50,10 @@ export function renderMessageText(message: DashboardMessage): string {
   }
 
   if (rawText.startsWith(APPROVAL_SIGNAL_PREFIX)) {
+    const context = parseApprovalContextText(rawText);
+    if (context) {
+      return `Manual authorization required: ${context.summary}`;
+    }
     return rawText.replace(APPROVAL_SIGNAL_PREFIX, "").trim();
   }
 
@@ -56,7 +87,16 @@ export function getMessageSignature(message: DashboardMessage): string {
 
 export function messageHasApprovalSignal(message: DashboardMessage): boolean {
   const rawText = extractRenderableText(message);
-  return rawText.startsWith(APPROVAL_SIGNAL_PREFIX);
+  return (
+    rawText.startsWith(APPROVAL_SIGNAL_PREFIX) ||
+    parseApprovalContextText(rawText) !== null
+  );
+}
+
+export function getApprovalContextFromMessage(
+  message: DashboardMessage,
+): ApprovalContextV1 | null {
+  return parseApprovalContextText(extractRenderableText(message));
 }
 
 export function getToolQuery(part: ToolPart): string {

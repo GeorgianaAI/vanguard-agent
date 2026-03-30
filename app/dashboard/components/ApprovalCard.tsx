@@ -1,12 +1,17 @@
 import { ShieldAlert, CheckCircle2, XCircle } from "lucide-react";
 import { APPROVAL_TITLE } from "../lib/constants";
 import type { ToolActionHandler, ToolPart } from "../lib/types";
+import { getToolName } from "ai";
+import { getApprovalPolicyLabel } from "@/src/lib/approval/policy";
+import { getApprovalPayloadFromPart } from "../lib/chatHelpers";
+import type { ApprovalContextV1 } from "@/src/lib/approval/types";
 
 type ApprovalCardProps = {
   part: ToolPart;
   onAuthorize: ToolActionHandler;
   onAbort: ToolActionHandler;
   disabled?: boolean;
+  previousApprovalContext?: ApprovalContextV1 | null;
 };
 
 export function ApprovalCard({
@@ -14,7 +19,18 @@ export function ApprovalCard({
   onAuthorize,
   onAbort,
   disabled = false,
+  previousApprovalContext = null,
 }: ApprovalCardProps) {
+  const payload = getApprovalPayloadFromPart(part);
+  const context = payload.approvalContext;
+  const toolName = context?.tool.name ?? getToolName(part);
+  const toolArgs = context?.tool.args_display ?? {};
+  const policyLabel = getApprovalPolicyLabel(toolName);
+
+  const changeHints =
+    context?.changes_since_last?.length ? context.changes_since_last : [];
+  const priorApprovals = context?.prior_approvals_in_thread ?? 0;
+
   return (
     <div className="my-6 rounded-2xl border border-amber-900/40 bg-amber-950/10 p-6 shadow-xl ring-1 ring-inset ring-amber-500/10">
       <div className="mb-4 flex items-center gap-3">
@@ -28,6 +44,79 @@ export function ApprovalCard({
         Vanguard is requesting external tool execution. Verify mission
         parameters before manual authorization.
       </p>
+
+      {context && (
+        <div
+          data-testid="approval-context"
+          className="mb-5 space-y-3 rounded-xl border border-amber-900/30 bg-slate-950/40 p-4 text-[11px] text-slate-300"
+        >
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded bg-emerald-900/30 px-2 py-1 text-[9px] font-black tracking-widest text-emerald-300">
+              {policyLabel}
+            </span>
+            <span className="rounded bg-amber-900/30 px-2 py-1 text-[9px] font-black tracking-widest text-amber-200">
+              {context.risk_level.toUpperCase()} RISK
+            </span>
+            <span className="rounded bg-slate-800 px-2 py-1 text-[9px] font-black tracking-widest text-slate-300">
+              {context.side_effects.replaceAll("_", " ").toUpperCase()}
+            </span>
+          </div>
+          <div>
+            <span className="text-[9px] font-black tracking-widest text-amber-300">
+              MISSION GOAL
+            </span>
+            <p className="mt-1 text-slate-200">{context.summary}</p>
+          </div>
+          <div>
+            <span className="text-[9px] font-black tracking-widest text-amber-300">
+              PLANNED TOOL CALL
+            </span>
+            <p className="mt-1 font-semibold text-cyan-300">{toolName}</p>
+            <pre className="mt-1 overflow-auto rounded border border-slate-800 bg-slate-950 p-2 text-[10px] text-slate-300">
+              {JSON.stringify(toolArgs, null, 2)}
+            </pre>
+          </div>
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <div>
+              <span className="text-[9px] font-black tracking-widest text-amber-300">
+                EXPECTED OUTPUT
+              </span>
+              <p className="mt-1 text-slate-300">
+                {context.expected_output.join(", ")}
+              </p>
+            </div>
+            <div>
+              <span className="text-[9px] font-black tracking-widest text-amber-300">
+                EXPIRES
+              </span>
+              <p
+                data-testid="approval-expiry"
+                className="mt-1 text-amber-200"
+              >
+                {new Date(context.expires_at).toLocaleString()}
+              </p>
+            </div>
+          </div>
+          {changeHints.length > 0 && (
+            <div>
+              <span className="text-[9px] font-black tracking-widest text-amber-300">
+                CHANGES SINCE LAST APPROVAL
+              </span>
+              <ul className="mt-1 list-disc space-y-1 pl-4 text-slate-300">
+                {changeHints.map((change) => (
+                  <li key={change}>{change}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="text-[10px] text-slate-400">
+            Prior approvals in thread: {priorApprovals}
+            {previousApprovalContext
+              ? ` · Previous plan: ${previousApprovalContext.tool.name}`
+              : ""}
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-4">
         <button

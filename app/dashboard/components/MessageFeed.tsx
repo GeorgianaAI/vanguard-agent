@@ -1,5 +1,5 @@
 import type { DashboardMessage, ToolActionHandler } from "../lib/types";
-import { getMessageSignature } from "../lib/utils";
+import { getApprovalContextFromMessage, getMessageSignature } from "../lib/utils";
 import { EmptyState } from "./EmptyState";
 import { MessageBubble } from "./MessageBubble";
 
@@ -49,6 +49,12 @@ export function MessageFeed({
           );
         });
 
+        const previousApprovalContext = [...dedupedMessages]
+          .slice(0, index)
+          .reverse()
+          .map((m) => getApprovalContextFromMessage(m))
+          .find((ctx) => ctx !== null);
+
         return (
           <MessageBubble
             key={`${message.id}-${index}`}
@@ -57,6 +63,7 @@ export function MessageFeed({
             onAbort={onAbort}
             resolved={hasResolutionAfter}
             approvalDisabled={approvalDisabled}
+            previousApprovalContext={previousApprovalContext ?? null}
           />
         );
       })}

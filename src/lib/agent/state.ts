@@ -1,5 +1,9 @@
 import { BaseMessage } from "@langchain/core/messages";
 import { Annotation } from "@langchain/langgraph";
+import type {
+  ApprovalContextV1,
+  ApprovalDecision,
+} from "../approval/types";
 
 export const VanguardStateAnnotation = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
@@ -44,6 +48,26 @@ export const VanguardStateAnnotation = Annotation.Root({
   missionAborted: Annotation<boolean>({
     reducer: (x, y) => y ?? x,
     default: () => false,
+  }),
+
+  pendingApprovalContext: Annotation<ApprovalContextV1 | null>({
+    reducer: (x, y) => y ?? x,
+    default: () => null,
+  }),
+
+  pendingApprovalHash: Annotation<string | null>({
+    reducer: (x, y) => y ?? x,
+    default: () => null,
+  }),
+
+  pendingApprovalId: Annotation<string | null>({
+    reducer: (x, y) => y ?? x,
+    default: () => null,
+  }),
+
+  approvalHistory: Annotation<ApprovalDecision[]>({
+    reducer: (_x, y) => y,
+    default: () => [],
   }),
 });
 

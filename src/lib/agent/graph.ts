@@ -9,6 +9,13 @@ import { END, StateGraph } from "@langchain/langgraph";
 import { getCheckpointer } from "./checkpointer";
 import { VanguardStateAnnotation, VanguardStateType } from "./state";
 import { toolNode, vanguardTools } from "./tools";
+import { computeApprovalContextHash, computeArgHash } from "../approval/hash";
+import {
+  APPROVAL_TOOL_ALLOWLIST,
+  getApprovalRisk,
+  getApprovalSideEffects,
+} from "../approval/policy";
+import type { ApprovalContextV1 } from "../approval/types";
 
 export const runtime = "edge";
 
@@ -16,6 +23,7 @@ const SUPERVISOR_MODEL =
   process.env.ANTHROPIC_SUPERVISOR_MODEL ?? "claude-sonnet-4-6";
 const SCOUT_MODEL = process.env.ANTHROPIC_SCOUT_MODEL ?? "claude-sonnet-4-6";
 const APPROVAL_SIGNAL_PREFIX = "AUTHORIZATION_REQUIRED:";
+const APPROVAL_TTL_MS = 1000 * 60 * 10;
 
 function getSupervisorModel() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -49,6 +57,91 @@ function ensureEndsWithUser(
     prepared.push(new HumanMessage(fallback));
   }
   return prepared;
+}
+
+function normalizeTargetToDomain(target: string): string {
+  const trimmed = target.trim().toLowerCase();
+  if (!trimmed) return "example.com";
+  const withoutScheme = trimmed.replace(/^https?:\/\//, "");
+  return withoutScheme.split("/")[0] || "example.com";
+}
+
+function diffSinceLastApproval(
+  current: { toolName: string; toolArgHash: string; target: string },
+  state: VanguardStateType,
+): string[] {
+  const previous = state.approvalHistory[state.approvalHistory.length - 1];
+  if (!previous) return ["First authorization in this thread."];
+  const changes: string[] = [];
+  if (previous.tool_name !== current.toolName) {
+    changes.push(`Tool changed: ${previous.tool_name} -> ${current.toolName}`);
+  }
+  if (previous.tool_arg_hash !== current.toolArgHash) {
+    changes.push("Tool arguments changed from prior approval.");
+  }
+  const previousTarget = state.pendingApprovalContext?.constraints.target_lock ?? "";
+  if (previousTarget && previousTarget !== current.target) {
+    changes.push(`Target changed: ${previousTarget} -> ${current.target}`);
+  }
+  if (changes.length === 0) {
+    changes.push("No material changes from prior approved action.");
+  }
+  return changes;
+}
+
+async function buildApprovalContext(
+  state: VanguardStateType,
+): Promise<{ context: ApprovalContextV1; contextHash: string }> {
+  const now = Date.now();
+  const requestedAt = new Date(now).toISOString();
+  const expiresAt = new Date(now + APPROVAL_TTL_MS).toISOString();
+  const targetDomain = normalizeTargetToDomain(state.target || "example.com");
+  const toolName = "domain_whois";
+  const toolArgs: Record<string, unknown> = { domain: targetDomain };
+  const toolArgHash = await computeArgHash(toolArgs);
+  const approvalId = `apr_${crypto.randomUUID()}`;
+
+  const context: ApprovalContextV1 = {
+    version: 1,
+    approval_id: approvalId,
+    thread_id: "pending-thread-binding",
+    requested_at: requestedAt,
+    expires_at: expiresAt,
+    requested_by_node: "scout",
+    summary:
+      "Need registrar and registration event data before deeper corroboration.",
+    reasoning_excerpt:
+      "WHOIS/RDAP data anchors identity and registration timeline before broader web corroboration.",
+    risk_level: getApprovalRisk(toolName),
+    side_effects: getApprovalSideEffects(toolName),
+    policy_tags: ["public-data", "osint", "read-only"],
+    budget: {
+      estimated_tokens: 1200,
+      max_tokens_for_step: 3000,
+    },
+    tool: {
+      name: toolName,
+      args: toolArgs,
+      args_display: {
+        domain: targetDomain,
+      },
+      arg_hash: toolArgHash,
+    },
+    expected_output: ["registrar", "status", "registration/expiration events"],
+    constraints: {
+      allowed_tools: [...APPROVAL_TOOL_ALLOWLIST],
+      target_lock: targetDomain,
+    },
+    prior_approvals_in_thread: state.approvalHistory.length,
+    changes_since_last: diffSinceLastApproval(
+      { toolName, toolArgHash, target: targetDomain },
+      state,
+    ),
+  };
+
+  const contextHash = await computeApprovalContextHash(context);
+  context.approval_context_hash = contextHash;
+  return { context, contextHash };
 }
 
 /**
@@ -91,34 +184,17 @@ async function scoutNode(state: VanguardStateType) {
   }
 
   if (!state.isAuthorized) {
-    const gateModel = getSupervisorModel();
-    const gateResponse = await gateModel.invoke([
-      new SystemMessage(
-        [
-          "You are Vanguard authorization gate.",
-          "Respond with one concise sentence prefixed by AUTHORIZATION_REQUIRED:.",
-          "Do not add markdown or extra sections.",
-        ].join("\n"),
-      ),
-      new HumanMessage(
-        `Target: ${state.target || "unspecified"}. Manual authorization is required before external tools run.`,
-      ),
-    ]);
-
-    const gateContent =
-      AIMessage.isInstance(gateResponse) && typeof gateResponse.content === "string"
-        ? gateResponse.content.trim()
-        : "";
-
-    const approvalMessage =
-      gateContent.startsWith(APPROVAL_SIGNAL_PREFIX)
-        ? new AIMessage(gateContent)
-        : new AIMessage(
-            `${APPROVAL_SIGNAL_PREFIX} Manual authorization is required before external public-intel tools can run.`,
-          );
+    const { context, contextHash } = await buildApprovalContext(state);
+    const serializedContext = JSON.stringify(context);
+    const approvalMessage = new AIMessage(
+      `${APPROVAL_SIGNAL_PREFIX}${serializedContext}`,
+    );
 
     return {
       isPendingApproval: true,
+      pendingApprovalContext: context,
+      pendingApprovalHash: contextHash,
+      pendingApprovalId: context.approval_id,
       messages: [approvalMessage],
     };
   }
@@ -149,6 +225,9 @@ async function scoutNode(state: VanguardStateType) {
     messages: [response],
     iterationCount: 1,
     isPendingApproval: false,
+    pendingApprovalContext: null,
+    pendingApprovalHash: null,
+    pendingApprovalId: null,
     isAuthorized: false,
     scoutHasRun: true,
   };
@@ -203,6 +282,9 @@ async function auditorNode(state: VanguardStateType) {
     messages: [response],
     next: "end",
     isPendingApproval: false,
+    pendingApprovalContext: null,
+    pendingApprovalHash: null,
+    pendingApprovalId: null,
     isAuthorized: false,
     missionAborted: false,
   };

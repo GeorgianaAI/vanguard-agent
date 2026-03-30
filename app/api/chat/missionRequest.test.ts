@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  approvalMissingContextBinding,
   approvalMissingApprovedFlag,
   approvalMissingThreadId,
   extractTextFromMessage,
@@ -108,6 +109,33 @@ describe("approvalMissingApprovedFlag", () => {
         isApproval: true,
         thread_id: "v-1",
         approved: false,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("approvalMissingContextBinding", () => {
+  it("is true when approval omits approval_id/hash", () => {
+    expect(
+      approvalMissingContextBinding({
+        messages: [],
+        isApproval: true,
+        approved: true,
+        thread_id: "v-1",
+      }),
+    ).toBe(true);
+  });
+
+  it("is false when approval has context binding", () => {
+    expect(
+      approvalMissingContextBinding({
+        messages: [],
+        isApproval: true,
+        approved: true,
+        thread_id: "v-1",
+        approval_id: "apr-1",
+        approval_context_hash:
+          "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       }),
     ).toBe(false);
   });
