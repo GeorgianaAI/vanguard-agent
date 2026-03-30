@@ -13,6 +13,12 @@ export const MissionRequestSchema = z.object({
   isApproval: z.boolean().optional().default(false),
   approved: z.boolean().optional(),
   tool_call_id: z.string().optional(),
+  approval_id: z.string().optional(),
+  approval_context_hash: z
+    .string()
+    .regex(/^sha256:[a-f0-9]{64}$/)
+    .optional(),
+  operator_note: z.string().max(500).optional(),
 });
 
 export type MissionRequestInput = z.infer<typeof MissionRequestSchema>;
@@ -76,6 +82,16 @@ export function approvalMissingThreadId(data: MissionRequestInput): boolean {
 
 export function approvalMissingApprovedFlag(data: MissionRequestInput): boolean {
   return data.isApproval === true && typeof data.approved !== "boolean";
+}
+
+export function approvalMissingContextBinding(data: MissionRequestInput): boolean {
+  if (data.isApproval !== true) return false;
+  return (
+    typeof data.approval_id !== "string" ||
+    data.approval_id.trim().length === 0 ||
+    typeof data.approval_context_hash !== "string" ||
+    !/^sha256:[a-f0-9]{64}$/.test(data.approval_context_hash)
+  );
 }
 
 /** Redis + in-process approval lock key (must match route.ts usage). */

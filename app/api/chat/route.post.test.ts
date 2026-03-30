@@ -1,4 +1,33 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ApprovalContextV1 } from "../../../src/lib/approval/types";
+
+const TEST_APPROVAL_CONTEXT: ApprovalContextV1 = {
+  version: 1,
+  approval_id: "apr-test-1",
+  approval_context_hash: "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  thread_id: "v-test-1",
+  requested_at: new Date(0).toISOString(),
+  expires_at: new Date(Date.now() + 60_000).toISOString(),
+  requested_by_node: "scout",
+  summary: "Need registrar metadata before corroboration.",
+  risk_level: "low",
+  side_effects: "read_only_public_data",
+  policy_tags: ["public-data"],
+  tool: {
+    name: "domain_whois",
+    args: { domain: "openai.com" },
+    args_display: { domain: "openai.com" },
+    arg_hash:
+      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  },
+  expected_output: ["registrar"],
+  constraints: {
+    allowed_tools: ["domain_whois", "tavily_search"],
+    target_lock: "openai.com",
+  },
+  prior_approvals_in_thread: 0,
+  changes_since_last: ["First authorization in this thread."],
+};
 
 const hoisted = vi.hoisted(() => ({
   redisSet: vi.fn(),
@@ -73,7 +102,14 @@ describe("POST /api/chat governance", () => {
     hoisted.ratelimitLimit.mockResolvedValue({ success: true });
     hoisted.redisSet.mockResolvedValue("OK");
     hoisted.getState.mockResolvedValue({
-      values: { isPendingApproval: true, scoutHasRun: false },
+      values: {
+        isPendingApproval: true,
+        scoutHasRun: false,
+        pendingApprovalContext: TEST_APPROVAL_CONTEXT,
+        pendingApprovalHash: TEST_APPROVAL_CONTEXT.approval_context_hash,
+        pendingApprovalId: TEST_APPROVAL_CONTEXT.approval_id,
+        approvalHistory: [],
+      },
     });
   });
 
@@ -99,7 +135,9 @@ describe("POST /api/chat governance", () => {
           isApproval: true,
           approved: true,
           thread_id: "v-test-1",
-          tool_call_id: "tool-1",
+          tool_call_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_context_hash: TEST_APPROVAL_CONTEXT.approval_context_hash,
         }),
       }),
     );
@@ -120,7 +158,9 @@ describe("POST /api/chat governance", () => {
           isApproval: true,
           approved: true,
           thread_id: "v-test-2",
-          tool_call_id: "tool-2",
+          tool_call_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_context_hash: TEST_APPROVAL_CONTEXT.approval_context_hash,
         }),
       }),
     );
@@ -142,6 +182,43 @@ describe("POST /api/chat governance", () => {
     );
     expect(res.status).toBe(400);
     expect(hoisted.ratelimitLimit).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when approval payload omits context binding", async () => {
+    const POST = await loadPost();
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          isApproval: true,
+          approved: true,
+          thread_id: "v-test-3",
+          tool_call_id: "x",
+        }),
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 409 on approval hash mismatch", async () => {
+    const POST = await loadPost();
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          isApproval: true,
+          approved: true,
+          thread_id: "v-test-1",
+          tool_call_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_context_hash:
+            "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        }),
+      }),
+    );
+    expect(res.status).toBe(409);
   });
 
   it("returns 429 when rate limit fails", async () => {
@@ -170,8 +247,10 @@ describe("POST /api/chat governance", () => {
         body: JSON.stringify({
           isApproval: true,
           approved: true,
-          thread_id: "v-test-ok",
-          tool_call_id: "tool-ok",
+          thread_id: "v-test-1",
+          tool_call_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_context_hash: TEST_APPROVAL_CONTEXT.approval_context_hash,
         }),
       }),
     );
