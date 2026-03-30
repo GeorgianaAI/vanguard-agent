@@ -16,11 +16,13 @@ export type EvidencePackageInput = {
   requestId: string;
   generatedAt: string;
   runs: LangSmithRun[];
+  evidenceStatus?: "complete" | "degraded";
   warnings?: string[];
 };
 
 export type EvidencePackage = {
   version: 1;
+  evidence_status: "complete" | "degraded";
   mission_id: string;
   thread_id: string;
   request_id: string;
@@ -62,6 +64,7 @@ export function buildEvidencePackage(
 
   return {
     version: 1,
+    evidence_status: input.evidenceStatus ?? "complete",
     mission_id: input.missionId,
     thread_id: input.threadId,
     request_id: input.requestId,
