@@ -18,6 +18,7 @@ export const MissionRequestSchema = z.object({
     .string()
     .regex(/^sha256:[a-f0-9]{64}$/)
     .optional(),
+  approval_context: z.unknown().optional(),
   operator_note: z.string().max(500).optional(),
 });
 

@@ -11,7 +11,10 @@ import {
   formatApprovalLockKey,
   MissionRequestSchema,
 } from "./missionRequest";
-import { isExpiredApproval } from "../../../src/lib/approval/hash";
+import {
+  computeApprovalContextHash,
+  isExpiredApproval,
+} from "../../../src/lib/approval/hash";
 import {
   isAllowedApprovalTool,
   validateApprovalToolArgs,
@@ -94,6 +97,7 @@ export async function POST(req: Request) {
       tool_call_id,
       approval_id,
       approval_context_hash,
+      approval_context,
     } = parsed.data;
 
     if (isApproval && !thread_id) {
@@ -241,22 +245,52 @@ export async function POST(req: Request) {
         );
       }
 
-      if (!pendingApprovalContext || !pendingApprovalHash || !pendingApprovalId) {
-        vanguardChatLog({
-          reqId,
-          phase: "approval",
-          status: 409,
-          threadId,
-          message: "Missing pending approval context",
-          isApproval: true,
-        });
-        return withRequestIdHeaders(
-          new Response("Approval context missing or stale", { status: 409 }),
-          reqId,
-        );
+      let effectivePendingContext = pendingApprovalContext;
+      let effectivePendingHash = pendingApprovalHash;
+      let effectivePendingId = pendingApprovalId;
+
+      if (!effectivePendingContext || !effectivePendingHash || !effectivePendingId) {
+        const fromBody =
+          approval_context && typeof approval_context === "object"
+            ? (approval_context as ApprovalContextV1)
+            : null;
+        if (!fromBody) {
+          vanguardChatLog({
+            reqId,
+            phase: "approval",
+            status: 409,
+            threadId,
+            message: "Missing pending approval context",
+            isApproval: true,
+          });
+          return withRequestIdHeaders(
+            new Response("Approval context missing or stale", { status: 409 }),
+            reqId,
+          );
+        }
+        const computedBodyHash = await computeApprovalContextHash(fromBody);
+        if (computedBodyHash !== approval_context_hash) {
+          vanguardChatLog({
+            reqId,
+            phase: "approval",
+            status: 409,
+            threadId,
+            message: "Approval context hash mismatch (body)",
+            isApproval: true,
+          });
+          return withRequestIdHeaders(
+            new Response("Approval mismatch — context hash is invalid", {
+              status: 409,
+            }),
+            reqId,
+          );
+        }
+        effectivePendingContext = fromBody;
+        effectivePendingHash = computedBodyHash;
+        effectivePendingId = fromBody.approval_id;
       }
 
-      if (isExpiredApproval(pendingApprovalContext.expires_at)) {
+      if (isExpiredApproval(effectivePendingContext.expires_at)) {
         vanguardChatLog({
           reqId,
           phase: "approval",
@@ -273,7 +307,7 @@ export async function POST(req: Request) {
         );
       }
 
-      if (approval_id !== pendingApprovalId) {
+      if (approval_id !== effectivePendingId) {
         vanguardChatLog({
           reqId,
           phase: "approval",
@@ -290,7 +324,7 @@ export async function POST(req: Request) {
         );
       }
 
-      if (approval_context_hash !== pendingApprovalHash) {
+      if (approval_context_hash !== effectivePendingHash) {
         vanguardChatLog({
           reqId,
           phase: "approval",
@@ -307,7 +341,7 @@ export async function POST(req: Request) {
         );
       }
 
-      if (tool_call_id && tool_call_id !== pendingApprovalContext.approval_id) {
+      if (tool_call_id && tool_call_id !== effectivePendingContext.approval_id) {
         vanguardChatLog({
           reqId,
           phase: "approval",
@@ -322,7 +356,7 @@ export async function POST(req: Request) {
         );
       }
 
-      const plannedTool = pendingApprovalContext.tool;
+      const plannedTool = effectivePendingContext.tool;
       if (
         !isAllowedApprovalTool(plannedTool.name) ||
         !validateApprovalToolArgs(plannedTool.name, plannedTool.args)
@@ -348,12 +382,12 @@ export async function POST(req: Request) {
       const safeTarget = target?.trim() || "General Recon";
       const decision: ApprovalDecision = {
         version: 1,
-        approval_id: pendingApprovalContext.approval_id,
+        approval_id: effectivePendingContext.approval_id,
         thread_id: threadId,
         decided_at: new Date().toISOString(),
         decision: isAuthorized ? "authorized" : "aborted",
-        tool_name: pendingApprovalContext.tool.name,
-        tool_arg_hash: pendingApprovalContext.tool.arg_hash,
+        tool_name: effectivePendingContext.tool.name,
+        tool_arg_hash: effectivePendingContext.tool.arg_hash,
         request_id: reqId,
       };
 
@@ -439,6 +473,25 @@ export async function POST(req: Request) {
       ...config,
       tags: [...config.tags, "vanguard-agent-recon-start"],
     });
+    const nextValues = nextState as Record<string, unknown>;
+    if (
+      nextValues.isPendingApproval === true &&
+      nextValues.pendingApprovalContext &&
+      typeof nextValues.pendingApprovalHash === "string" &&
+      typeof nextValues.pendingApprovalId === "string"
+    ) {
+      // invoke() can return state without persisting checkpoint transitions in this flow;
+      // persist pending-approval binding explicitly so immediate authorize requests don't race stale state.
+      await vanguardGraph.updateState(
+        { configurable: { thread_id: threadId } },
+        {
+          isPendingApproval: true,
+          pendingApprovalContext: nextValues.pendingApprovalContext as ApprovalContextV1,
+          pendingApprovalHash: nextValues.pendingApprovalHash as string,
+          pendingApprovalId: nextValues.pendingApprovalId as string,
+        },
+      );
+    }
     const latestAssistant = [...nextState.messages]
       .reverse()
       .find(

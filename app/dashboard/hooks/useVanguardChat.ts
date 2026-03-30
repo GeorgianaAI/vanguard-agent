@@ -23,6 +23,7 @@ type ApprovalAction = {
   toolCallId: string;
   approvalId: string;
   approvalContextHash: string;
+  approvalContext: unknown;
 };
 
 function readStoredThreadId(): string | null {
@@ -139,6 +140,7 @@ export function useVanguardChat({
     toolCallId,
     approvalId,
     approvalContextHash,
+    approvalContext,
   }: ApprovalAction) {
     if (loading) return;
     if (approvalInFlight.current) return;
@@ -157,6 +159,7 @@ export function useVanguardChat({
             tool_call_id: toolCallId,
             approval_id: approvalId,
             approval_context_hash: approvalContextHash,
+            approval_context: approvalContext,
             target: target.trim() || DEFAULT_TARGET,
           },
         },
@@ -180,6 +183,7 @@ export function useVanguardChat({
       toolCallId,
       approvalId,
       approvalContextHash: payload.approvalContextHash,
+      approvalContext: payload.approvalContext,
     });
   }
 
@@ -194,6 +198,7 @@ export function useVanguardChat({
       toolCallId,
       approvalId,
       approvalContextHash: payload.approvalContextHash,
+      approvalContext: payload.approvalContext,
     });
   }
 
