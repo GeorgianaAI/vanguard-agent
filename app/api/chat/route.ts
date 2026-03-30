@@ -1,4 +1,4 @@
-import { HumanMessage } from "@langchain/core/messages";
+import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { createUIMessageStreamResponse } from "ai";
@@ -22,6 +22,7 @@ import {
   vanguardChatLog,
   withRequestIdHeaders,
 } from "./telemetry";
+import type { UIMessageChunk } from "ai";
 
 export const runtime = "edge";
 
@@ -47,6 +48,20 @@ function acquireLocalApprovalLock(key: string, ttlMs: number): boolean {
 
   approvalLocks.set(key, now + ttlMs);
   return true;
+}
+
+function streamSingleAssistantText(text: string): ReadableStream<UIMessageChunk> {
+  const textId = `txt_${crypto.randomUUID()}`;
+  return new ReadableStream<UIMessageChunk>({
+    start(controller) {
+      controller.enqueue({ type: "start" });
+      controller.enqueue({ type: "text-start", id: textId });
+      controller.enqueue({ type: "text-delta", id: textId, delta: text });
+      controller.enqueue({ type: "text-end", id: textId });
+      controller.enqueue({ type: "finish", finishReason: "stop" });
+      controller.close();
+    },
+  });
 }
 
 export async function POST(req: Request) {
@@ -420,13 +435,25 @@ export async function POST(req: Request) {
       message: "recon_stream_start",
       isApproval: false,
     });
-    const stream = vanguardGraph.streamEvents(inputState, {
+    const nextState = await vanguardGraph.invoke(inputState, {
       ...config,
       tags: [...config.tags, "vanguard-agent-recon-start"],
     });
+    const latestAssistant = [...nextState.messages]
+      .reverse()
+      .find(
+        (msg) =>
+          AIMessage.isInstance(msg) &&
+          typeof msg.content === "string" &&
+          msg.content.trim().length > 0,
+      );
+    const assistantText =
+      latestAssistant && AIMessage.isInstance(latestAssistant)
+        ? String(latestAssistant.content)
+        : "Manual authorization is required before external tools can run.";
 
     const streamRes = createUIMessageStreamResponse({
-      stream: toUIMessageStream(stream),
+      stream: streamSingleAssistantText(assistantText),
       headers: { "x-vanguard-thread-id": threadId },
     });
     return withRequestIdHeaders(streamRes, reqId);

@@ -185,10 +185,31 @@ async function scoutNode(state: VanguardStateType) {
 
   if (!state.isAuthorized) {
     const { context, contextHash } = await buildApprovalContext(state);
+    const gateModel = getSupervisorModel();
+    const gateResponse = await gateModel.invoke([
+      new SystemMessage(
+        [
+          "You are Vanguard authorization gate.",
+          "Respond with one concise sentence prefixed by AUTHORIZATION_REQUIRED:.",
+          "Do not add markdown or extra sections.",
+        ].join("\n"),
+      ),
+      new HumanMessage(
+        `Target: ${state.target || "unspecified"}. Manual authorization is required before external tools run.`,
+      ),
+    ]);
     const serializedContext = JSON.stringify(context);
-    const approvalMessage = new AIMessage(
-      `${APPROVAL_SIGNAL_PREFIX}${serializedContext}`,
-    );
+    const approvalPayload = `${APPROVAL_SIGNAL_PREFIX}${serializedContext}`;
+    const approvalMessage = AIMessage.isInstance(gateResponse)
+      ? new AIMessage({
+          content: approvalPayload,
+          id: gateResponse.id,
+          additional_kwargs: gateResponse.additional_kwargs,
+          response_metadata: gateResponse.response_metadata,
+          tool_calls: gateResponse.tool_calls,
+          invalid_tool_calls: gateResponse.invalid_tool_calls,
+        })
+      : new AIMessage(approvalPayload);
 
     return {
       isPendingApproval: true,
