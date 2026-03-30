@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApprovalContextV1 } from "../../../src/lib/approval/types";
+import { computeApprovalContextHash } from "../../../src/lib/approval/hash";
 
 const TEST_APPROVAL_CONTEXT: ApprovalContextV1 = {
   version: 1,
   approval_id: "apr-test-1",
-  approval_context_hash: "sha256:1111111111111111111111111111111111111111111111111111111111111111",
   thread_id: "v-test-1",
   requested_at: new Date(0).toISOString(),
   expires_at: new Date(Date.now() + 60_000).toISOString(),
@@ -28,6 +28,9 @@ const TEST_APPROVAL_CONTEXT: ApprovalContextV1 = {
   prior_approvals_in_thread: 0,
   changes_since_last: ["First authorization in this thread."],
 };
+
+let TEST_APPROVAL_CONTEXT_HASH =
+  "sha256:1111111111111111111111111111111111111111111111111111111111111111";
 
 const hoisted = vi.hoisted(() => ({
   redisSet: vi.fn(),
@@ -93,6 +96,10 @@ vi.mock("@ai-sdk/langchain", () => ({
 describe("POST /api/chat governance", () => {
   beforeEach(async () => {
     vi.resetModules();
+    TEST_APPROVAL_CONTEXT_HASH = await computeApprovalContextHash(
+      TEST_APPROVAL_CONTEXT,
+    );
+    TEST_APPROVAL_CONTEXT.approval_context_hash = TEST_APPROVAL_CONTEXT_HASH;
     hoisted.redisSet.mockReset();
     hoisted.ratelimitLimit.mockReset();
     hoisted.getState.mockReset();
@@ -106,7 +113,7 @@ describe("POST /api/chat governance", () => {
         isPendingApproval: true,
         scoutHasRun: false,
         pendingApprovalContext: TEST_APPROVAL_CONTEXT,
-        pendingApprovalHash: TEST_APPROVAL_CONTEXT.approval_context_hash,
+        pendingApprovalHash: TEST_APPROVAL_CONTEXT_HASH,
         pendingApprovalId: TEST_APPROVAL_CONTEXT.approval_id,
         approvalHistory: [],
       },
@@ -137,7 +144,7 @@ describe("POST /api/chat governance", () => {
           thread_id: "v-test-1",
           tool_call_id: TEST_APPROVAL_CONTEXT.approval_id,
           approval_id: TEST_APPROVAL_CONTEXT.approval_id,
-          approval_context_hash: TEST_APPROVAL_CONTEXT.approval_context_hash,
+          approval_context_hash: TEST_APPROVAL_CONTEXT_HASH,
         }),
       }),
     );
@@ -160,7 +167,7 @@ describe("POST /api/chat governance", () => {
           thread_id: "v-test-2",
           tool_call_id: TEST_APPROVAL_CONTEXT.approval_id,
           approval_id: TEST_APPROVAL_CONTEXT.approval_id,
-          approval_context_hash: TEST_APPROVAL_CONTEXT.approval_context_hash,
+          approval_context_hash: TEST_APPROVAL_CONTEXT_HASH,
         }),
       }),
     );
@@ -221,6 +228,33 @@ describe("POST /api/chat governance", () => {
     expect(res.status).toBe(409);
   });
 
+  it("accepts approval when checkpoint context is missing but body context is valid", async () => {
+    hoisted.getState.mockResolvedValue({
+      values: {
+        isPendingApproval: true,
+        scoutHasRun: false,
+        approvalHistory: [],
+      },
+    });
+    const POST = await loadPost();
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          isApproval: true,
+          approved: true,
+          thread_id: "v-test-1",
+          tool_call_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_context_hash: TEST_APPROVAL_CONTEXT_HASH,
+          approval_context: TEST_APPROVAL_CONTEXT,
+        }),
+      }),
+    );
+    expect(res.status).toBe(200);
+  });
+
   it("returns 429 when rate limit fails", async () => {
     hoisted.ratelimitLimit.mockResolvedValue({ success: false });
     const POST = await loadPost();
@@ -250,7 +284,7 @@ describe("POST /api/chat governance", () => {
           thread_id: "v-test-1",
           tool_call_id: TEST_APPROVAL_CONTEXT.approval_id,
           approval_id: TEST_APPROVAL_CONTEXT.approval_id,
-          approval_context_hash: TEST_APPROVAL_CONTEXT.approval_context_hash,
+          approval_context_hash: TEST_APPROVAL_CONTEXT_HASH,
         }),
       }),
     );

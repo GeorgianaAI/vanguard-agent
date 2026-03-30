@@ -26,6 +26,14 @@ export function ApprovalCard({
   const toolName = context?.tool.name ?? getToolName(part);
   const toolArgs = context?.tool.args_display ?? {};
   const policyLabel = getApprovalPolicyLabel(toolName);
+  const sideEffectsLabel = context?.side_effects
+    .replaceAll("_", " ")
+    .toUpperCase();
+  const normalizeBadgeLabel = (value: string) =>
+    value.replace(/[^A-Z0-9]/g, "");
+  const showSideEffectsBadge =
+    !!sideEffectsLabel &&
+    normalizeBadgeLabel(sideEffectsLabel) !== normalizeBadgeLabel(policyLabel);
 
   const changeHints =
     context?.changes_since_last?.length ? context.changes_since_last : [];
@@ -57,9 +65,11 @@ export function ApprovalCard({
             <span className="rounded bg-amber-900/30 px-2 py-1 text-[9px] font-black tracking-widest text-amber-200">
               {context.risk_level.toUpperCase()} RISK
             </span>
-            <span className="rounded bg-slate-800 px-2 py-1 text-[9px] font-black tracking-widest text-slate-300">
-              {context.side_effects.replaceAll("_", " ").toUpperCase()}
-            </span>
+            {showSideEffectsBadge && (
+              <span className="rounded bg-slate-800 px-2 py-1 text-[9px] font-black tracking-widest text-slate-300">
+                {sideEffectsLabel}
+              </span>
+            )}
           </div>
           <div>
             <span className="text-[9px] font-black tracking-widest text-amber-300">

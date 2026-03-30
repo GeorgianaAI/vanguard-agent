@@ -186,9 +186,8 @@ async function scoutNode(state: VanguardStateType) {
   if (!state.isAuthorized) {
     const { context, contextHash } = await buildApprovalContext(state);
     const serializedContext = JSON.stringify(context);
-    const approvalMessage = new AIMessage(
-      `${APPROVAL_SIGNAL_PREFIX}${serializedContext}`,
-    );
+    const approvalPayload = `${APPROVAL_SIGNAL_PREFIX}${serializedContext}`;
+    const approvalMessage = new AIMessage(approvalPayload);
 
     return {
       isPendingApproval: true,
