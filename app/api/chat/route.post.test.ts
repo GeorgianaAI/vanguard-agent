@@ -223,6 +223,7 @@ describe("POST /api/chat governance", () => {
   });
 
   it("returns 409 on approval hash mismatch", async () => {
+    hoisted.getState.mockRejectedValue(new Error("should-not-call-getState"));
     const POST = await loadPost();
     const res = await POST(
       new Request("http://localhost/api/chat", {
@@ -236,10 +237,14 @@ describe("POST /api/chat governance", () => {
           approval_id: TEST_APPROVAL_CONTEXT.approval_id,
           approval_context_hash:
             "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          approval_context: TEST_APPROVAL_CONTEXT,
         }),
       }),
     );
     expect(res.status).toBe(409);
+    expect(hoisted.getState).not.toHaveBeenCalled();
+    expect(hoisted.ratelimitLimit).not.toHaveBeenCalled();
+    expect(hoisted.redisSet).not.toHaveBeenCalled();
   });
 
   it("accepts approval when checkpoint context is missing but body context is valid", async () => {
