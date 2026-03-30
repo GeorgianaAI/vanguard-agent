@@ -167,6 +167,28 @@ export async function POST(req: Request) {
     const threadId = thread_id ?? `vanguard-${Date.now()}`;
     const missionId = threadId;
 
+    // Fast-fail tampered approval payloads before touching external dependencies.
+    if (isApproval && approval_context && typeof approval_context === "object") {
+      const bodyContext = approval_context as ApprovalContextV1;
+      const computedBodyHash = await computeApprovalContextHash(bodyContext);
+      if (computedBodyHash !== approval_context_hash) {
+        vanguardChatLog({
+          reqId,
+          phase: "approval",
+          status: 409,
+          threadId,
+          message: "Approval context hash mismatch (early body check)",
+          isApproval: true,
+        });
+        return withRequestIdHeaders(
+          new Response("Approval mismatch — context hash is invalid", {
+            status: 409,
+          }),
+          reqId,
+        );
+      }
+    }
+
     const config = {
       configurable: { thread_id: threadId },
       version: "v2" as const,
