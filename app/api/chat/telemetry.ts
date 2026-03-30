@@ -6,6 +6,7 @@ export type VanguardChatLog = {
   phase: "parse" | "recon" | "approval" | "rate_limit" | "error";
   status: number;
   threadId?: string;
+  missionId?: string;
   message: string;
   isApproval?: boolean;
 };

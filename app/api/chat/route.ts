@@ -147,6 +147,7 @@ export async function POST(req: Request) {
     }
 
     const threadId = thread_id ?? `vanguard-${Date.now()}`;
+    const missionId = threadId;
 
     const { success } = await ratelimit.limit(getClientIp(req));
     if (!success) {
@@ -167,6 +168,12 @@ export async function POST(req: Request) {
     const config = {
       configurable: { thread_id: threadId },
       version: "v2" as const,
+      metadata: {
+        thread_id: threadId,
+        mission_id: missionId,
+        request_id: reqId,
+        is_approval: !!isApproval,
+      },
       tags: [
         "vanguard-agent",
         isApproval ? "vanguard-agent-approval" : "vanguard-agent-recon",
@@ -435,6 +442,7 @@ export async function POST(req: Request) {
         phase: "approval",
         status: 200,
         threadId,
+        missionId,
         message: isAuthorized
           ? "approval_authorized_stream"
           : "approval_aborted_stream",
@@ -466,6 +474,7 @@ export async function POST(req: Request) {
       phase: "recon",
       status: 200,
       threadId,
+      missionId,
       message: "recon_stream_start",
       isApproval: false,
     });
