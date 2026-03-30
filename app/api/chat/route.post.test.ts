@@ -217,6 +217,7 @@ describe("POST /api/chat governance", () => {
       }),
     );
     expect(res.status).toBe(400);
+    expect(hoisted.ratelimitLimit).not.toHaveBeenCalled();
   });
 
   it("returns 409 on approval hash mismatch", async () => {
@@ -281,6 +282,28 @@ describe("POST /api/chat governance", () => {
       }),
     );
     expect(res.status).toBe(429);
+    expect(hoisted.ratelimitLimit).toHaveBeenCalledWith("127.0.0.1:mission");
+  });
+
+  it("uses approval-specific rate limit bucket", async () => {
+    hoisted.ratelimitLimit.mockResolvedValue({ success: false });
+    const POST = await loadPost();
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          isApproval: true,
+          approved: true,
+          thread_id: "v-rate-approval",
+          tool_call_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_context_hash: TEST_APPROVAL_CONTEXT_HASH,
+        }),
+      }),
+    );
+    expect(res.status).toBe(429);
+    expect(hoisted.ratelimitLimit).toHaveBeenCalledWith("127.0.0.1:approval");
   });
 
   it("returns 200 stream wrapper when approval succeeds", async () => {

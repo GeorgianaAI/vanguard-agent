@@ -32,11 +32,29 @@ export const runtime = "edge";
 const redis = Redis.fromEnv();
 const approvalLocks = new Map<string, number>();
 
-const ratelimit = new Ratelimit({
+const MISSION_RATE_LIMIT_WINDOW = "60 s";
+const MISSION_RATE_LIMIT_REQUESTS = 5;
+const APPROVAL_RATE_LIMIT_WINDOW = "60 s";
+const APPROVAL_RATE_LIMIT_REQUESTS = 20;
+
+const missionRatelimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(5, "60 s"),
+  limiter: Ratelimit.slidingWindow(
+    MISSION_RATE_LIMIT_REQUESTS,
+    MISSION_RATE_LIMIT_WINDOW,
+  ),
   analytics: true,
-  prefix: "@vanguard/ratelimit",
+  prefix: "@vanguard/ratelimit/mission",
+});
+
+const approvalRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(
+    APPROVAL_RATE_LIMIT_REQUESTS,
+    APPROVAL_RATE_LIMIT_WINDOW,
+  ),
+  analytics: true,
+  prefix: "@vanguard/ratelimit/approval",
 });
 
 function getClientIp(req: Request): string {
@@ -149,7 +167,9 @@ export async function POST(req: Request) {
     const threadId = thread_id ?? `vanguard-${Date.now()}`;
     const missionId = threadId;
 
-    const { success } = await ratelimit.limit(getClientIp(req));
+    const rateLimitKey = `${getClientIp(req)}:${isApproval ? "approval" : "mission"}`;
+    const activeLimiter = isApproval ? approvalRatelimit : missionRatelimit;
+    const { success } = await activeLimiter.limit(rateLimitKey);
     if (!success) {
       vanguardChatLog({
         reqId,
