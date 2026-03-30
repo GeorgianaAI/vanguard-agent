@@ -201,6 +201,41 @@ export async function POST(req: Request) {
     };
 
     if (isApproval) {
+      const currentState = await vanguardGraph.getState({
+        configurable: { thread_id: threadId },
+      });
+      const values = (currentState?.values ?? {}) as Record<string, unknown>;
+      const pendingApprovalContext = (values.pendingApprovalContext ??
+        null) as ApprovalContextV1 | null;
+      const pendingApprovalHash = (values.pendingApprovalHash ?? null) as
+        | string
+        | null;
+      const pendingApprovalId = (values.pendingApprovalId ?? null) as
+        | string
+        | null;
+      const approvalHistory = Array.isArray(values.approvalHistory)
+        ? (values.approvalHistory as ApprovalDecision[])
+        : [];
+
+      // Reject stale/bypass approval attempts before lock/rate-limit dependencies.
+      if (shouldRejectApprovalForGraphState(values)) {
+        vanguardChatLog({
+          reqId,
+          phase: "approval",
+          status: 409,
+          threadId,
+          message: "Stale or invalid checkpoint for approval",
+          isApproval: true,
+        });
+        return withRequestIdHeaders(
+          new Response(
+            "Approval already processed or no pending authorization step",
+            { status: 409 },
+          ),
+          reqId,
+        );
+      }
+
       const approvalLockKey = formatApprovalLockKey(threadId, tool_call_id);
       const lockTtlMs = 1000 * 60 * 30;
 
@@ -234,40 +269,6 @@ export async function POST(req: Request) {
         });
         return withRequestIdHeaders(
           new Response("Approval already processed", { status: 409 }),
-          reqId,
-        );
-      }
-
-      const currentState = await vanguardGraph.getState({
-        configurable: { thread_id: threadId },
-      });
-      const values = (currentState?.values ?? {}) as Record<string, unknown>;
-      const pendingApprovalContext = (values.pendingApprovalContext ??
-        null) as ApprovalContextV1 | null;
-      const pendingApprovalHash = (values.pendingApprovalHash ?? null) as
-        | string
-        | null;
-      const pendingApprovalId = (values.pendingApprovalId ?? null) as
-        | string
-        | null;
-      const approvalHistory = Array.isArray(values.approvalHistory)
-        ? (values.approvalHistory as ApprovalDecision[])
-        : [];
-
-      if (shouldRejectApprovalForGraphState(values)) {
-        vanguardChatLog({
-          reqId,
-          phase: "approval",
-          status: 409,
-          threadId,
-          message: "Stale or invalid checkpoint for approval",
-          isApproval: true,
-        });
-        return withRequestIdHeaders(
-          new Response(
-            "Approval already processed or no pending authorization step",
-            { status: 409 },
-          ),
           reqId,
         );
       }
