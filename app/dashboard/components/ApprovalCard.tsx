@@ -29,8 +29,11 @@ export function ApprovalCard({
   const sideEffectsLabel = context?.side_effects
     .replaceAll("_", " ")
     .toUpperCase();
+  const normalizeBadgeLabel = (value: string) =>
+    value.replace(/[^A-Z0-9]/g, "");
   const showSideEffectsBadge =
-    !!sideEffectsLabel && sideEffectsLabel !== policyLabel;
+    !!sideEffectsLabel &&
+    normalizeBadgeLabel(sideEffectsLabel) !== normalizeBadgeLabel(policyLabel);
 
   const changeHints =
     context?.changes_since_last?.length ? context.changes_since_last : [];
