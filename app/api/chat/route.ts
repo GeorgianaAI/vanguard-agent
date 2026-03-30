@@ -167,24 +167,6 @@ export async function POST(req: Request) {
     const threadId = thread_id ?? `vanguard-${Date.now()}`;
     const missionId = threadId;
 
-    const rateLimitKey = `${getClientIp(req)}:${isApproval ? "approval" : "mission"}`;
-    const activeLimiter = isApproval ? approvalRatelimit : missionRatelimit;
-    const { success } = await activeLimiter.limit(rateLimitKey);
-    if (!success) {
-      vanguardChatLog({
-        reqId,
-        phase: "rate_limit",
-        status: 429,
-        threadId,
-        message: "Rate limit exceeded",
-        isApproval: !!isApproval,
-      });
-      return withRequestIdHeaders(
-        new Response("Too many missions. Cool down.", { status: 429 }),
-        reqId,
-      );
-    }
-
     const config = {
       configurable: { thread_id: threadId },
       version: "v2" as const,
@@ -232,6 +214,24 @@ export async function POST(req: Request) {
             "Approval already processed or no pending authorization step",
             { status: 409 },
           ),
+          reqId,
+        );
+      }
+
+      const { success } = await approvalRatelimit.limit(
+        `${getClientIp(req)}:approval`,
+      );
+      if (!success) {
+        vanguardChatLog({
+          reqId,
+          phase: "rate_limit",
+          status: 429,
+          threadId,
+          message: "Rate limit exceeded",
+          isApproval: true,
+        });
+        return withRequestIdHeaders(
+          new Response("Too many missions. Cool down.", { status: 429 }),
           reqId,
         );
       }
@@ -474,6 +474,22 @@ export async function POST(req: Request) {
         headers: { "x-vanguard-thread-id": threadId },
       });
       return withRequestIdHeaders(streamRes, reqId);
+    }
+
+    const { success } = await missionRatelimit.limit(`${getClientIp(req)}:mission`);
+    if (!success) {
+      vanguardChatLog({
+        reqId,
+        phase: "rate_limit",
+        status: 429,
+        threadId,
+        message: "Rate limit exceeded",
+        isApproval: false,
+      });
+      return withRequestIdHeaders(
+        new Response("Too many missions. Cool down.", { status: 429 }),
+        reqId,
+      );
     }
 
     const lastMessage = messages[messages.length - 1];
