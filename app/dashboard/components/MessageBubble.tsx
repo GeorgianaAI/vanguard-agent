@@ -5,7 +5,12 @@ import type {
   ToolActionHandler,
   ToolPart,
 } from "../lib/types";
-import { messageHasApprovalSignal, renderMessageText } from "../lib/utils";
+import {
+  getApprovalContextFromMessage,
+  messageHasApprovalSignal,
+  renderMessageText,
+} from "../lib/utils";
+import type { ApprovalContextV1 } from "@/src/lib/approval/types";
 import { ApprovalCard } from "./ApprovalCard";
 import { ToolInvocationCard } from "./ToolInvocationCard";
 
@@ -15,6 +20,7 @@ type MessageBubbleProps = {
   onAbort: ToolActionHandler;
   resolved?: boolean;
   approvalDisabled?: boolean;
+  previousApprovalContext?: ApprovalContextV1 | null;
 };
 
 export function MessageBubble({
@@ -23,10 +29,12 @@ export function MessageBubble({
   onAbort,
   resolved = false,
   approvalDisabled = false,
+  previousApprovalContext = null,
 }: MessageBubbleProps) {
   const text = renderMessageText(message);
   const toolParts = message.parts.filter(isToolUIPart) as ToolPart[];
   const isUser = message.role === "user";
+  const approvalContext = getApprovalContextFromMessage(message);
 
   const hasToolApprovalPart = toolParts.some(
     (part) => part.state === "approval-requested",
@@ -45,7 +53,13 @@ export function MessageBubble({
   const fallbackApprovalPart = {
     type: "tool-invocation",
     state: "approval-requested",
-    toolCallId: "manual-authorization",
+    toolCallId: approvalContext?.approval_id ?? "manual-authorization",
+    input: {
+      approval_id: approvalContext?.approval_id,
+      approval_context_hash: approvalContext?.approval_context_hash,
+      approval_context: approvalContext,
+      query: approvalContext?.summary,
+    },
   } as unknown as ToolPart;
 
   return (
@@ -89,6 +103,7 @@ export function MessageBubble({
             onAuthorize={onAuthorize}
             onAbort={onAbort}
             disabled={approvalDisabled}
+            previousApprovalContext={previousApprovalContext}
           />
         </div>
       )}

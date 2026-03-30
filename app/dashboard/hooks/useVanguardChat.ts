@@ -3,6 +3,7 @@ import { DefaultChatTransport } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createThreadId,
+  getApprovalPayloadFromPart,
   getToolCallId,
   THREAD_STORAGE_KEY,
 } from "../lib/chatHelpers";
@@ -20,6 +21,8 @@ type UseVanguardChatArgs = {
 type ApprovalAction = {
   approved: boolean;
   toolCallId: string;
+  approvalId: string;
+  approvalContextHash: string;
 };
 
 function readStoredThreadId(): string | null {
@@ -37,6 +40,9 @@ function formatChatTransportError(err: Error): string {
     return "This authorization step is no longer valid (already completed or expired). Try refreshing or starting a new mission.";
   }
   if (/400|Invalid mission|Missing thread_id|Missing approved boolean/i.test(msg)) {
+    return `Request rejected: ${msg}`;
+  }
+  if (/Missing approval context binding/i.test(msg)) {
     return `Request rejected: ${msg}`;
   }
   if (/500|Mission Aborted|Uplink Failure/i.test(msg)) {
@@ -128,7 +134,12 @@ export function useVanguardChat({
     }
   };
 
-  async function sendApproval({ approved, toolCallId }: ApprovalAction) {
+  async function sendApproval({
+    approved,
+    toolCallId,
+    approvalId,
+    approvalContextHash,
+  }: ApprovalAction) {
     if (loading) return;
     if (approvalInFlight.current) return;
     if (!threadId) return;
@@ -144,6 +155,8 @@ export function useVanguardChat({
             approved,
             thread_id: threadId,
             tool_call_id: toolCallId,
+            approval_id: approvalId,
+            approval_context_hash: approvalContextHash,
             target: target.trim() || DEFAULT_TARGET,
           },
         },
@@ -159,15 +172,29 @@ export function useVanguardChat({
   async function authorizeTool(part: ToolPart) {
     if (loading || approvalInFlight.current) return;
     const toolCallId = getToolCallId(part);
-    if (!toolCallId) return;
-    await sendApproval({ approved: true, toolCallId });
+    const payload = getApprovalPayloadFromPart(part);
+    const approvalId = payload.approvalId ?? toolCallId;
+    if (!toolCallId || !approvalId || !payload.approvalContextHash) return;
+    await sendApproval({
+      approved: true,
+      toolCallId,
+      approvalId,
+      approvalContextHash: payload.approvalContextHash,
+    });
   }
 
   async function abortTool(part: ToolPart) {
     if (loading || approvalInFlight.current) return;
     const toolCallId = getToolCallId(part);
-    if (!toolCallId) return;
-    await sendApproval({ approved: false, toolCallId });
+    const payload = getApprovalPayloadFromPart(part);
+    const approvalId = payload.approvalId ?? toolCallId;
+    if (!toolCallId || !approvalId || !payload.approvalContextHash) return;
+    await sendApproval({
+      approved: false,
+      toolCallId,
+      approvalId,
+      approvalContextHash: payload.approvalContextHash,
+    });
   }
 
   function setInputValue(value: string) {
