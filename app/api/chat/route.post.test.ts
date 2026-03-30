@@ -162,6 +162,7 @@ describe("POST /api/chat governance", () => {
     expect(res.status).toBe(409);
     const text = await res.text();
     expect(text).toContain("no pending authorization");
+    expect(hoisted.redisSet).not.toHaveBeenCalled();
     expect(res.headers.get("x-request-id")).toBeTruthy();
   });
 
