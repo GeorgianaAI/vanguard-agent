@@ -32,6 +32,19 @@ describe("getCheckpointer", () => {
   it("returns undefined during production build phase when redis env is missing", () => {
     process.env.NODE_ENV = "production";
     process.env.NEXT_PHASE = "phase-production-build";
+    delete process.env.CI;
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    delete process.env.RED_TEAM_UPSTASH_REDIS_REST_URL;
+    delete process.env.RED_TEAM_UPSTASH_REDIS_REST_TOKEN;
+
+    expect(getCheckpointer()).toBeUndefined();
+  });
+
+  it("returns undefined during CI runtime in production when redis env is missing", () => {
+    process.env.NODE_ENV = "production";
+    process.env.CI = "true";
+    delete process.env.NEXT_PHASE;
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
     delete process.env.RED_TEAM_UPSTASH_REDIS_REST_URL;
