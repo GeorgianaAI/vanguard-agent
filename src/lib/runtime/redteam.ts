@@ -10,6 +10,10 @@ export function isRedTeamMode(env: EnvSource = process.env): boolean {
   return readBool(env.REDTEAM_MODE) || readBool(env.NEXT_PUBLIC_REDTEAM_MODE);
 }
 
+export function isProductionEnv(env: EnvSource = process.env): boolean {
+  return env.NODE_ENV === "production";
+}
+
 export function getLangSmithProject(env: EnvSource = process.env): string | undefined {
   if (isRedTeamMode(env)) {
     return env.RED_TEAM_LANGSMITH_PROJECT ?? env.LANGSMITH_PROJECT;

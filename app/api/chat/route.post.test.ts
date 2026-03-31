@@ -32,6 +32,7 @@ const TEST_APPROVAL_CONTEXT: ApprovalContextV1 = {
 
 let TEST_APPROVAL_CONTEXT_HASH =
   "sha256:1111111111111111111111111111111111111111111111111111111111111111";
+const ORIGINAL_NODE_ENV = process.env.NODE_ENV;
 
 const hoisted = vi.hoisted(() => ({
   redisSet: vi.fn(),
@@ -138,6 +139,7 @@ describe("POST /api/chat governance", () => {
   });
 
   afterEach(() => {
+    process.env.NODE_ENV = ORIGINAL_NODE_ENV;
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
     vi.clearAllMocks();
@@ -339,6 +341,15 @@ describe("POST /api/chat governance", () => {
       }),
     );
     expect(res.status).toBe(503);
+  });
+
+  it("throws on import in production when redis config is missing", async () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    await expect(loadPost()).rejects.toThrow(
+      /Missing Redis configuration for production/,
+    );
   });
 
   it("uses approval-specific rate limit bucket", async () => {

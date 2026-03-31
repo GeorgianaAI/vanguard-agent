@@ -12,7 +12,7 @@ import type {
   PendingWrite,
 } from "@langchain/langgraph-checkpoint";
 import { Redis } from "@upstash/redis";
-import { resolveRedisEnv } from "../runtime/redteam";
+import { isProductionEnv, resolveRedisEnv } from "../runtime/redteam";
 
 const CHECKPOINT_TTL_SECONDS = 60 * 60 * 24; // 24h
 
@@ -185,10 +185,24 @@ export function getCheckpointer() {
   try {
     return new UpstashRestCheckpointer();
   } catch (error) {
-    // In CI/build contexts without Redis env, allow graph compile without persistence.
+    if (isProductionEnv()) {
+      console.error(
+        JSON.stringify({
+          component: "vanguard.agent.checkpointer",
+          level: "error",
+          event: "production_checkpointer_init_failed",
+          detail: error instanceof Error ? error.message.slice(0, 120) : "unknown",
+        }),
+      );
+      throw error;
+    }
     console.warn(
-      "Checkpointer disabled:",
-      error instanceof Error ? error.message : String(error),
+      JSON.stringify({
+        component: "vanguard.agent.checkpointer",
+        level: "warn",
+        event: "degraded_checkpointer_disabled",
+        detail: error instanceof Error ? error.message.slice(0, 120) : "unknown",
+      }),
     );
     return undefined;
   }
