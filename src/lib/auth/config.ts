@@ -8,6 +8,7 @@ const OperatorSchema = z.object({
 });
 
 const OperatorsSchema = z.array(OperatorSchema).min(1);
+const USERNAME_RE = /^[a-zA-Z0-9._-]+$/;
 
 export function getAuthSecret(): string {
   const secret = process.env.AUTH_SESSION_SECRET;
@@ -31,8 +32,30 @@ export function getAuthCookieName(): string {
 export function getOperators(): OperatorRecord[] {
   const raw = process.env.AUTH_OPERATORS_JSON;
   if (!raw) throw new Error("Missing AUTH_OPERATORS_JSON");
-  const parsed = JSON.parse(raw);
-  return OperatorsSchema.parse(parsed);
+
+  const parsed = OperatorsSchema.parse(JSON.parse(raw));
+  const seen = new Set<string>();
+
+  for (const op of parsed) {
+    if (!USERNAME_RE.test(op.username)) {
+      throw new Error(`Invalid username format: ${op.username}`);
+    }
+    if (seen.has(op.username)) {
+      throw new Error(`Duplicate username: ${op.username}`);
+    }
+    seen.add(op.username);
+
+    if (
+      process.env.NODE_ENV === "production" &&
+      op.password === "ChangeMe!123"
+    ) {
+      throw new Error(
+        `Weak default password not allowed in production: ${op.username}`,
+      );
+    }
+  }
+
+  return parsed;
 }
 
 export function resolveRole(username: string): OperatorRole | null {
