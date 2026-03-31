@@ -39,6 +39,14 @@ Here is how Vanguard differs from a standard AI chat:
 
 ## ![Vanguard Command Stream - Findings Report](./docs/assets/vanguard-command-stream-2.png)
 
+---
+
+> [!TIP]
+> **Mission Strategy:** For deeper technical context, see [ARCHITECTURE_FLOWS.md](./docs/ARCHITECTURE_FLOWS.md) for runtime flow diagrams.
+> For adversarial test outcomes and evidence posture, see [SECURITY_ADVISORY.md](./SECURITY_ADVISORY.md). 🛰️🛡️
+
+---
+
 ## 🏗️ Core Agentic Architecture
 
 - **Supervisor-Worker Pattern:** Implements a dual-node hierarchy where a **Supervisor (The General)** plans the mission and a **Scout (The Worker)** executes specialized reconnaissance tasks.
