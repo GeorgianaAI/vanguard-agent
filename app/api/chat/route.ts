@@ -31,14 +31,15 @@ import {
   isRedTeamMode,
   resolveRedisEnv,
 } from "../../../src/lib/runtime/redteam";
+import { getVectorRuntimeConfig } from "../../../src/lib/runtime/vectorClient";
 
 export const runtime = "edge";
 
 const redisEnv = resolveRedisEnv();
-const redis =
-  redisEnv.url && redisEnv.token
-    ? new Redis({ url: redisEnv.url, token: redisEnv.token })
-    : Redis.fromEnv();
+const vectorEnv = getVectorRuntimeConfig();
+const redis = redisEnv.url && redisEnv.token
+  ? new Redis({ url: redisEnv.url, token: redisEnv.token })
+  : null;
 const approvalLocks = new Map<string, number>();
 
 const MISSION_RATE_LIMIT_WINDOW = "60 s";
@@ -46,25 +47,29 @@ const MISSION_RATE_LIMIT_REQUESTS = 5;
 const APPROVAL_RATE_LIMIT_WINDOW = "60 s";
 const APPROVAL_RATE_LIMIT_REQUESTS = 20;
 
-const missionRatelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(
-    MISSION_RATE_LIMIT_REQUESTS,
-    MISSION_RATE_LIMIT_WINDOW,
-  ),
-  analytics: true,
-  prefix: `@${redisEnv.keyPrefix}/ratelimit/mission`,
-});
+const missionRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(
+        MISSION_RATE_LIMIT_REQUESTS,
+        MISSION_RATE_LIMIT_WINDOW,
+      ),
+      analytics: true,
+      prefix: `@${redisEnv.keyPrefix}/ratelimit/mission`,
+    })
+  : null;
 
-const approvalRatelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(
-    APPROVAL_RATE_LIMIT_REQUESTS,
-    APPROVAL_RATE_LIMIT_WINDOW,
-  ),
-  analytics: true,
-  prefix: `@${redisEnv.keyPrefix}/ratelimit/approval`,
-});
+const approvalRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(
+        APPROVAL_RATE_LIMIT_REQUESTS,
+        APPROVAL_RATE_LIMIT_WINDOW,
+      ),
+      analytics: true,
+      prefix: `@${redisEnv.keyPrefix}/ratelimit/approval`,
+    })
+  : null;
 
 function getClientIp(req: Request): string {
   const forwardedFor = req.headers.get("x-forwarded-for") ?? "";
@@ -206,6 +211,7 @@ export async function POST(req: Request) {
         mission_id: missionId,
         request_id: reqId,
         is_approval: !!isApproval,
+        vector_namespace: vectorEnv.namespace,
       },
       tags: [
         "vanguard-agent",
@@ -246,6 +252,23 @@ export async function POST(req: Request) {
             "Approval already processed or no pending authorization step",
             { status: 409 },
           ),
+          reqId,
+        );
+      }
+
+      if (!approvalRatelimit || !redis) {
+        vanguardChatLog({
+          reqId,
+          phase: "error",
+          status: 503,
+          threadId,
+          message: "Redis config missing for approval flow",
+          isApproval: true,
+        });
+        return withRequestIdHeaders(
+          new Response("Service unavailable: Redis configuration missing", {
+            status: 503,
+          }),
           reqId,
         );
       }
@@ -506,6 +529,23 @@ export async function POST(req: Request) {
         headers: { "x-vanguard-thread-id": threadId },
       });
       return withRequestIdHeaders(streamRes, reqId);
+    }
+
+    if (!missionRatelimit) {
+      vanguardChatLog({
+        reqId,
+        phase: "error",
+        status: 503,
+        threadId,
+        message: "Redis config missing for mission flow",
+        isApproval: false,
+      });
+      return withRequestIdHeaders(
+        new Response("Service unavailable: Redis configuration missing", {
+          status: 503,
+        }),
+        reqId,
+      );
     }
 
     const { success } = await missionRatelimit.limit(`${getClientIp(req)}:mission`);

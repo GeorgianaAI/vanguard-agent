@@ -64,10 +64,15 @@ export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
   constructor() {
     super();
     const cfg = resolveRedisEnv();
+    if (!cfg.url || !cfg.token) {
+      throw new Error(
+        "Missing Redis configuration: set UPSTASH_REDIS_REST_URL/TOKEN or RED_TEAM_UPSTASH_REDIS_REST_URL/TOKEN when REDTEAM_MODE=true.",
+      );
+    }
     this.keyPrefix = cfg.keyPrefix;
     this.client = new Redis({
-      url: cfg.url!,
-      token: cfg.token!,
+      url: cfg.url,
+      token: cfg.token,
     });
   }
 

@@ -1,14 +1,16 @@
 import type { ToolPart } from "./types";
 import type { ApprovalContextV1 } from "@/src/lib/approval/types";
+import { getThreadPrefix } from "@/src/lib/runtime/redteam";
 
 /** Must match localStorage key in dashboard session persistence. */
 export const THREAD_STORAGE_KEY = "vanguard-thread-id";
 
 export function createThreadId(): string {
+  const prefix = getThreadPrefix();
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return `vanguard-${crypto.randomUUID()}`;
+    return `${prefix}-${crypto.randomUUID()}`;
   }
-  return `vanguard-${Date.now()}`;
+  return `${prefix}-${Date.now()}`;
 }
 
 export function getToolCallId(part: ToolPart): string | null {

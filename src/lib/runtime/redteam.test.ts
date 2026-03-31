@@ -19,6 +19,12 @@ describe("redteam runtime config", () => {
     expect(getThreadPrefix(env)).toBe("redteam-ci");
   });
 
+  it("enables redteam mode via NEXT_PUBLIC toggle for client paths", () => {
+    const env = { NEXT_PUBLIC_REDTEAM_MODE: "true" };
+    expect(isRedTeamMode(env)).toBe(true);
+    expect(getThreadPrefix(env)).toBe("redteam-ci");
+  });
+
   it("resolves redis env with redteam fallback behavior", () => {
     const env = {
       REDTEAM_MODE: "true",

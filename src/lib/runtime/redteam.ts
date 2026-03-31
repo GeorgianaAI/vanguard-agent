@@ -7,7 +7,7 @@ function readBool(value: string | undefined): boolean {
 }
 
 export function isRedTeamMode(env: EnvSource = process.env): boolean {
-  return readBool(env.REDTEAM_MODE);
+  return readBool(env.REDTEAM_MODE) || readBool(env.NEXT_PUBLIC_REDTEAM_MODE);
 }
 
 export function getLangSmithProject(env: EnvSource = process.env): string | undefined {
