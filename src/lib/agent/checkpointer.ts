@@ -12,7 +12,7 @@ import type {
   PendingWrite,
 } from "@langchain/langgraph-checkpoint";
 import { Redis } from "@upstash/redis";
-import { resolveRedisEnv } from "../runtime/redteam";
+import { isProductionEnv, resolveRedisEnv } from "../runtime/redteam";
 
 const CHECKPOINT_TTL_SECONDS = 60 * 60 * 24; // 24h
 
@@ -182,5 +182,16 @@ export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
 }
 
 export function getCheckpointer() {
-  return new UpstashRestCheckpointer();
+  try {
+    return new UpstashRestCheckpointer();
+  } catch (error) {
+    if (isProductionEnv()) {
+      throw error;
+    }
+    console.warn(
+      "Checkpointer disabled:",
+      error instanceof Error ? error.message : String(error),
+    );
+    return undefined;
+  }
 }

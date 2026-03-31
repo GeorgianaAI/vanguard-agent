@@ -1,0 +1,30 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { getCheckpointer } from "./checkpointer";
+
+const prevEnv = { ...process.env };
+
+describe("getCheckpointer", () => {
+  afterEach(() => {
+    process.env = { ...prevEnv };
+  });
+
+  it("returns undefined in non-production when redis env is missing", () => {
+    process.env.NODE_ENV = "test";
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    delete process.env.RED_TEAM_UPSTASH_REDIS_REST_URL;
+    delete process.env.RED_TEAM_UPSTASH_REDIS_REST_TOKEN;
+
+    expect(getCheckpointer()).toBeUndefined();
+  });
+
+  it("throws in production when redis env is missing", () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    delete process.env.RED_TEAM_UPSTASH_REDIS_REST_URL;
+    delete process.env.RED_TEAM_UPSTASH_REDIS_REST_TOKEN;
+
+    expect(() => getCheckpointer()).toThrow(/Missing Redis configuration/);
+  });
+});
