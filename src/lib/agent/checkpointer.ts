@@ -187,7 +187,8 @@ export function getCheckpointer() {
   } catch (error) {
     const isProductionBuildPhase =
       process.env.NEXT_PHASE === "phase-production-build";
-    if (isProductionEnv() && !isProductionBuildPhase) {
+    const isCiRuntime = process.env.CI === "true";
+    if (isProductionEnv() && !isProductionBuildPhase && !isCiRuntime) {
       console.error(
         JSON.stringify({
           component: "vanguard.agent.checkpointer",
@@ -204,7 +205,9 @@ export function getCheckpointer() {
         level: "warn",
         event: isProductionBuildPhase
           ? "production_build_checkpointer_deferred"
-          : "degraded_checkpointer_disabled",
+          : isCiRuntime
+            ? "ci_runtime_checkpointer_deferred"
+            : "degraded_checkpointer_disabled",
         detail: error instanceof Error ? error.message.slice(0, 120) : "unknown",
       }),
     );
