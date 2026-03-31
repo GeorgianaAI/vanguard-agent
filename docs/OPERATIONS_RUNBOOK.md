@@ -1,4 +1,4 @@
-# Operations Runbook
+# 📘 Operations Runbook
 
 ## Health endpoint semantics
 
