@@ -26,10 +26,23 @@ import {
   withRequestIdHeaders,
 } from "./telemetry";
 import type { UIMessageChunk } from "ai";
+import {
+  getThreadPrefix,
+  isRedTeamMode,
+  resolveRedisEnv,
+} from "../../../src/lib/runtime/redteam";
+import {
+  getVectorRuntimeConfig,
+  runVectorNamespaceProbe,
+} from "../../../src/lib/runtime/vectorClient";
 
 export const runtime = "edge";
 
-const redis = Redis.fromEnv();
+const redisEnv = resolveRedisEnv();
+const vectorEnv = getVectorRuntimeConfig();
+const redis = redisEnv.url && redisEnv.token
+  ? new Redis({ url: redisEnv.url, token: redisEnv.token })
+  : null;
 const approvalLocks = new Map<string, number>();
 
 const MISSION_RATE_LIMIT_WINDOW = "60 s";
@@ -37,25 +50,29 @@ const MISSION_RATE_LIMIT_REQUESTS = 5;
 const APPROVAL_RATE_LIMIT_WINDOW = "60 s";
 const APPROVAL_RATE_LIMIT_REQUESTS = 20;
 
-const missionRatelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(
-    MISSION_RATE_LIMIT_REQUESTS,
-    MISSION_RATE_LIMIT_WINDOW,
-  ),
-  analytics: true,
-  prefix: "@vanguard/ratelimit/mission",
-});
+const missionRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(
+        MISSION_RATE_LIMIT_REQUESTS,
+        MISSION_RATE_LIMIT_WINDOW,
+      ),
+      analytics: true,
+      prefix: `@${redisEnv.keyPrefix}/ratelimit/mission`,
+    })
+  : null;
 
-const approvalRatelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(
-    APPROVAL_RATE_LIMIT_REQUESTS,
-    APPROVAL_RATE_LIMIT_WINDOW,
-  ),
-  analytics: true,
-  prefix: "@vanguard/ratelimit/approval",
-});
+const approvalRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(
+        APPROVAL_RATE_LIMIT_REQUESTS,
+        APPROVAL_RATE_LIMIT_WINDOW,
+      ),
+      analytics: true,
+      prefix: `@${redisEnv.keyPrefix}/ratelimit/approval`,
+    })
+  : null;
 
 function getClientIp(req: Request): string {
   const forwardedFor = req.headers.get("x-forwarded-for") ?? "";
@@ -164,7 +181,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const threadId = thread_id ?? `vanguard-${Date.now()}`;
+    const threadId = thread_id ?? `${getThreadPrefix()}-${Date.now()}`;
     const missionId = threadId;
 
     // Fast-fail tampered approval payloads before touching external dependencies.
@@ -197,10 +214,12 @@ export async function POST(req: Request) {
         mission_id: missionId,
         request_id: reqId,
         is_approval: !!isApproval,
+        vector_namespace: vectorEnv.namespace,
       },
       tags: [
         "vanguard-agent",
         isApproval ? "vanguard-agent-approval" : "vanguard-agent-recon",
+        ...(isRedTeamMode() ? ["vanguard-agent-redteam"] : []),
       ],
     };
 
@@ -236,6 +255,23 @@ export async function POST(req: Request) {
             "Approval already processed or no pending authorization step",
             { status: 409 },
           ),
+          reqId,
+        );
+      }
+
+      if (!approvalRatelimit || !redis) {
+        vanguardChatLog({
+          reqId,
+          phase: "error",
+          status: 503,
+          threadId,
+          message: "Redis config missing for approval flow",
+          isApproval: true,
+        });
+        return withRequestIdHeaders(
+          new Response("Service unavailable: Redis configuration missing", {
+            status: 503,
+          }),
           reqId,
         );
       }
@@ -498,6 +534,23 @@ export async function POST(req: Request) {
       return withRequestIdHeaders(streamRes, reqId);
     }
 
+    if (!missionRatelimit) {
+      vanguardChatLog({
+        reqId,
+        phase: "error",
+        status: 503,
+        threadId,
+        message: "Redis config missing for mission flow",
+        isApproval: false,
+      });
+      return withRequestIdHeaders(
+        new Response("Service unavailable: Redis configuration missing", {
+          status: 503,
+        }),
+        reqId,
+      );
+    }
+
     const { success } = await missionRatelimit.limit(`${getClientIp(req)}:mission`);
     if (!success) {
       vanguardChatLog({
@@ -528,6 +581,25 @@ export async function POST(req: Request) {
       pendingApprovalId: null,
     };
 
+    let vectorProbeVerified = false;
+    if (isRedTeamMode()) {
+      try {
+        const probe = await runVectorNamespaceProbe(threadId);
+        vectorProbeVerified = probe.verified;
+      } catch (error) {
+        vanguardChatLog({
+          reqId,
+          phase: "error",
+          status: 500,
+          threadId,
+          message: `vector_namespace_probe_failed:${
+            error instanceof Error ? error.message : "unknown"
+          }`,
+          isApproval: false,
+        });
+      }
+    }
+
     vanguardChatLog({
       reqId,
       phase: "recon",
@@ -539,6 +611,10 @@ export async function POST(req: Request) {
     });
     const nextState = await vanguardGraph.invoke(inputState, {
       ...config,
+      metadata: {
+        ...config.metadata,
+        vector_probe_verified: vectorProbeVerified,
+      },
       tags: [...config.tags, "vanguard-agent-recon-start"],
     });
     const nextValues = nextState as Record<string, unknown>;

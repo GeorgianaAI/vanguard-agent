@@ -59,10 +59,14 @@ const hoisted = vi.hoisted(() => ({
 }));
 
 vi.mock("@upstash/redis", () => ({
-  Redis: {
-    fromEnv: () => ({
-      set: hoisted.redisSet,
-    }),
+  Redis: class {
+    set = hoisted.redisSet;
+    constructor() {}
+    static fromEnv() {
+      return {
+        set: hoisted.redisSet,
+      };
+    }
   },
 }));
 
@@ -99,6 +103,8 @@ vi.mock("@ai-sdk/langchain", () => ({
 describe("POST /api/chat governance", () => {
   beforeEach(async () => {
     vi.resetModules();
+    process.env.UPSTASH_REDIS_REST_URL = "https://test.redis";
+    process.env.UPSTASH_REDIS_REST_TOKEN = "test-token";
     TEST_APPROVAL_CONTEXT_HASH = await computeApprovalContextHash(
       TEST_APPROVAL_CONTEXT,
     );
@@ -132,6 +138,8 @@ describe("POST /api/chat governance", () => {
   });
 
   afterEach(() => {
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
     vi.clearAllMocks();
   });
 
@@ -247,6 +255,29 @@ describe("POST /api/chat governance", () => {
     expect(hoisted.redisSet).not.toHaveBeenCalled();
   });
 
+  it("still returns 409 on tampered approval even without redis config", async () => {
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    const POST = await loadPost();
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          isApproval: true,
+          approved: true,
+          thread_id: "v-test-1",
+          tool_call_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_context_hash:
+            "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+          approval_context: TEST_APPROVAL_CONTEXT,
+        }),
+      }),
+    );
+    expect(res.status).toBe(409);
+  });
+
   it("accepts approval when checkpoint context is missing but body context is valid", async () => {
     hoisted.getState.mockResolvedValue({
       values: {
@@ -290,6 +321,24 @@ describe("POST /api/chat governance", () => {
     );
     expect(res.status).toBe(429);
     expect(hoisted.ratelimitLimit).toHaveBeenCalledWith("127.0.0.1:mission");
+  });
+
+  it("returns 503 for mission when redis config is missing", async () => {
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    const POST = await loadPost();
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          messages: [],
+          target: "example.com",
+          thread_id: "v-mission-no-redis",
+        }),
+      }),
+    );
+    expect(res.status).toBe(503);
   });
 
   it("uses approval-specific rate limit bucket", async () => {
@@ -356,6 +405,15 @@ describe("POST /api/chat governance", () => {
     );
     expect(res.status).toBe(200);
     expect(hoisted.invoke).toHaveBeenCalled();
+    expect(hoisted.invoke).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          vector_namespace: expect.any(String),
+          vector_probe_verified: expect.any(Boolean),
+        }),
+      }),
+    );
     expect(hoisted.streamEvents).not.toHaveBeenCalled();
     expect(hoisted.updateState).toHaveBeenCalledWith(
       { configurable: { thread_id: "v-pressure" } },

@@ -12,6 +12,7 @@ import type {
   PendingWrite,
 } from "@langchain/langgraph-checkpoint";
 import { Redis } from "@upstash/redis";
+import { resolveRedisEnv } from "../runtime/redteam";
 
 const CHECKPOINT_TTL_SECONDS = 60 * 60 * 24; // 24h
 
@@ -33,12 +34,16 @@ function getCheckpointIdFromConfig(config: RunnableConfig): string | undefined {
   return typeof checkpointId === "string" ? checkpointId : undefined;
 }
 
-function checkpointKey(threadId: string, checkpointId: string): string {
-  return `vanguard:checkpoint:${threadId}:${checkpointId}`;
+function checkpointKey(
+  keyPrefix: string,
+  threadId: string,
+  checkpointId: string,
+): string {
+  return `${keyPrefix}:checkpoint:${threadId}:${checkpointId}`;
 }
 
-function latestPointerKey(threadId: string): string {
-  return `vanguard:checkpoint:latest:${threadId}`;
+function latestPointerKey(keyPrefix: string, threadId: string): string {
+  return `${keyPrefix}:checkpoint:latest:${threadId}`;
 }
 
 function parseStoredCheckpoint(raw: unknown): StoredCheckpoint | undefined {
@@ -54,12 +59,20 @@ function parseStoredCheckpoint(raw: unknown): StoredCheckpoint | undefined {
 
 export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
   private client: Redis;
+  private keyPrefix: string;
 
   constructor() {
     super();
+    const cfg = resolveRedisEnv();
+    if (!cfg.url || !cfg.token) {
+      throw new Error(
+        "Missing Redis configuration: set UPSTASH_REDIS_REST_URL/TOKEN or RED_TEAM_UPSTASH_REDIS_REST_URL/TOKEN when REDTEAM_MODE=true.",
+      );
+    }
+    this.keyPrefix = cfg.keyPrefix;
     this.client = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+      url: cfg.url,
+      token: cfg.token,
     });
   }
 
@@ -74,8 +87,8 @@ export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
   ): Promise<RunnableConfig> {
     const threadId = getThreadId(config);
     const checkpointId = checkpoint.id;
-    const cpKey = checkpointKey(threadId, checkpointId);
-    const latestKey = latestPointerKey(threadId);
+    const cpKey = checkpointKey(this.keyPrefix, threadId, checkpointId);
+    const latestKey = latestPointerKey(this.keyPrefix, threadId);
 
     const payload: StoredCheckpoint = { checkpoint, metadata };
 
@@ -117,12 +130,12 @@ export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
 
     const checkpointId =
       requestedCheckpointId ??
-      (await this.client.get<string>(latestPointerKey(threadId)));
+      (await this.client.get<string>(latestPointerKey(this.keyPrefix, threadId)));
 
     if (!checkpointId) return undefined;
 
     const raw = await this.client.get<unknown>(
-      checkpointKey(threadId, checkpointId),
+      checkpointKey(this.keyPrefix, threadId, checkpointId),
     );
     const parsed = parseStoredCheckpoint(raw);
     if (!parsed) return undefined;
@@ -158,11 +171,13 @@ export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
    * Delete all checkpoints for a thread.
    */
   async deleteThread(threadId: string): Promise<void> {
-    const keys = await this.client.keys(`vanguard:checkpoint:${threadId}:*`);
+    const keys = await this.client.keys(
+      `${this.keyPrefix}:checkpoint:${threadId}:*`,
+    );
     if (keys.length > 0) {
       await this.client.del(...keys);
     }
-    await this.client.del(latestPointerKey(threadId));
+    await this.client.del(latestPointerKey(this.keyPrefix, threadId));
   }
 }
 
