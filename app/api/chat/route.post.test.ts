@@ -177,6 +177,28 @@ describe("POST /api/chat governance", () => {
     expect(res.headers.get("x-request-id")).toBeTruthy();
   });
 
+  it("returns 409 when graph state read fails for approval bypass", async () => {
+    hoisted.getState.mockRejectedValue(new Error("state unavailable"));
+    const POST = await loadPost();
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          isApproval: true,
+          approved: true,
+          thread_id: "v-test-getstate-fail",
+          tool_call_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_context_hash: TEST_APPROVAL_CONTEXT_HASH,
+        }),
+      }),
+    );
+    expect(res.status).toBe(409);
+    const text = await res.text();
+    expect(text).toContain("Approval context missing or stale");
+  });
+
   it("returns 409 when Redis NX lock is not acquired", async () => {
     hoisted.redisSet.mockResolvedValue(null);
     const POST = await loadPost();
