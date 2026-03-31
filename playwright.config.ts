@@ -24,7 +24,8 @@ export default defineConfig({
 
   webServer: process.env.CI
     ? {
-        command: "npm run build && npm run start",
+        command:
+          "AUTH_E2E_BYPASS=true npm run build && AUTH_E2E_BYPASS=true npm run start",
         url: "http://localhost:3000",
         reuseExistingServer: false,
         timeout: 300_000,
