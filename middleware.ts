@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifySessionToken } from "./src/lib/auth/session";
-import { hasMinRole } from "./src/lib/auth/rbac";
+import { hasPermission, type Permission } from "./src/lib/auth/permissions";
 
 function unauthorized(req: NextRequest) {
   if (req.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const login = new URL("/login", req.url);
-  return NextResponse.redirect(login);
+  return NextResponse.redirect(new URL("/login", req.url));
 }
 
 function forbidden() {
@@ -16,16 +15,18 @@ function forbidden() {
 }
 
 function shouldBypassAuthForE2E(): boolean {
-  return process.env.CI === "true" && process.env.AUTH_E2E_BYPASS === "true";
+  return process.env.AUTH_E2E_BYPASS === "true";
+}
+
+function routePermission(pathname: string): Permission | null {
+  if (pathname.startsWith("/dashboard")) return "ui:access";
+  if (pathname.startsWith("/api/chat")) return "mission:run";
+  if (pathname.startsWith("/api/audit/evidence")) return "audit:evidence:read";
+  return null;
 }
 
 export async function middleware(req: NextRequest) {
-  // Temporary compatibility path for legacy e2e suites.
-  // Keeps auth enabled in normal runtime while allowing existing CI tests
-  // (written pre-auth) to keep asserting governance/status behavior.
-  if (shouldBypassAuthForE2E()) {
-    return NextResponse.next();
-  }
+  if (shouldBypassAuthForE2E()) return NextResponse.next();
 
   const cookie = req.cookies.get(
     process.env.AUTH_COOKIE_NAME ?? "vanguard_session",
@@ -35,24 +36,16 @@ export async function middleware(req: NextRequest) {
   const claims = await verifySessionToken(cookie);
   if (!claims) return unauthorized(req);
 
-  const p = req.nextUrl.pathname;
+  const required = routePermission(req.nextUrl.pathname);
+  if (required && !hasPermission(claims.role, required)) return forbidden();
 
-  // dashboard requires at least viewer
-  if (p.startsWith("/dashboard")) {
-    if (!hasMinRole(claims.role, "viewer")) return forbidden();
-  }
+  const headers = new Headers(req.headers);
+  headers.set("x-actor-id", claims.sub);
+  headers.set("x-actor-role", claims.role);
 
-  // chat requires analyst+
-  if (p.startsWith("/api/chat")) {
-    if (!hasMinRole(claims.role, "analyst")) return forbidden();
-  }
-
-  // audit export requires admin
-  if (p.startsWith("/api/audit/evidence")) {
-    if (!hasMinRole(claims.role, "admin")) return forbidden();
-  }
-
-  return NextResponse.next();
+  return NextResponse.next({
+    request: { headers },
+  });
 }
 
 export const config = {

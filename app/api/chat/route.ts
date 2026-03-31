@@ -19,7 +19,10 @@ import {
   isAllowedApprovalTool,
   validateApprovalToolArgs,
 } from "../../../src/lib/approval/policy";
-import type { ApprovalDecision, ApprovalContextV1 } from "../../../src/lib/approval/types";
+import type {
+  ApprovalDecision,
+  ApprovalContextV1,
+} from "../../../src/lib/approval/types";
 import {
   newRequestId,
   vanguardChatLog,
@@ -49,9 +52,10 @@ if (redisConfigMissing) {
       : "Redis configuration missing outside production; API will run in degraded mode.",
   );
 }
-const redis = redisEnv.url && redisEnv.token
-  ? new Redis({ url: redisEnv.url, token: redisEnv.token })
-  : null;
+const redis =
+  redisEnv.url && redisEnv.token
+    ? new Redis({ url: redisEnv.url, token: redisEnv.token })
+    : null;
 const approvalLocks = new Map<string, number>();
 
 const MISSION_RATE_LIMIT_WINDOW = "60 s";
@@ -97,7 +101,9 @@ function acquireLocalApprovalLock(key: string, ttlMs: number): boolean {
   return true;
 }
 
-function streamSingleAssistantText(text: string): ReadableStream<UIMessageChunk> {
+function streamSingleAssistantText(
+  text: string,
+): ReadableStream<UIMessageChunk> {
   const textId = `txt_${crypto.randomUUID()}`;
   return new ReadableStream<UIMessageChunk>({
     start(controller) {
@@ -113,6 +119,8 @@ function streamSingleAssistantText(text: string): ReadableStream<UIMessageChunk>
 
 export async function POST(req: Request) {
   const reqId = newRequestId(req);
+  const actorId = req.headers.get("x-actor-id") ?? undefined;
+  const actorRole = req.headers.get("x-actor-role") ?? undefined;
 
   try {
     const body = await req.json();
@@ -125,6 +133,8 @@ export async function POST(req: Request) {
         phase: "parse",
         status: 400,
         message: "MissionRequestSchema validation failed",
+        actorId,
+        actorRole,
       });
       return withRequestIdHeaders(
         new Response("Invalid mission payload", { status: 400 }),
@@ -151,6 +161,8 @@ export async function POST(req: Request) {
         status: 400,
         message: "Missing thread_id for approval",
         isApproval: true,
+        actorId,
+        actorRole,
       });
       return withRequestIdHeaders(
         new Response("Missing thread_id for approval", { status: 400 }),
@@ -166,6 +178,8 @@ export async function POST(req: Request) {
         threadId: thread_id,
         message: "Missing approved boolean",
         isApproval: true,
+        actorId,
+        actorRole,
       });
       return withRequestIdHeaders(
         new Response("Missing approved boolean for approval request", {
@@ -183,9 +197,13 @@ export async function POST(req: Request) {
         threadId: thread_id,
         message: "Missing approval context binding fields",
         isApproval: true,
+        actorId,
+        actorRole,
       });
       return withRequestIdHeaders(
-        new Response("Missing approval context binding fields", { status: 400 }),
+        new Response("Missing approval context binding fields", {
+          status: 400,
+        }),
         reqId,
       );
     }
@@ -194,7 +212,11 @@ export async function POST(req: Request) {
     const missionId = threadId;
 
     // Fast-fail tampered approval payloads before touching external dependencies.
-    if (isApproval && approval_context && typeof approval_context === "object") {
+    if (
+      isApproval &&
+      approval_context &&
+      typeof approval_context === "object"
+    ) {
       try {
         const bodyContext = approval_context as ApprovalContextV1;
         const computedBodyHash = await computeApprovalContextHash(bodyContext);
@@ -206,6 +228,8 @@ export async function POST(req: Request) {
             threadId,
             message: "Approval context hash mismatch (early body check)",
             isApproval: true,
+            actorId,
+            actorRole,
           });
           return withRequestIdHeaders(
             new Response("Approval mismatch — context hash is invalid", {
@@ -220,8 +244,11 @@ export async function POST(req: Request) {
           phase: "approval",
           status: 409,
           threadId,
-          message: "Approval context hash computation failed (early body check)",
+          message:
+            "Approval context hash computation failed (early body check)",
           isApproval: true,
+          actorId,
+          actorRole,
         });
         return withRequestIdHeaders(
           new Response("Approval mismatch — context payload is invalid", {
@@ -250,9 +277,11 @@ export async function POST(req: Request) {
     };
 
     if (isApproval) {
-      const currentState = await vanguardGraph.getState({
-        configurable: { thread_id: threadId },
-      }).catch(() => null);
+      const currentState = await vanguardGraph
+        .getState({
+          configurable: { thread_id: threadId },
+        })
+        .catch(() => null);
       const values = (currentState?.values ?? {}) as Record<string, unknown>;
       const pendingApprovalContext = (values.pendingApprovalContext ??
         null) as ApprovalContextV1 | null;
@@ -293,6 +322,8 @@ export async function POST(req: Request) {
           threadId,
           message: "Redis config missing for approval flow",
           isApproval: true,
+          actorId,
+          actorRole,
         });
         return withRequestIdHeaders(
           new Response("Service unavailable: Redis configuration missing", {
@@ -313,6 +344,8 @@ export async function POST(req: Request) {
           threadId,
           message: "Rate limit exceeded",
           isApproval: true,
+          actorId,
+          actorRole,
         });
         return withRequestIdHeaders(
           new Response("Too many missions. Cool down.", { status: 429 }),
@@ -331,6 +364,8 @@ export async function POST(req: Request) {
           threadId,
           message: "Duplicate approval (in-process lock)",
           isApproval: true,
+          actorId,
+          actorRole,
         });
         return withRequestIdHeaders(
           new Response("Approval already processed", { status: 409 }),
@@ -350,6 +385,8 @@ export async function POST(req: Request) {
           threadId,
           message: "Duplicate approval (Redis nx)",
           isApproval: true,
+          actorId,
+          actorRole,
         });
         return withRequestIdHeaders(
           new Response("Approval already processed", { status: 409 }),
@@ -361,7 +398,11 @@ export async function POST(req: Request) {
       let effectivePendingHash = pendingApprovalHash;
       let effectivePendingId = pendingApprovalId;
 
-      if (!effectivePendingContext || !effectivePendingHash || !effectivePendingId) {
+      if (
+        !effectivePendingContext ||
+        !effectivePendingHash ||
+        !effectivePendingId
+      ) {
         const fromBody =
           approval_context && typeof approval_context === "object"
             ? (approval_context as ApprovalContextV1)
@@ -374,6 +415,8 @@ export async function POST(req: Request) {
             threadId,
             message: "Missing pending approval context",
             isApproval: true,
+            actorId,
+            actorRole,
           });
           return withRequestIdHeaders(
             new Response("Approval context missing or stale", { status: 409 }),
@@ -389,6 +432,8 @@ export async function POST(req: Request) {
             threadId,
             message: "Approval context hash mismatch (body)",
             isApproval: true,
+            actorId,
+            actorRole,
           });
           return withRequestIdHeaders(
             new Response("Approval mismatch — context hash is invalid", {
@@ -410,11 +455,16 @@ export async function POST(req: Request) {
           threadId,
           message: "Approval expired",
           isApproval: true,
+          actorId,
+          actorRole,
         });
         return withRequestIdHeaders(
-          new Response("Approval expired — please request a fresh authorization", {
-            status: 409,
-          }),
+          new Response(
+            "Approval expired — please request a fresh authorization",
+            {
+              status: 409,
+            },
+          ),
           reqId,
         );
       }
@@ -427,11 +477,16 @@ export async function POST(req: Request) {
           threadId,
           message: "Approval id mismatch",
           isApproval: true,
+          actorId,
+          actorRole,
         });
         return withRequestIdHeaders(
-          new Response("Approval mismatch — plan id does not match pending step", {
-            status: 409,
-          }),
+          new Response(
+            "Approval mismatch — plan id does not match pending step",
+            {
+              status: 409,
+            },
+          ),
           reqId,
         );
       }
@@ -444,6 +499,8 @@ export async function POST(req: Request) {
           threadId,
           message: "Approval context hash mismatch",
           isApproval: true,
+          actorId,
+          actorRole,
         });
         return withRequestIdHeaders(
           new Response("Approval mismatch — context hash is invalid", {
@@ -453,7 +510,10 @@ export async function POST(req: Request) {
         );
       }
 
-      if (tool_call_id && tool_call_id !== effectivePendingContext.approval_id) {
+      if (
+        tool_call_id &&
+        tool_call_id !== effectivePendingContext.approval_id
+      ) {
         vanguardChatLog({
           reqId,
           phase: "approval",
@@ -461,9 +521,13 @@ export async function POST(req: Request) {
           threadId,
           message: "Approval tool_call_id mismatch",
           isApproval: true,
+          actorId,
+          actorRole,
         });
         return withRequestIdHeaders(
-          new Response("Approval mismatch — stale tool call id", { status: 409 }),
+          new Response("Approval mismatch — stale tool call id", {
+            status: 409,
+          }),
           reqId,
         );
       }
@@ -480,6 +544,8 @@ export async function POST(req: Request) {
           threadId,
           message: "Approval tool policy validation failed",
           isApproval: true,
+          actorId,
+          actorRole,
         });
         return withRequestIdHeaders(
           new Response("Approval blocked — tool policy validation failed", {
@@ -552,6 +618,8 @@ export async function POST(req: Request) {
           ? "approval_authorized_stream"
           : "approval_aborted_stream",
         isApproval: true,
+        actorId,
+        actorRole,
       });
       const streamRes = createUIMessageStreamResponse({
         stream: toUIMessageStream(stream),
@@ -568,6 +636,8 @@ export async function POST(req: Request) {
         threadId,
         message: "Redis config missing for mission flow",
         isApproval: false,
+        actorId,
+        actorRole,
       });
       return withRequestIdHeaders(
         new Response("Service unavailable: Redis configuration missing", {
@@ -577,7 +647,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const { success } = await missionRatelimit.limit(`${getClientIp(req)}:mission`);
+    const { success } = await missionRatelimit.limit(
+      `${getClientIp(req)}:mission`,
+    );
     if (!success) {
       vanguardChatLog({
         reqId,
@@ -586,6 +658,8 @@ export async function POST(req: Request) {
         threadId,
         message: "Rate limit exceeded",
         isApproval: false,
+        actorId,
+        actorRole,
       });
       return withRequestIdHeaders(
         new Response("Too many missions. Cool down.", { status: 429 }),
@@ -622,6 +696,8 @@ export async function POST(req: Request) {
             error instanceof Error ? error.message : "unknown"
           }`,
           isApproval: false,
+          actorId,
+          actorRole,
         });
       }
     }
@@ -634,6 +710,8 @@ export async function POST(req: Request) {
       missionId,
       message: "recon_stream_start",
       isApproval: false,
+      actorId,
+      actorRole,
     });
     const nextState = await vanguardGraph.invoke(inputState, {
       ...config,
@@ -656,7 +734,8 @@ export async function POST(req: Request) {
         { configurable: { thread_id: threadId } },
         {
           isPendingApproval: true,
-          pendingApprovalContext: nextValues.pendingApprovalContext as ApprovalContextV1,
+          pendingApprovalContext:
+            nextValues.pendingApprovalContext as ApprovalContextV1,
           pendingApprovalHash: nextValues.pendingApprovalHash as string,
           pendingApprovalId: nextValues.pendingApprovalId as string,
         },
@@ -687,6 +766,8 @@ export async function POST(req: Request) {
       phase: "error",
       status: 500,
       message: error instanceof Error ? error.message : "unknown_error",
+      actorId,
+      actorRole,
     });
     return withRequestIdHeaders(
       new Response("Mission Aborted: Uplink Failure", { status: 500 }),
