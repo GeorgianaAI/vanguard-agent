@@ -343,13 +343,23 @@ describe("POST /api/chat governance", () => {
     expect(res.status).toBe(503);
   });
 
-  it("throws on import in production when redis config is missing", async () => {
+  it("returns 503 in production when redis config is missing", async () => {
     process.env.NODE_ENV = "production";
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
-    await expect(loadPost()).rejects.toThrow(
-      /Missing Redis configuration for production/,
+    const POST = await loadPost();
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          messages: [],
+          target: "example.com",
+          thread_id: "v-prod-no-redis",
+        }),
+      }),
     );
+    expect(res.status).toBe(503);
   });
 
   it("uses approval-specific rate limit bucket", async () => {
