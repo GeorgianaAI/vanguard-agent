@@ -195,19 +195,36 @@ export async function POST(req: Request) {
 
     // Fast-fail tampered approval payloads before touching external dependencies.
     if (isApproval && approval_context && typeof approval_context === "object") {
-      const bodyContext = approval_context as ApprovalContextV1;
-      const computedBodyHash = await computeApprovalContextHash(bodyContext);
-      if (computedBodyHash !== approval_context_hash) {
+      try {
+        const bodyContext = approval_context as ApprovalContextV1;
+        const computedBodyHash = await computeApprovalContextHash(bodyContext);
+        if (computedBodyHash !== approval_context_hash) {
+          vanguardChatLog({
+            reqId,
+            phase: "approval",
+            status: 409,
+            threadId,
+            message: "Approval context hash mismatch (early body check)",
+            isApproval: true,
+          });
+          return withRequestIdHeaders(
+            new Response("Approval mismatch — context hash is invalid", {
+              status: 409,
+            }),
+            reqId,
+          );
+        }
+      } catch {
         vanguardChatLog({
           reqId,
           phase: "approval",
           status: 409,
           threadId,
-          message: "Approval context hash mismatch (early body check)",
+          message: "Approval context hash computation failed (early body check)",
           isApproval: true,
         });
         return withRequestIdHeaders(
-          new Response("Approval mismatch — context hash is invalid", {
+          new Response("Approval mismatch — context payload is invalid", {
             status: 409,
           }),
           reqId,
@@ -235,7 +252,7 @@ export async function POST(req: Request) {
     if (isApproval) {
       const currentState = await vanguardGraph.getState({
         configurable: { thread_id: threadId },
-      });
+      }).catch(() => null);
       const values = (currentState?.values ?? {}) as Record<string, unknown>;
       const pendingApprovalContext = (values.pendingApprovalContext ??
         null) as ApprovalContextV1 | null;
