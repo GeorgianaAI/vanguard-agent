@@ -10,6 +10,16 @@ import { useVanguardChat } from "./hooks/useVanguardChat";
 export default function VanguardDashboard() {
   const [target, setTarget] = useState<string>("");
   const [input, setInput] = useState<string>("");
+  const [logoutPending, setLogoutPending] = useState<boolean>(false);
+
+  async function handleLogout() {
+    setLogoutPending(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      window.location.href = "/login";
+    }
+  }
 
   const {
     messages,
@@ -25,7 +35,11 @@ export default function VanguardDashboard() {
   return (
     <div className="min-h-screen bg-slate-950 p-8 text-slate-100">
       <div className="mx-auto max-w-4xl px-6 pb-24 pt-32">
-        <DashboardHeader loading={loading} />
+        <DashboardHeader
+          loading={loading}
+          onLogout={handleLogout}
+          logoutPending={logoutPending}
+        />
 
         <main className="mx-auto grid max-w-4xl gap-6">
           <TargetInput target={target} setTarget={setTarget} />
