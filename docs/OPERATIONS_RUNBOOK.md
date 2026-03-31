@@ -22,6 +22,31 @@
   - missing key/project in non-production (degraded)
   - API failure in any environment (error)
 
+## Red-Team Mode Usage
+
+- `REDTEAM_MODE=true` enables isolated red-team runtime behavior for controlled adversarial runs.
+- Optional isolation controls:
+  - `RED_TEAM_VECTOR_NAMESPACE` (vector memory namespace partition)
+  - `RED_TEAM_THREAD_PREFIX` (thread ID prefix partition)
+- This section is **optional** and **not required for standard setup**.
+- Keep red-team mode **off** for normal operator usage and production user traffic.
+- Enable red-team mode only for:
+  - dedicated red-team test runs
+  - CI adversarial suites
+  - governance/evidence capture workflows
+- In local `.env.local`, keep red-team vars as commented templates and enable only when needed.
+- In CI, scope red-team vars to the specific red-team job/environment (not global pipeline defaults).
+- If behavior looks unexpectedly isolated or non-standard, first verify whether `REDTEAM_MODE` was accidentally enabled.
+
+### Red-team env example (maintainers only, optional)
+
+Use only for controlled red-team runs (local security testing or CI red-team job):
+
+```env
+REDTEAM_MODE=true
+RED_TEAM_VECTOR_NAMESPACE=redteam-ci-0000000001
+RED_TEAM_THREAD_PREFIX=redteam-ci
+
 ## Immediate remediation
 
 1. Check `GET /api/health` and capture `x-request-id` from the response headers.
@@ -45,3 +70,4 @@
 - Health endpoint: `/api/health`
 - Structured runtime logs: `component=vanguard.api.health`
 - CI checks: `npm run verify:env`, `npm run verify:ready`, test and e2e jobs
+```
