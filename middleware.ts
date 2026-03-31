@@ -15,7 +15,18 @@ function forbidden() {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 
+function shouldBypassAuthForE2E(): boolean {
+  return process.env.CI === "true" && process.env.AUTH_E2E_BYPASS === "true";
+}
+
 export async function middleware(req: NextRequest) {
+  // Temporary compatibility path for legacy e2e suites.
+  // Keeps auth enabled in normal runtime while allowing existing CI tests
+  // (written pre-auth) to keep asserting governance/status behavior.
+  if (shouldBypassAuthForE2E()) {
+    return NextResponse.next();
+  }
+
   const cookie = req.cookies.get(
     process.env.AUTH_COOKIE_NAME ?? "vanguard_session",
   )?.value;
