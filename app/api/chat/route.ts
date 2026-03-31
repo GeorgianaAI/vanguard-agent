@@ -42,14 +42,11 @@ export const runtime = "edge";
 const redisEnv = resolveRedisEnv();
 const vectorEnv = getVectorRuntimeConfig();
 const redisConfigMissing = !redisEnv.url || !redisEnv.token;
-if (isProductionEnv() && redisConfigMissing) {
-  throw new Error(
-    "Missing Redis configuration for production: set UPSTASH_REDIS_REST_URL/TOKEN or RED_TEAM_UPSTASH_REDIS_REST_URL/TOKEN when REDTEAM_MODE=true.",
-  );
-}
-if (!isProductionEnv() && redisConfigMissing) {
+if (redisConfigMissing) {
   console.warn(
-    "Redis configuration missing outside production; API will run in degraded mode.",
+    isProductionEnv()
+      ? "Redis configuration missing in production context; API will hard-fail mission/approval requests with 503."
+      : "Redis configuration missing outside production; API will run in degraded mode.",
   );
 }
 const redis = redisEnv.url && redisEnv.token
