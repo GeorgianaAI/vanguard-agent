@@ -31,7 +31,10 @@ import {
   isRedTeamMode,
   resolveRedisEnv,
 } from "../../../src/lib/runtime/redteam";
-import { getVectorRuntimeConfig } from "../../../src/lib/runtime/vectorClient";
+import {
+  getVectorRuntimeConfig,
+  runVectorNamespaceProbe,
+} from "../../../src/lib/runtime/vectorClient";
 
 export const runtime = "edge";
 
@@ -578,6 +581,25 @@ export async function POST(req: Request) {
       pendingApprovalId: null,
     };
 
+    let vectorProbeVerified = false;
+    if (isRedTeamMode()) {
+      try {
+        const probe = await runVectorNamespaceProbe(threadId);
+        vectorProbeVerified = probe.verified;
+      } catch (error) {
+        vanguardChatLog({
+          reqId,
+          phase: "error",
+          status: 500,
+          threadId,
+          message: `vector_namespace_probe_failed:${
+            error instanceof Error ? error.message : "unknown"
+          }`,
+          isApproval: false,
+        });
+      }
+    }
+
     vanguardChatLog({
       reqId,
       phase: "recon",
@@ -589,6 +611,10 @@ export async function POST(req: Request) {
     });
     const nextState = await vanguardGraph.invoke(inputState, {
       ...config,
+      metadata: {
+        ...config.metadata,
+        vector_probe_verified: vectorProbeVerified,
+      },
       tags: [...config.tags, "vanguard-agent-recon-start"],
     });
     const nextValues = nextState as Record<string, unknown>;

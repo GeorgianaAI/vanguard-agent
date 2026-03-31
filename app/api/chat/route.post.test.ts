@@ -410,6 +410,7 @@ describe("POST /api/chat governance", () => {
       expect.objectContaining({
         metadata: expect.objectContaining({
           vector_namespace: expect.any(String),
+          vector_probe_verified: expect.any(Boolean),
         }),
       }),
     );
