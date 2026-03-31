@@ -105,17 +105,21 @@ Best results come from one mission objective per prompt.
 - [x] **The Core Setup:** Implemented a LangGraph-based agent loop with stateful control flow.
 - [x] **Satellite Vision:** Integrated Tavily AI for real-time public web intelligence.
 - [x] **Approval Gate (HITL):** Implemented operator authorization flow before external tool execution.
-- [x] **Mission Persistence:** Migrated in-memory state to Upstash Redis for multi-session survival.
-- [x] **Tactical Dashboard:** Built the high-contrast Command Center UI with streaming reasoning.
+- [x] **Persistence & Reliability:** Upstash Redis-backed checkpointing enables state recovery and multi-session mission continuity.
+- [x] **Command Center UI:** Streaming mission interface with approval context and operator controls.
 - [x] **Grounded Alignment:** Synchronized Home and Dashboard visuals to the Phase 2 standard.
 - [x] **Supervisor Refactor:** General/Scout/Auditor hierarchy implemented; routing and approval UX still being hardened.
 - [x] **Automated Unit Testing:** **Vitest** for API request validation (Zod), mission and approval state helpers, and dashboard message utilities.
-- [x] **CI and e2e Smoke:** **GitHub Actions** runs lint, unit tests with coverage, production build, and **Playwright** (Chromium) on pushes and pull requests to `main`; dashboard smoke covers core controls, initial feed state, and a mocked chat POST path. Live HITL/API tests stay optional behind `E2E_LIVE`.
+- [x] **CI/CD and e2e Validation:** **GitHub Actions** enforces lint, unit tests (with coverage), and production build on pushes/PRs to `main`, plus **Playwright** Chromium smoke checks for core dashboard behavior (shell controls, initial feed state, mocked `/api/chat` failure paths). Live HITL/API scenarios remain opt-in behind `E2E_LIVE`.
 - [x] **MCP server (stdio):** `mcp-server/` with **`vanguard_ping`** and **`domain_whois`** (RDAP, shared with LangGraph). Expand with **`nmap`** or other tools under explicit policy later.
 - [x] **Vercel deployment:** Production app hosted on **Vercel**; API keys and service credentials are set as **server-side environment variables** in the Vercel project (not committed to the repo).
 - [x] **Adversarial Red-Teaming:** Stress-testing the authorization gate against jailbreak attempts.
 - [x] **Auth & RBAC:** Operator authentication (sessions / identity provider) and **role-based access control** for dashboard routes, mission actions (e.g. deploy, approve tools), and audit-sensitive APIs.
-- [ ] **NIST Compliance Export:** Automated generation of PDF audit reports from LangSmith traces.
+- [x] **Operational & Governance Docs:** Runbook, security advisory, and architecture flow documentation.
+- [ ] **Demo Access (Recruiter-Friendly):** Add a rotating `demo_admin` account and document public demo access workflow.
+- [ ] **Mission Timeline Replay (Governance UI):** Compact event timeline with read-only playback.
+- [ ] **Compliance Evidence Export (PDF):** Generate downloadable audit reports from trace-linked mission evidence (LangSmith + governance logs).
+- [ ] **NIST-Aligned Governance Dashboard:** Decision integrity ledger, mission timeline replay, and traceable control evidence mapped to AI risk management and compliance oversight (`/governance`).
 
 ---
 
