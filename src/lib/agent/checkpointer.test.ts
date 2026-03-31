@@ -20,6 +20,7 @@ describe("getCheckpointer", () => {
 
   it("throws in production when redis env is missing", () => {
     process.env.NODE_ENV = "production";
+    delete process.env.CI;
     delete process.env.NEXT_PHASE;
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
