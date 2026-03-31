@@ -26,10 +26,19 @@ import {
   withRequestIdHeaders,
 } from "./telemetry";
 import type { UIMessageChunk } from "ai";
+import {
+  getThreadPrefix,
+  isRedTeamMode,
+  resolveRedisEnv,
+} from "../../../src/lib/runtime/redteam";
 
 export const runtime = "edge";
 
-const redis = Redis.fromEnv();
+const redisEnv = resolveRedisEnv();
+const redis =
+  redisEnv.url && redisEnv.token
+    ? new Redis({ url: redisEnv.url, token: redisEnv.token })
+    : Redis.fromEnv();
 const approvalLocks = new Map<string, number>();
 
 const MISSION_RATE_LIMIT_WINDOW = "60 s";
@@ -44,7 +53,7 @@ const missionRatelimit = new Ratelimit({
     MISSION_RATE_LIMIT_WINDOW,
   ),
   analytics: true,
-  prefix: "@vanguard/ratelimit/mission",
+  prefix: `@${redisEnv.keyPrefix}/ratelimit/mission`,
 });
 
 const approvalRatelimit = new Ratelimit({
@@ -54,7 +63,7 @@ const approvalRatelimit = new Ratelimit({
     APPROVAL_RATE_LIMIT_WINDOW,
   ),
   analytics: true,
-  prefix: "@vanguard/ratelimit/approval",
+  prefix: `@${redisEnv.keyPrefix}/ratelimit/approval`,
 });
 
 function getClientIp(req: Request): string {
@@ -164,7 +173,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const threadId = thread_id ?? `vanguard-${Date.now()}`;
+    const threadId = thread_id ?? `${getThreadPrefix()}-${Date.now()}`;
     const missionId = threadId;
 
     // Fast-fail tampered approval payloads before touching external dependencies.
@@ -201,6 +210,7 @@ export async function POST(req: Request) {
       tags: [
         "vanguard-agent",
         isApproval ? "vanguard-agent-approval" : "vanguard-agent-recon",
+        ...(isRedTeamMode() ? ["vanguard-agent-redteam"] : []),
       ],
     };
 

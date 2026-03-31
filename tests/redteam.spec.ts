@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
 
+const redTeamSessionId =
+  process.env.RED_TEAM_SESSION_ID ??
+  (process.env.CI ? "redteam-ci-0000000001" : "redteam-local-00000001");
+
 test.describe("Red team governance harness", () => {
   test("rejects malformed approval payload missing context binding", async ({
     request,
@@ -9,7 +13,7 @@ test.describe("Red team governance harness", () => {
       data: {
         isApproval: true,
         approved: true,
-        thread_id: "vanguard-redteam-malformed-1",
+        thread_id: `${redTeamSessionId}-malformed-1`,
         tool_call_id: "apr-x",
       },
     });
@@ -24,7 +28,7 @@ test.describe("Red team governance harness", () => {
       data: {
         isApproval: true,
         approved: true,
-        thread_id: "vanguard-redteam-bypass-1",
+        thread_id: `${redTeamSessionId}-bypass-1`,
         tool_call_id: "apr-x",
         approval_id: "apr-x",
         approval_context_hash:
@@ -32,7 +36,7 @@ test.describe("Red team governance harness", () => {
         approval_context: {
           version: 1,
           approval_id: "apr-x",
-          thread_id: "vanguard-redteam-bypass-1",
+          thread_id: `${redTeamSessionId}-bypass-1`,
           requested_at: "2026-03-30T00:00:00.000Z",
           expires_at: "2099-01-01T00:00:00.000Z",
           requested_by_node: "scout",

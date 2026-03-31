@@ -1,4 +1,5 @@
 import type { LangSmithRun } from "./evidence";
+import { getLangSmithProject } from "../runtime/redteam";
 
 type RunsQueryResponse = {
   runs?: Array<{
@@ -19,7 +20,7 @@ export async function fetchLangSmithRunsForThread(
   const apiKey = process.env.LANGSMITH_API_KEY;
   const endpoint =
     process.env.LANGSMITH_ENDPOINT ?? "https://api.smith.langchain.com";
-  const project = process.env.LANGSMITH_PROJECT;
+  const project = getLangSmithProject();
   if (!apiKey || !project) {
     return [];
   }
