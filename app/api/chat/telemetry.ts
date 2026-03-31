@@ -9,6 +9,8 @@ export type VanguardChatLog = {
   missionId?: string;
   message: string;
   isApproval?: boolean;
+  actorId?: string;
+  actorRole?: string;
 };
 
 export function vanguardChatLog(entry: VanguardChatLog): void {
@@ -29,10 +31,7 @@ export function newRequestId(req: Request): string {
   );
 }
 
-export function withRequestIdHeaders(
-  res: Response,
-  reqId: string,
-): Response {
+export function withRequestIdHeaders(res: Response, reqId: string): Response {
   const headers = new Headers(res.headers);
   headers.set("x-request-id", reqId);
   return new Response(res.body, {
