@@ -13,6 +13,7 @@ import {
 import type { ApprovalContextV1 } from "@/src/lib/approval/types";
 import { ApprovalCard } from "./ApprovalCard";
 import { ToolInvocationCard } from "./ToolInvocationCard";
+import { AgentBadge, type AgentType } from "./AgentBadge";
 
 type MessageBubbleProps = {
   message: DashboardMessage;
@@ -22,6 +23,33 @@ type MessageBubbleProps = {
   approvalDisabled?: boolean;
   previousApprovalContext?: ApprovalContextV1 | null;
 };
+
+function resolveAssistantAgentType(opts: {
+  text: string;
+  hasToolParts: boolean;
+  hasApprovalSignal: boolean;
+  requestedByNode?: "supervisor" | "scout" | "system";
+}): AgentType {
+  // Strongest signal: explicit node in approval context
+  if (opts.requestedByNode === "scout") return "SCOUT";
+  if (opts.requestedByNode === "supervisor") return "SUPERVISOR";
+
+  // Approval gate and tool activity are scout-origin in current graph
+  if (opts.hasApprovalSignal || opts.hasToolParts) return "SCOUT";
+
+  // Lightweight supervisor cue for initial routing acknowledgements
+  const normalized = opts.text.toLowerCase();
+  if (
+    normalized.includes("initiating") ||
+    normalized.includes("understood") ||
+    normalized.includes("routing mission")
+  ) {
+    return "SUPERVISOR";
+  }
+
+  // Final synthesis/closure falls to auditor
+  return "AUDITOR";
+}
 
 export function MessageBubble({
   message,
@@ -43,9 +71,7 @@ export function MessageBubble({
   // Keep fallback deterministic: only the explicit approval signal can trigger
   // fallback rendering if adapter tool state is unavailable.
   const hasStateApprovalSignal =
-    !isUser &&
-    !hasToolApprovalPart &&
-    messageHasApprovalSignal(message);
+    !isUser && !hasToolApprovalPart && messageHasApprovalSignal(message);
 
   const showApprovalCard =
     !resolved && (hasToolApprovalPart || hasStateApprovalSignal);
@@ -62,17 +88,25 @@ export function MessageBubble({
     },
   } as unknown as ToolPart;
 
+  const agentType: AgentType | null = isUser
+    ? null
+    : resolveAssistantAgentType({
+        text,
+        hasToolParts: toolParts.length > 0,
+        hasApprovalSignal: hasToolApprovalPart || hasStateApprovalSignal,
+        requestedByNode: approvalContext?.requested_by_node,
+      });
+
   return (
     <div className="group animate-in fade-in slide-in-from-left-2 duration-300 space-y-4">
       <div className="flex items-center gap-2">
-        <span
-          className={`text-[9px] font-black px-2 py-0.5 rounded tracking-[0.15em] uppercase shadow-sm border transition-colors ${isUser
-            ? "bg-slate-800 text-slate-400 border-slate-700"
-            : "bg-cyan-950 text-cyan-400 border-cyan-500/10"
-            }`}
-        >
-          {isUser ? "Operator" : "Vanguard"}
-        </span>
+        {isUser ? (
+          <span className="text-[9px] font-black px-2 py-0.5 rounded tracking-[0.15em] uppercase shadow-sm border transition-colors bg-slate-800 text-slate-400 border-slate-700">
+            Operator
+          </span>
+        ) : (
+          <AgentBadge type={agentType ?? "AUDITOR"} />
+        )}
       </div>
 
       <div className="text-[13px] text-slate-300 font-medium leading-relaxed pl-4 border-l-2 border-slate-800 transition-colors group-hover:border-slate-700 whitespace-pre-wrap">

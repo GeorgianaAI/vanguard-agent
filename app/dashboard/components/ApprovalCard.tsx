@@ -5,6 +5,7 @@ import { getToolName } from "ai";
 import { getApprovalPolicyLabel } from "@/src/lib/approval/policy";
 import { getApprovalPayloadFromPart } from "../lib/chatHelpers";
 import type { ApprovalContextV1 } from "@/src/lib/approval/types";
+import { AgentBadge, type AgentType } from "./AgentBadge";
 
 type ApprovalCardProps = {
   part: ToolPart;
@@ -13,6 +14,14 @@ type ApprovalCardProps = {
   disabled?: boolean;
   previousApprovalContext?: ApprovalContextV1 | null;
 };
+
+function requestedNodeToAgentType(
+  node?: ApprovalContextV1["requested_by_node"],
+): AgentType {
+  if (node === "supervisor") return "SUPERVISOR";
+  if (node === "scout") return "SCOUT";
+  return "AUDITOR";
+}
 
 export function ApprovalCard({
   part,
@@ -35,8 +44,9 @@ export function ApprovalCard({
     !!sideEffectsLabel &&
     normalizeBadgeLabel(sideEffectsLabel) !== normalizeBadgeLabel(policyLabel);
 
-  const changeHints =
-    context?.changes_since_last?.length ? context.changes_since_last : [];
+  const changeHints = context?.changes_since_last?.length
+    ? context.changes_since_last
+    : [];
   const priorApprovals = context?.prior_approvals_in_thread ?? 0;
 
   return (
@@ -46,6 +56,11 @@ export function ApprovalCard({
         <div className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-500">
           {APPROVAL_TITLE}
         </div>
+        {context && (
+          <AgentBadge
+            type={requestedNodeToAgentType(context.requested_by_node)}
+          />
+        )}
       </div>
 
       <p className="mb-6 text-[11px] leading-relaxed tracking-tight text-slate-400 uppercase font-medium">
@@ -99,10 +114,7 @@ export function ApprovalCard({
               <span className="text-[9px] font-black tracking-widest text-amber-300">
                 EXPIRES
               </span>
-              <p
-                data-testid="approval-expiry"
-                className="mt-1 text-amber-200"
-              >
+              <p data-testid="approval-expiry" className="mt-1 text-amber-200">
                 {new Date(context.expires_at).toLocaleString()}
               </p>
             </div>
