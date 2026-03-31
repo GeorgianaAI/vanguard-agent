@@ -15,6 +15,7 @@ describe("middleware auth/rbac", () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
     process.env.AUTH_COOKIE_NAME = "vanguard_session";
+    delete process.env.AUTH_E2E_BYPASS;
     vi.resetModules();
     vi.clearAllMocks();
   });
@@ -31,7 +32,6 @@ describe("middleware auth/rbac", () => {
   it("redirects unauthenticated user from /dashboard to /login", async () => {
     const middleware = await loadMiddleware();
     const req = new NextRequest("http://localhost/dashboard");
-
     const res = await middleware(req);
 
     expect(res.status).toBe(307);
@@ -52,7 +52,6 @@ describe("middleware auth/rbac", () => {
     });
 
     const res = await middleware(req);
-
     expect(res.status).toBe(403);
   });
 
@@ -70,7 +69,6 @@ describe("middleware auth/rbac", () => {
     });
 
     const res = await middleware(req);
-
     expect(res.status).toBe(200);
   });
 
@@ -88,7 +86,6 @@ describe("middleware auth/rbac", () => {
     });
 
     const res = await middleware(req);
-
     expect(res.status).toBe(403);
   });
 });

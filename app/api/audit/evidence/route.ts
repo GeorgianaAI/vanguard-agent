@@ -15,9 +15,13 @@ function shouldRequireLangSmithConfig(): boolean {
 
 export async function GET(req: Request) {
   const reqId = newRequestId(req);
+  const actorId = req.headers.get("x-actor-id");
+  const actorRole = req.headers.get("x-actor-role");
+
   const url = new URL(req.url);
   const threadId = url.searchParams.get("thread_id")?.trim();
   const missionId = url.searchParams.get("mission_id")?.trim() || threadId;
+
   if (!threadId) {
     return withRequestIdHeaders(
       new Response("Missing thread_id", { status: 400 }),
@@ -28,8 +32,10 @@ export async function GET(req: Request) {
   const warnings: string[] = [];
   let runs: LangSmithRun[] = [];
   let evidenceStatus: "complete" | "degraded" = "complete";
+
   const missingLangSmithConfig =
     !process.env.LANGSMITH_API_KEY || !process.env.LANGSMITH_PROJECT;
+
   if (shouldRequireLangSmithConfig() && missingLangSmithConfig) {
     evidenceStatus = "degraded";
     warnings.push(
@@ -60,12 +66,21 @@ export async function GET(req: Request) {
   });
 
   return withRequestIdHeaders(
-    Response.json(pkg, {
-      status: 200,
-      headers: {
-        "cache-control": "no-store",
+    Response.json(
+      {
+        ...pkg,
+        requested_by: {
+          actor_id: actorId ?? null,
+          actor_role: actorRole ?? null,
+        },
       },
-    }),
+      {
+        status: 200,
+        headers: {
+          "cache-control": "no-store",
+        },
+      },
+    ),
     reqId,
   );
 }
