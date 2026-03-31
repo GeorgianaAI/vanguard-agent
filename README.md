@@ -1,6 +1,6 @@
 # 🛰️ Vanguard Agent: Autonomous Security Reconnaissance & Governance
 
-🚀 **View Live Demo (WIP)** | **[📂 View Codebase](https://github.com/GeorgiDS9/vanguard-agent)**
+**[🚀 View Live Demo](https://vanguard-agent.vercel.app/dashboard)** | **[📂 View Codebase](https://github.com/GeorgiDS9/vanguard-agent)**
 
 **Agentic AI | Phase 2 Operational Autonomy | Next.js 16 | LangGraph Orchestration | HITL (manual authorization) | NIST-Aligned Governance**
 
@@ -29,11 +29,15 @@ Here is how Vanguard differs from a standard AI chat:
 
 **Vanguard Command Center** - _Autonomous Reconnaissance Terminal_
 
-> 1. Vanguard Command Stream - Authorization Step
+> 1. Vanguard Command Stream - Pre-Authorization Step
 
-## ![Vanguard Command Stream - Authorization Step](./docs/assets/vanguard-command-authorization.png)
+## ![Vanguard Command Stream - Authorization Step](./docs/assets/vanguard-command-stream-pre-authorization.png)
 
-> 2. Vanguard Command Stream - Post-Authorization + Findings
+> 2. Vanguard Command Stream - Authorization Step
+
+## ![Vanguard Command Stream - Authorization Step](./docs/assets/vanguard-command-context-and-authorization.png)
+
+> 3. Vanguard Command Stream - Post-Authorization + Findings
 
 ## ![Vanguard Command Stream - Post-Authorization Flow](./docs/assets/vanguard-command-stream-3.png)
 
