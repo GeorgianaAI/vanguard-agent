@@ -182,5 +182,14 @@ export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
 }
 
 export function getCheckpointer() {
-  return new UpstashRestCheckpointer();
+  try {
+    return new UpstashRestCheckpointer();
+  } catch (error) {
+    // In CI/build contexts without Redis env, allow graph compile without persistence.
+    console.warn(
+      "Checkpointer disabled:",
+      error instanceof Error ? error.message : String(error),
+    );
+    return undefined;
+  }
 }
