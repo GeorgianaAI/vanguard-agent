@@ -186,11 +186,23 @@ export function getCheckpointer() {
     return new UpstashRestCheckpointer();
   } catch (error) {
     if (isProductionEnv()) {
+      console.error(
+        JSON.stringify({
+          component: "vanguard.agent.checkpointer",
+          level: "error",
+          event: "production_checkpointer_init_failed",
+          detail: error instanceof Error ? error.message.slice(0, 120) : "unknown",
+        }),
+      );
       throw error;
     }
     console.warn(
-      "Checkpointer disabled:",
-      error instanceof Error ? error.message : String(error),
+      JSON.stringify({
+        component: "vanguard.agent.checkpointer",
+        level: "warn",
+        event: "degraded_checkpointer_disabled",
+        detail: error instanceof Error ? error.message.slice(0, 120) : "unknown",
+      }),
     );
     return undefined;
   }
