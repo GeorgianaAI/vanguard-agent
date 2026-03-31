@@ -15,7 +15,9 @@
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
-    "mcp": "npm run start --prefix mcp-server"
+    "mcp": "npm run start --prefix mcp-server",
+    "verify:env": "node scripts/check-env-parity.mjs",
+    "verify:ready": "node scripts/verify-ready.mjs"
   },
   "dependencies": {
     "@ai-sdk/langchain": "^2.0.144",
