@@ -185,7 +185,9 @@ export function getCheckpointer() {
   try {
     return new UpstashRestCheckpointer();
   } catch (error) {
-    if (isProductionEnv()) {
+    const isProductionBuildPhase =
+      process.env.NEXT_PHASE === "phase-production-build";
+    if (isProductionEnv() && !isProductionBuildPhase) {
       console.error(
         JSON.stringify({
           component: "vanguard.agent.checkpointer",
@@ -200,7 +202,9 @@ export function getCheckpointer() {
       JSON.stringify({
         component: "vanguard.agent.checkpointer",
         level: "warn",
-        event: "degraded_checkpointer_disabled",
+        event: isProductionBuildPhase
+          ? "production_build_checkpointer_deferred"
+          : "degraded_checkpointer_disabled",
         detail: error instanceof Error ? error.message.slice(0, 120) : "unknown",
       }),
     );
