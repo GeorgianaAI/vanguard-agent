@@ -1,4 +1,4 @@
-import { Info, Play, RotateCcw } from "lucide-react";
+import { Play, RotateCcw } from "lucide-react";
 import type { MissionSurfaceMode } from "../hooks/useVanguardChat";
 
 interface MissionReplayHeaderProps {
@@ -21,41 +21,46 @@ export function MissionReplayHeader({
   const progressPercent =
     totalSteps > 0 ? Math.min((currentStep / totalSteps) * 100, 100) : 0;
 
-  const modeLabel =
-    mode === "restored" ? "RESTORED TRANSCRIPT" : "LIVE MISSION";
-  const modeDetail =
-    mode === "restored"
-      ? "Read-only seek — use New Mission to start fresh"
-      : "Interactive — operator messages & approvals enabled";
-
   return (
-    <div className="sticky top-0 z-20 mb-3 flex w-full min-w-0 flex-col gap-3 rounded-lg border border-slate-800/80 bg-slate-950 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-      <div className="flex min-w-0 shrink items-center gap-2 sm:gap-4">
+    <div className="sticky top-0 z-20 mb-3 flex w-full min-w-0 flex-col gap-3 rounded-lg border border-slate-800/80 bg-slate-950 px-3 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4">
+      {/* Mode status (LED + dual-line label) */}
+      <div className="flex min-w-0 shrink-0 items-center">
         <div
-          className={`flex min-w-0 items-center gap-1.5 rounded-md border px-2 py-1 ${
+          className={`flex items-center gap-3 rounded-lg border px-3 py-1.5 backdrop-blur-md transition-all duration-500 ${
             mode === "restored"
-              ? "border-indigo-500/30 bg-indigo-950/40"
-              : "border-cyan-500/25 bg-cyan-950/25"
+              ? "border-indigo-500/40 bg-indigo-950/30 shadow-[0_0_15px_-5px_rgba(99,102,241,0.2)]"
+              : "border-cyan-500/40 bg-cyan-950/30 shadow-[0_0_15px_-5px_rgba(8,145,178,0.2)]"
           }`}
         >
-          <Info
-            className={`h-3 w-3 shrink-0 ${mode === "restored" ? "text-indigo-400" : "text-cyan-400"}`}
+          <div
+            className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+              mode === "restored"
+                ? "bg-indigo-400"
+                : "animate-pulse bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
+            }`}
+            aria-hidden
           />
-          <span className="flex min-w-0 flex-col gap-0.5">
+
+          <div className="flex min-w-0 flex-col leading-none">
             <span
-              className={`truncate text-[10px] font-black tracking-widest uppercase ${mode === "restored" ? "text-indigo-200" : "text-cyan-200"}`}
+              className={`text-[10px] font-black uppercase tracking-[0.2em] ${
+                mode === "restored" ? "text-indigo-300" : "text-cyan-300"
+              }`}
             >
-              {modeLabel}
+              {mode === "restored" ? "Historical Record" : "Live Mission"}
             </span>
-            <span className="hidden text-[8px] font-bold uppercase tracking-tight text-slate-500 sm:block">
-              {modeDetail}
+
+            <span className="mt-1 text-[8px] font-bold uppercase tracking-widest text-slate-500">
+              {mode === "restored"
+                ? "Read-Only Archive"
+                : "Interactive Protocol Enabled"}
             </span>
-          </span>
+          </div>
         </div>
       </div>
 
-      {/* 🛰️ PLAYBACK CONTROLS — seek within current transcript (no agent re-run) */}
-      <div className="flex min-w-0 flex-1 items-center justify-center gap-2 sm:max-w-[200px] sm:flex-none sm:justify-end md:max-w-none">
+      {/* Seek controls */}
+      <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
         <button
           type="button"
           disabled={seekDisabled || totalSteps === 0}
@@ -65,7 +70,7 @@ export function MissionReplayHeader({
         >
           <RotateCcw className="h-4 w-4" />
         </button>
-        <div className="h-1 min-w-0 max-w-[140px] flex-1 rounded-full bg-slate-800 overflow-hidden sm:max-w-[128px] md:w-32 md:max-w-none md:flex-none">
+        <div className="h-1 min-w-0 max-w-[140px] flex-1 rounded-full bg-slate-800 overflow-hidden sm:max-w-[160px] md:max-w-[200px]">
           <div
             className="h-full bg-cyan-500 transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
@@ -82,7 +87,7 @@ export function MissionReplayHeader({
         </button>
       </div>
 
-      <div className="shrink-0 text-center text-[10px] font-bold text-slate-500 tabular-nums uppercase tracking-widest sm:text-right">
+      <div className="shrink-0 pl-1 text-center text-[10px] font-bold tabular-nums uppercase tracking-widest text-slate-500 sm:text-right sm:pl-2">
         Step {currentStep} / {totalSteps}
       </div>
     </div>

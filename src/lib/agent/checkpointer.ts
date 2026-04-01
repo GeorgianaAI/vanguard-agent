@@ -46,15 +46,35 @@ function latestPointerKey(keyPrefix: string, threadId: string): string {
   return `${keyPrefix}:checkpoint:latest:${threadId}`;
 }
 
-function parseStoredCheckpoint(raw: unknown): StoredCheckpoint | undefined {
-  if (typeof raw !== "string") return undefined;
-  try {
-    const parsed = JSON.parse(raw) as StoredCheckpoint;
-    if (!parsed?.checkpoint?.id) return undefined;
-    return parsed;
-  } catch {
+/**
+ * Upstash's client auto-deserializes JSON values returned from GET, so `raw` is
+ * often already a plain object. We previously only accepted strings; that made
+ * getTuple() fail and getState() return empty values (empty mission history).
+ */
+export function parseStoredCheckpointPayload(
+  raw: unknown,
+): StoredCheckpoint | undefined {
+  let parsed: unknown;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return undefined;
+    }
+  } else if (raw !== null && typeof raw === "object") {
+    parsed = raw;
+  } else {
     return undefined;
   }
+
+  const stored = parsed as Partial<StoredCheckpoint>;
+  if (stored.checkpoint == null || typeof stored.checkpoint !== "object") {
+    return undefined;
+  }
+  const id = (stored.checkpoint as { id?: unknown }).id;
+  if (typeof id !== "string" || id.length === 0) return undefined;
+
+  return stored as StoredCheckpoint;
 }
 
 export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
@@ -137,7 +157,7 @@ export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
     const raw = await this.client.get<unknown>(
       checkpointKey(this.keyPrefix, threadId, checkpointId),
     );
-    const parsed = parseStoredCheckpoint(raw);
+    const parsed = parseStoredCheckpointPayload(raw);
     if (!parsed) return undefined;
 
     return {

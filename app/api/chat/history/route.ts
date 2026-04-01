@@ -1,8 +1,21 @@
 import { vanguardGraph } from "@/src/lib/agent/graph";
-import { checkpointMessagesToDashboardMessages } from "@/src/lib/chat/checkpointToUIMessages";
+import {
+  checkpointMessagesToDashboardMessages,
+  reviveCheckpointMessages,
+} from "@/src/lib/chat/checkpointToUIMessages";
 import { getThreadPrefix } from "@/src/lib/runtime/redteam";
 
 export const runtime = "edge";
+
+function messagesFromStateValues(values: unknown): unknown[] | null {
+  if (values == null) return null;
+  if (Array.isArray(values)) return values;
+  if (typeof values === "object" && "messages" in values) {
+    const m = (values as { messages: unknown }).messages;
+    return Array.isArray(m) ? m : null;
+  }
+  return null;
+}
 
 /**
  * Read-only mission transcript from LangGraph checkpoint (Redis).
@@ -29,15 +42,13 @@ export async function GET(req: Request) {
       configurable: { thread_id: threadId },
     });
 
-    const values = snapshot?.values as { messages?: unknown[] } | undefined;
-    const raw = values?.messages;
-    if (!Array.isArray(raw)) {
+    const raw = messagesFromStateValues(snapshot?.values);
+    if (raw == null) {
       return Response.json({ messages: [] });
     }
 
-    const messages = checkpointMessagesToDashboardMessages(
-      raw as Parameters<typeof checkpointMessagesToDashboardMessages>[0],
-    );
+    const revived = reviveCheckpointMessages(raw);
+    const messages = checkpointMessagesToDashboardMessages(revived);
     return Response.json({ messages });
   } catch (error) {
     console.error("GET /api/chat/history:", error);

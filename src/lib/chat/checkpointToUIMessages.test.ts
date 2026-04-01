@@ -1,7 +1,10 @@
 import { AIMessage, HumanMessage, ToolMessage } from "@langchain/core/messages";
 import { describe, expect, it } from "vitest";
 import { attachAgentNode } from "../agent/agentNode";
-import { checkpointMessagesToDashboardMessages } from "./checkpointToUIMessages";
+import {
+  checkpointMessagesToDashboardMessages,
+  reviveCheckpointMessages,
+} from "./checkpointToUIMessages";
 
 describe("checkpointMessagesToDashboardMessages", () => {
   it("preserves agent_node metadata on assistant rows", () => {
@@ -45,5 +48,60 @@ describe("checkpointMessagesToDashboardMessages", () => {
     ]);
     expect(ui[0].role).toBe("user");
     expect(ui[0].parts[0]).toMatchObject({ type: "text", text: "scan example.com" });
+  });
+});
+
+describe("reviveCheckpointMessages + checkpointMessagesToDashboardMessages", () => {
+  it("rehydrates StoredMessage-shaped plain objects from checkpoint JSON", () => {
+    const raw = [
+      { type: "human" as const, data: { content: "scan example.com" } },
+      {
+        type: "ai" as const,
+        data: {
+          content: "done",
+          tool_calls: [
+            {
+              id: "call_1",
+              name: "domain_whois",
+              args: { domain: "example.com" },
+              type: "tool_call" as const,
+            },
+          ],
+        },
+      },
+      {
+        type: "tool" as const,
+        data: { content: "{}", tool_call_id: "call_1" },
+      },
+    ];
+    const ui = checkpointMessagesToDashboardMessages(reviveCheckpointMessages(raw));
+    expect(ui).toHaveLength(2);
+    expect(ui[0].role).toBe("user");
+    expect(ui[0].parts[0]).toMatchObject({ type: "text", text: "scan example.com" });
+    const toolPart = ui[1].parts.find((p) => p.type === "dynamic-tool");
+    expect(toolPart).toBeDefined();
+    if (toolPart && toolPart.type === "dynamic-tool") {
+      expect(toolPart.toolCallId).toBe("call_1");
+      expect(toolPart.state).toBe("output-available");
+    }
+  });
+
+  it("rehydrates LangChain serialized constructor payloads (lc + kwargs)", () => {
+    const raw = [
+      {
+        lc: 1,
+        type: "constructor",
+        id: ["langchain", "schema", "messages", "HumanMessage"],
+        kwargs: { content: "hello from redis" },
+      },
+    ];
+    const revived = reviveCheckpointMessages(raw);
+    expect(revived).toHaveLength(1);
+    expect(HumanMessage.isInstance(revived[0])).toBe(true);
+    const ui = checkpointMessagesToDashboardMessages(revived);
+    expect(ui[0].parts[0]).toMatchObject({
+      type: "text",
+      text: "hello from redis",
+    });
   });
 });
