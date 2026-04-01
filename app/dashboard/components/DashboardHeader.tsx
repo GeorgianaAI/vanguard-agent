@@ -28,7 +28,7 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   return (
     <header className="mx-auto mb-12 max-w-4xl border-b border-slate-800 pb-10">
-      <div className="mb-20 flex items-center justify-between gap-3">
+      <div className="mb-15 flex items-center justify-between gap-3">
         <Link
           href="/"
           className="group flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 transition-all hover:border-cyan-500/50 hover:bg-slate-900 hover:text-cyan-400 shadow-lg shadow-black/40"
