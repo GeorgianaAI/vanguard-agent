@@ -1,6 +1,8 @@
 type CommandInputProps = {
   input: string;
   loading: boolean;
+  awaitingAuthorization: boolean;
+  restored: boolean;
   setInput: (value: string) => void;
   onSubmit: (event: React.SyntheticEvent<HTMLFormElement>) => Promise<void>;
 };
@@ -8,9 +10,19 @@ type CommandInputProps = {
 export function CommandInput({
   input,
   loading,
+  awaitingAuthorization,
+  restored,
   setInput,
   onSubmit,
 }: CommandInputProps) {
+  const submitBlocked = loading || awaitingAuthorization || restored;
+
+  const label = loading
+    ? "EXECUTING..."
+    : awaitingAuthorization
+      ? "PENDING DECISION..."
+      : "DEPLOY";
+
   return (
     <form onSubmit={onSubmit} className="relative group">
       <div className="absolute -inset-0.5 bg-cyan-500/10 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
@@ -18,18 +30,19 @@ export function CommandInput({
       <input
         data-testid="mission-input"
         value={input}
+        readOnly={restored}
         onChange={(e) => setInput(e.target.value)}
         placeholder="Initialize mission sequence..."
-        className="relative w-full rounded-2xl border-2 border-slate-800 bg-slate-900 px-8 py-5 pr-36 text-base font-medium text-slate-100 outline-none transition-all focus:border-cyan-600/50 shadow-xl placeholder:text-slate-500"
+        className="relative w-full rounded-2xl border-2 border-slate-800 bg-slate-900 px-8 py-5 pr-36 text-base font-medium text-slate-100 outline-none transition-all focus:border-cyan-600/50 shadow-xl placeholder:text-slate-500 read-only:cursor-not-allowed read-only:opacity-60"
       />
 
       <button
         type="submit"
         data-testid="deploy-button"
-        disabled={loading}
-        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-8 py-2.5 text-[11px] font-black tracking-[0.2em] text-white transition-all hover:bg-cyan-500 disabled:opacity-50 uppercase shadow-lg shadow-cyan-500/20"
+        disabled={submitBlocked}
+        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-8 py-2.5 text-[11px] font-black tracking-[0.2em] text-white transition-all hover:bg-cyan-500 disabled:opacity-50 uppercase shadow-lg shadow-cyan-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
       >
-        {loading ? "EXECUTING..." : "DEPLOY"}
+        {label}
       </button>
     </form>
   );

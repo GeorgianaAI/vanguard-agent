@@ -10,6 +10,8 @@ import { TimelineSidebar } from "./components/TimelineSidebar";
 import { useVanguardChat } from "./hooks/useVanguardChat";
 import { buildMissionTimelineEvents } from "./lib/timeline";
 import type { MissionTimelineEvent } from "./lib/types";
+import { hasOpenApproval } from "./lib/missionState";
+import { RESTORED_TRANSCRIPT_HINT } from "./lib/constants";
 
 export default function VanguardDashboard() {
   const [target, setTarget] = useState<string>("");
@@ -41,8 +43,15 @@ export default function VanguardDashboard() {
     startNewMission,
   } = useVanguardChat({ target, input, setInput });
 
-  function handleNewMission() {
+  const awaitingAuthorizationLive = useMemo(
+    () => surfaceMode === "live" && hasOpenApproval(messages),
+    [messages, surfaceMode],
+  );
+
+  function handleResetMission() {
     setActiveTimelineMessageId(null);
+    setTarget("");
+    setInput("");
     startNewMission();
   }
 
@@ -79,9 +88,10 @@ export default function VanguardDashboard() {
       <div className="mx-auto max-w-[1200px] px-4 pb-24 pt-32 sm:px-6 md:p-8">
         <DashboardHeader
           loading={loading}
+          restored={surfaceMode === "restored"}
           onLogout={handleLogout}
           logoutPending={logoutPending}
-          onNewMission={handleNewMission}
+          onResetMission={handleResetMission}
         />
 
         <main className="mx-auto grid w-full min-w-0 max-w-[1200px] gap-6">
@@ -106,13 +116,20 @@ export default function VanguardDashboard() {
                 operatorNotice={operatorNotice}
                 onAuthorize={authorizeTool}
                 onAbort={abortTool}
-                approvalDisabled={loading}
+                approvalDisabled={loading || surfaceMode === "restored"}
               />
 
               <div className="mt-6">
+                {surfaceMode === "restored" ? (
+                  <p className="mb-2 text-xs italic text-slate-500">
+                    {RESTORED_TRANSCRIPT_HINT}
+                  </p>
+                ) : null}
                 <CommandInput
                   input={input}
                   loading={loading}
+                  awaitingAuthorization={awaitingAuthorizationLive}
+                  restored={surfaceMode === "restored"}
                   setInput={setInputValue}
                   onSubmit={onSubmit}
                 />

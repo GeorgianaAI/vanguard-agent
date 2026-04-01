@@ -47,12 +47,12 @@ export function MissionReplayHeader({
                 mode === "restored" ? "text-indigo-300" : "text-cyan-300"
               }`}
             >
-              {mode === "restored" ? "Historical Record" : "Live Mission"}
+              {mode === "restored" ? "Restored Session" : "Live Mission"}
             </span>
 
             <span className="mt-1 text-[8px] font-bold uppercase tracking-widest text-slate-500">
               {mode === "restored"
-                ? "Read-Only Archive"
+                ? "Read-Only Transcript"
                 : "Interactive Protocol Enabled"}
             </span>
           </div>
