@@ -31,17 +31,29 @@ Here is how Vanguard differs from a standard AI chat:
 
 **Vanguard Command Center** - _Autonomous Reconnaissance Terminal_
 
-> 1. Vanguard Command Stream - Mission Timeline
+> 1. Vanguard Command Stream - Empty State
 
-## ![Vanguard Command Stream - Mission Timeline](./docs/assets/vanguard-command-stream-mission-timeline.png)
+## ![Vanguard Command Stream - Empty State](./docs/assets/vanguard-command-empty-state.png)
 
-> 2. Vanguard Command Stream - Authorization Step
+> 2. Vanguard Command Stream - Mission Timeline
+
+## ![Vanguard Command Stream - Mission Timeline](./docs/assets/vanguard-command-mission-timeline.png)
+
+> 3. Vanguard Command Stream - Authorization Step
 
 ## ![Vanguard Command Stream - Authorization Step](./docs/assets/vanguard-command-authorization.png)
 
-> 3. Vanguard Command Stream - Findings
+> 4. Vanguard Command Stream - Restored Session
 
-## ![Vanguard Command Stream - Findings](./docs/assets/vanguard-command-stream-findings.png)
+## ![Vanguard Command Stream - Restored Session](./docs/assets/vanguard-command-restored-session.png)
+
+> 5. Vanguard Command Stream - Control Buttons
+
+## ![Vanguard Command Stream - Return to Base Buttons](./docs/assets/vanguard-command-return-to-base-button.png)
+
+## ![Vanguard Command Stream - Return to Base Buttons](./docs/assets/vanguard-command-reset-mission-button.png)
+
+## ![Vanguard Command Stream - Terminate Mission Button](./docs/assets/vanguard-command-terminate-mission-button.png)
 
 ---
 
