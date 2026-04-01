@@ -261,8 +261,11 @@ Use the live demo credentials below to test the full Command Center flow:
 - [x] **Operational & Governance Docs:** Runbook, security advisory, and architecture flow documentation.
 - [x] **Demo Access (Recruiter-Friendly):** Add a rotating `demo_admin` account and document public demo access workflow.
 - [x] **Mission Timeline & Replay (Command Center UI):** Compact event timeline with read-only playback.
+- [ ] **Dependency & CVE hygiene:** Run `npm audit` (and CI scanning if desired), patch or document accepted risk for high/critical findings.
+- [ ] **Target-oriented CVE & advisory signals:** Enrich recon output with relevant public CVE/advisory context for observed stack or exposure (defensive OSINT scope).
 - [ ] **Compliance Evidence Export (PDF):** Generate downloadable audit reports from trace-linked mission evidence (LangSmith + governance logs).
 - [ ] **NIST-Aligned Governance Dashboard:** Decision integrity ledger, mission timeline replay, and traceable control evidence mapped to AI risk management and compliance oversight (`/governance`).
+- [ ] **Auth: evaluate / migrate to Clerk (optional):** Replace custom session flow with Clerk if product direction confirms; preserve roles, `/dashboard` access, middleware, and Playwright e2e bypass or Clerk test mode.
 
 ---
 
