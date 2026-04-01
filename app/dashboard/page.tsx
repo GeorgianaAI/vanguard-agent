@@ -37,6 +37,7 @@ export default function VanguardDashboard() {
     abortTool,
     setInputValue,
     operatorNotice,
+    surfaceMode,
     startNewMission,
   } = useVanguardChat({ target, input, setInput });
 
@@ -52,6 +53,17 @@ export default function VanguardDashboard() {
 
   const currentStep =
     timelineEvents.findIndex((e) => e.status === "active") + 1;
+
+  function seekToTimelineIndex(index: number) {
+    const event = timelineEvents[index];
+    if (!event) return;
+    setActiveTimelineMessageId(event.messageId);
+    requestAnimationFrame(() => {
+      document
+        .getElementById(`message-${event.messageId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
 
   function handleSelectTimelineEvent(event: MissionTimelineEvent) {
     setActiveTimelineMessageId(event.messageId);
@@ -78,8 +90,14 @@ export default function VanguardDashboard() {
           <div className="flex w-full min-w-0 flex-col gap-6 lg:flex-row lg:items-start">
             <section className="min-w-0 w-full flex-1 lg:min-h-0">
               <MissionReplayHeader
+                mode={surfaceMode}
                 totalSteps={timelineEvents.length}
                 currentStep={Math.max(currentStep, 0)}
+                seekDisabled={loading}
+                onSeekStart={() => seekToTimelineIndex(0)}
+                onSeekEnd={() =>
+                  seekToTimelineIndex(Math.max(timelineEvents.length - 1, 0))
+                }
               />
 
               <MessageFeed
