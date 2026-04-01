@@ -57,19 +57,19 @@ export default function VanguardDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 p-8 text-slate-100">
-      <div className="mx-auto max-w-[1200px] px-6 pb-24 pt-32">
+    <div className="isolate min-h-screen w-full overflow-x-hidden bg-slate-950 text-slate-100">
+      <div className="mx-auto max-w-[1200px] px-4 pb-24 pt-32 sm:px-6 md:p-8">
         <DashboardHeader
           loading={loading}
           onLogout={handleLogout}
           logoutPending={logoutPending}
         />
 
-        <main className="mx-auto grid max-w-[1200px] gap-6">
+        <main className="mx-auto grid w-full min-w-0 max-w-[1200px] gap-6">
           <TargetInput target={target} setTarget={setTarget} />
 
-          <div className="flex gap-6">
-            <section className="min-w-0 flex-1">
+          <div className="flex w-full min-w-0 flex-col gap-6 lg:flex-row lg:items-start">
+            <section className="min-w-0 w-full flex-1 lg:min-h-0">
               <MissionReplayHeader
                 totalSteps={timelineEvents.length}
                 currentStep={Math.max(currentStep, 0)}
