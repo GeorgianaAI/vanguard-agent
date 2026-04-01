@@ -1,7 +1,10 @@
+import { RunnableLambda } from "@langchain/core/runnables";
 import { tool } from "@langchain/core/tools";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { z } from "zod";
+import { reviveLangchainMessages } from "../langchain/reviveLangchainMessages";
 import { lookupDomainRdapJson } from "../recon/rdapDomainSummary";
+import type { VanguardStateType } from "./state";
 
 const TAVILY_API_URL = "https://api.tavily.com/search";
 
@@ -57,4 +60,16 @@ export const domainWhoisTool = tool(
 );
 
 export const vanguardTools = [reconTool, domainWhoisTool];
-export const toolNode = new ToolNode(vanguardTools);
+
+const toolNodeInner = new ToolNode(vanguardTools);
+
+/**
+ * LangGraph's ToolNode rejects `state.messages` when Redis/checkpoint left plain
+ * JSON objects (no `_getType`). Revive to BaseMessage instances before invoke.
+ */
+export const toolNode = RunnableLambda.from(
+  async (state: VanguardStateType) => {
+    const messages = reviveLangchainMessages(state.messages as unknown[]);
+    return toolNodeInner.invoke({ messages });
+  },
+).withConfig({ runName: "tools" });
