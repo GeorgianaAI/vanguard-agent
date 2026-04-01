@@ -11,27 +11,37 @@ import {
   STATUS_RECON_IN_PROGRESS,
   STATUS_SATELLITE_IDLE,
 } from "../lib/constants";
-import { NewMissionButton } from "./NewMissionButton";
+import { ResetMissionButton } from "./ResetMissionButton";
 
 type DashboardHeaderProps = {
   loading: boolean;
+  /** Read-only restored transcript: green LED + SATELLITE LINK IDLE. */
+  restored: boolean;
   onLogout: () => void;
   logoutPending: boolean;
-  onNewMission: () => void;
+  onResetMission: () => void;
 };
 
 export function DashboardHeader({
   loading,
+  restored,
   onLogout,
   logoutPending,
-  onNewMission,
+  onResetMission,
 }: DashboardHeaderProps) {
+  const linkLive = !restored;
+  const ledAmber = linkLive;
+  const statusLabel = restored
+    ? STATUS_SATELLITE_IDLE
+    : STATUS_RECON_IN_PROGRESS;
+
   return (
     <header className="mx-auto mb-12 max-w-4xl border-b border-slate-800 pb-10">
       <div className="mb-15 flex items-center justify-between gap-3">
+        {/* Return to Base button */}
         <Link
           href="/"
-          className="group flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 transition-all hover:border-cyan-500/50 hover:bg-slate-900 hover:text-cyan-400 shadow-lg shadow-black/40"
+          className="group flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 transition-all hover:border-cyan-500/50 hover:bg-slate-900 hover:text-cyan-400 shadow-lg shadow-black/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
         >
           <ChevronLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
           <span className="flex items-center gap-1.5">
@@ -40,13 +50,15 @@ export function DashboardHeader({
           </span>
         </Link>
 
-        <NewMissionButton onReset={onNewMission} />
+        {/* Reset Mission button */}
+        <ResetMissionButton onReset={onResetMission} />
 
+        {/* Terminate Mission button */}
         <button
           type="button"
           onClick={onLogout}
           disabled={logoutPending}
-          className="group flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 transition-all hover:border-rose-900/50 hover:bg-rose-950/20 hover:text-rose-400 shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+          className="group flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 transition-all hover:border-rose-900/50 hover:bg-rose-950/20 hover:text-rose-400 shadow-sm disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
         >
           <Power className="h-3 w-3 opacity-40 transition-opacity group-hover:opacity-100 group-hover:text-rose-500" />
           <span>
@@ -59,7 +71,7 @@ export function DashboardHeader({
       <div className="flex items-center justify-between">
         <div className="flex items-start gap-5">
           <Satellite
-            className={`h-12 w-12 text-cyan-500 mt-[-4px] ${loading ? "animate-pulse" : ""}`}
+            className={`h-12 w-12 text-cyan-500 mt-[-4px] ${loading && linkLive ? "animate-pulse" : ""}`}
           />
           <div>
             <h1 className="text-3xl font-black tracking-tighter uppercase text-white leading-none mb-2">
@@ -75,11 +87,9 @@ export function DashboardHeader({
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 px-5 py-2.5 text-[11px] font-black tracking-widest uppercase shadow-lg shadow-black/20">
           <div className="flex items-center gap-3">
             <div
-              className={`w-2 h-2 rounded-full shrink-0 -translate-y-[2.5px] ${loading ? "bg-amber-500 animate-ping" : "bg-emerald-500"}`}
+              className={`w-2 h-2 rounded-full shrink-0 -translate-y-[2.5px] ${ledAmber ? "bg-amber-500 animate-ping" : "bg-emerald-500"}`}
             />
-            <span className="text-slate-300">
-              {loading ? STATUS_RECON_IN_PROGRESS : STATUS_SATELLITE_IDLE}
-            </span>
+            <span className="text-slate-300">{statusLabel}</span>
           </div>
         </div>
       </div>
