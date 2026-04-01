@@ -39,6 +39,10 @@ import {
   getVectorRuntimeConfig,
   runVectorNamespaceProbe,
 } from "../../../src/lib/runtime/vectorClient";
+import {
+  readAgentNodeFromLangchainMessage,
+  type VanguardAgentNode,
+} from "../../../src/lib/agent/agentNode";
 
 export const runtime = "edge";
 
@@ -101,13 +105,25 @@ function acquireLocalApprovalLock(key: string, ttlMs: number): boolean {
   return true;
 }
 
+function inferAgentNodeFromContent(content: string): VanguardAgentNode {
+  if (content.includes("AUTHORIZATION_REQUIRED")) return "scout";
+  return "auditor";
+}
+
 function streamSingleAssistantText(
   text: string,
+  agentNode?: VanguardAgentNode,
 ): ReadableStream<UIMessageChunk> {
   const textId = `txt_${crypto.randomUUID()}`;
   return new ReadableStream<UIMessageChunk>({
     start(controller) {
       controller.enqueue({ type: "start" });
+      if (agentNode) {
+        controller.enqueue({
+          type: "message-metadata",
+          messageMetadata: { agent_node: agentNode },
+        });
+      }
       controller.enqueue({ type: "text-start", id: textId });
       controller.enqueue({ type: "text-delta", id: textId, delta: text });
       controller.enqueue({ type: "text-end", id: textId });
@@ -754,8 +770,14 @@ export async function POST(req: Request) {
         ? String(latestAssistant.content)
         : "Manual authorization is required before external tools can run.";
 
+    const agentNode: VanguardAgentNode | undefined =
+      latestAssistant && AIMessage.isInstance(latestAssistant)
+        ? (readAgentNodeFromLangchainMessage(latestAssistant) ??
+          inferAgentNodeFromContent(assistantText))
+        : inferAgentNodeFromContent(assistantText);
+
     const streamRes = createUIMessageStreamResponse({
-      stream: streamSingleAssistantText(assistantText),
+      stream: streamSingleAssistantText(assistantText, agentNode),
       headers: { "x-vanguard-thread-id": threadId },
     });
     return withRequestIdHeaders(streamRes, reqId);
