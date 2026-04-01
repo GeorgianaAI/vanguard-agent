@@ -26,6 +26,8 @@ type ApprovalAction = {
   approvalContext: unknown;
 };
 
+export type MissionSurfaceMode = "live" | "restored";
+
 function readStoredThreadId(): string | null {
   if (typeof window === "undefined") return null;
   const stored = window.localStorage.getItem(THREAD_STORAGE_KEY);
@@ -60,8 +62,11 @@ export function useVanguardChat({
   /** null only until client init runs; avoids passing id: undefined into useChat (recreates Chat every render). */
   const [threadId, setThreadId] = useState<string | null>(null);
   const [operatorNotice, setOperatorNotice] = useState<string | null>(null);
+  const [surfaceMode, setSurfaceMode] = useState<MissionSurfaceMode>("live");
 
   const approvalInFlight = useRef(false);
+  /** Avoid duplicate history fetches for the same thread; cleared on new thread / reset. */
+  const lastCompletedHistoryForThreadRef = useRef<string | null>(null);
 
   const dismissNotice = useCallback(() => setOperatorNotice(null), []);
 
@@ -93,6 +98,56 @@ export function useVanguardChat({
 
   const loading = isLoadingStatus(status);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !threadId) return;
+    if (lastCompletedHistoryForThreadRef.current === threadId) return;
+
+    const ac = new AbortController();
+
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/chat/history?thread_id=${encodeURIComponent(threadId)}`,
+          { signal: ac.signal },
+        );
+        if (ac.signal.aborted) return;
+
+        if (!res.ok) {
+          lastCompletedHistoryForThreadRef.current = threadId;
+          setOperatorNotice(
+            res.status === 401
+              ? "Session expired — sign in again to load mission history."
+              : "Could not load mission history for this thread.",
+          );
+          return;
+        }
+        const data = (await res.json()) as { messages?: DashboardMessage[] };
+        const incoming = data.messages ?? [];
+        lastCompletedHistoryForThreadRef.current = threadId;
+        if (incoming.length > 0) {
+          setMessages(incoming);
+          setSurfaceMode("restored");
+        }
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        if (ac.signal.aborted) return;
+        lastCompletedHistoryForThreadRef.current = threadId;
+        setOperatorNotice("Could not load mission history.");
+      }
+    })();
+
+    return () => ac.abort();
+  }, [threadId, setMessages]);
+
+  const startNewMission = useCallback(() => {
+    dismissNotice();
+    const next = createThreadId();
+    lastCompletedHistoryForThreadRef.current = null;
+    setThreadId(next);
+    setMessages([]);
+    setSurfaceMode("live");
+  }, [dismissNotice, setMessages]);
+
   function ensureThreadId() {
     if (threadId) return threadId;
     const next = createThreadId();
@@ -109,11 +164,13 @@ export function useVanguardChat({
 
     dismissNotice();
     setInput("");
+    setSurfaceMode("live");
     const activeThreadId = shouldStartFreshMission(messages)
       ? createThreadId()
       : ensureThreadId();
 
     if (activeThreadId !== threadId) {
+      lastCompletedHistoryForThreadRef.current = null;
       setThreadId(activeThreadId);
       setMessages([]);
     }
@@ -148,6 +205,7 @@ export function useVanguardChat({
 
     approvalInFlight.current = true;
     dismissNotice();
+    setSurfaceMode("live");
     try {
       await sendMessage(
         { text: approved ? "Mission authorized" : "Mission aborted" },
@@ -220,5 +278,7 @@ export function useVanguardChat({
     setMessages,
     operatorNotice,
     dismissNotice,
+    surfaceMode,
+    startNewMission,
   };
 }
