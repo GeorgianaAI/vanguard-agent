@@ -9,7 +9,7 @@ import {
 } from "../lib/chatHelpers";
 import { DEFAULT_TARGET } from "../lib/constants";
 import { shouldStartFreshMission } from "../lib/missionState";
-import type { ToolPart } from "../lib/types";
+import type { DashboardMessage, ToolPart } from "../lib/types";
 import { isLoadingStatus } from "../lib/utils";
 
 type UseVanguardChatArgs = {
@@ -82,7 +82,7 @@ export function useVanguardChat({
     [],
   );
 
-  const { messages, sendMessage, status, error, setMessages } = useChat({
+  const { messages, sendMessage, status, error, setMessages } = useChat<DashboardMessage>({
     transport,
     ...(threadId != null ? { id: threadId } : {}),
     resume: false,
