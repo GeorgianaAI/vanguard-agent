@@ -11,6 +11,9 @@ import { VanguardStateAnnotation, VanguardStateType } from "./state";
 import { toolNode, vanguardTools } from "./tools";
 import { computeApprovalContextHash, computeArgHash } from "../approval/hash";
 import {
+  attachAgentNode,
+} from "./agentNode";
+import {
   APPROVAL_TOOL_ALLOWLIST,
   getApprovalRisk,
   getApprovalSideEffects,
@@ -187,7 +190,7 @@ async function scoutNode(state: VanguardStateType) {
     const { context, contextHash } = await buildApprovalContext(state);
     const serializedContext = JSON.stringify(context);
     const approvalPayload = `${APPROVAL_SIGNAL_PREFIX}${serializedContext}`;
-    const approvalMessage = new AIMessage(approvalPayload);
+    const approvalMessage = attachAgentNode(new AIMessage(approvalPayload), "scout");
 
     return {
       isPendingApproval: true,
@@ -221,7 +224,7 @@ async function scoutNode(state: VanguardStateType) {
   const response = await scout.invoke([systemPrompt, ...scoutMessages]);
 
   return {
-    messages: [response],
+    messages: [attachAgentNode(response, "scout")],
     iterationCount: 1,
     isPendingApproval: false,
     pendingApprovalContext: null,
@@ -278,7 +281,7 @@ async function auditorNode(state: VanguardStateType) {
   const response = await auditor.invoke([systemPrompt, ...auditorMessages]);
 
   return {
-    messages: [response],
+    messages: [attachAgentNode(response, "auditor")],
     next: "end",
     isPendingApproval: false,
     pendingApprovalContext: null,
