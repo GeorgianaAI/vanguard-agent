@@ -31,9 +31,9 @@ export default defineConfig({
         timeout: 300_000,
       }
     : {
-        command: "npm run dev",
+        command: "AUTH_E2E_BYPASS=true npm run dev",
         url: "http://localhost:3000",
-        reuseExistingServer: true,
+        reuseExistingServer: false,
         timeout: 120_000,
       },
 });
