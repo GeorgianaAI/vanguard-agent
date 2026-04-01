@@ -2,50 +2,14 @@ import {
   AIMessage,
   HumanMessage,
   ToolMessage,
-  coerceMessageLikeToMessage,
-  isBaseMessage,
-  mapStoredMessagesToChatMessages,
   type BaseMessage,
 } from "@langchain/core/messages";
-
-/**
- * Checkpoint values from Redis / getState are often plain JSON, not class instances.
- * LangChain's `HumanMessage.isInstance` requires the internal symbol, so we revive first.
- */
-export function reviveCheckpointMessages(raw: unknown[]): BaseMessage[] {
-  if (!Array.isArray(raw) || raw.length === 0) return [];
-
-  const first = raw[0];
-  if (
-    typeof first === "object" &&
-    first !== null &&
-    isBaseMessage(first)
-  ) {
-    return raw.filter(
-      (m): m is BaseMessage =>
-        typeof m === "object" && m !== null && isBaseMessage(m),
-    );
-  }
-
-  try {
-    return mapStoredMessagesToChatMessages(raw as never);
-  } catch {
-    // Not StoredMessage/V1 shape; try LangChain coercion (serialized ctor, role objects, …).
-  }
-
-  const out: BaseMessage[] = [];
-  for (const m of raw) {
-    if (typeof m !== "object" || m === null) continue;
-    try {
-      out.push(coerceMessageLikeToMessage(m as never));
-    } catch {
-      // skip malformed row
-    }
-  }
-  return out;
-}
 import type { DashboardMessage } from "@/app/dashboard/lib/types";
 import { readAgentNodeFromLangchainMessage } from "@/src/lib/agent/agentNode";
+import { reviveLangchainMessages } from "@/src/lib/langchain/reviveLangchainMessages";
+
+/** @deprecated Use reviveLangchainMessages; kept for history route imports. */
+export const reviveCheckpointMessages = reviveLangchainMessages;
 
 function humanText(m: HumanMessage): string {
   const c = m.content;
