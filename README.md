@@ -247,8 +247,8 @@ Use the live demo credentials below to test the full Command Center flow:
 - [x] **Adversarial Red-Teaming:** Stress-testing the authorization gate against jailbreak attempts.
 - [x] **Auth & RBAC:** Operator authentication (sessions / identity provider) and **role-based access control** for dashboard routes, mission actions (e.g. deploy, approve tools), and audit-sensitive APIs.
 - [x] **Operational & Governance Docs:** Runbook, security advisory, and architecture flow documentation.
-- [ ] **Demo Access (Recruiter-Friendly):** Add a rotating `demo_admin` account and document public demo access workflow.
-- [ ] **Mission Timeline Replay (Governance UI):** Compact event timeline with read-only playback.
+- [x] **Demo Access (Recruiter-Friendly):** Add a rotating `demo_admin` account and document public demo access workflow.
+- [x] **Mission Timeline & Replay (Command Center UI):** Compact event timeline with read-only playback.
 - [ ] **Compliance Evidence Export (PDF):** Generate downloadable audit reports from trace-linked mission evidence (LangSmith + governance logs).
 - [ ] **NIST-Aligned Governance Dashboard:** Decision integrity ledger, mission timeline replay, and traceable control evidence mapped to AI risk management and compliance oversight (`/governance`).
 
