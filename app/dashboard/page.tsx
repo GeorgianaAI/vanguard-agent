@@ -48,6 +48,9 @@ export default function VanguardDashboard() {
     [messages, surfaceMode],
   );
 
+  const reconLedActive =
+    surfaceMode === "live" && (loading || awaitingAuthorizationLive);
+
   function handleResetMission() {
     setActiveTimelineMessageId(null);
     setTarget("");
@@ -89,6 +92,7 @@ export default function VanguardDashboard() {
         <DashboardHeader
           loading={loading}
           restored={surfaceMode === "restored"}
+          reconLedActive={reconLedActive}
           onLogout={handleLogout}
           logoutPending={logoutPending}
           onResetMission={handleResetMission}
