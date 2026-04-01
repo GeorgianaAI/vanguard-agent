@@ -37,7 +37,13 @@ export default function VanguardDashboard() {
     abortTool,
     setInputValue,
     operatorNotice,
+    startNewMission,
   } = useVanguardChat({ target, input, setInput });
+
+  function handleNewMission() {
+    setActiveTimelineMessageId(null);
+    startNewMission();
+  }
 
   const timelineEvents = useMemo(
     () => buildMissionTimelineEvents(messages, activeTimelineMessageId),
@@ -63,6 +69,7 @@ export default function VanguardDashboard() {
           loading={loading}
           onLogout={handleLogout}
           logoutPending={logoutPending}
+          onNewMission={handleNewMission}
         />
 
         <main className="mx-auto grid w-full min-w-0 max-w-[1200px] gap-6">
