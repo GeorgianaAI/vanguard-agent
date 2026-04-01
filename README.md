@@ -6,6 +6,8 @@
 
 **Vanguard Agent 🛰️** is a proactive **Security Reconnaissance Scout** engineered for governed adversarial operations and independent reconnaissance missions. Unlike standard chatbots that only answer questions, Vanguard is an **autonomous intelligence gatherer** that uses **ReAct (Reason-Action) loops** to explore targets, apply specialized security tools, and deliver mission-critical intelligence through multi-step execution with minimal operator guidance.
 
+Vanguard performs **governed defensive reconnaissance** (**OSINT** - Open-Source Intelligence) on public data sources (e.g., domain/WHOIS/RDAP data, websites and public records, public technical references). It investigates exposure signals and evidence, then produces a **traceable defensive brief**.
+
 Built on the **Phase 2 Operational Autonomy** standard, Vanguard operates with "Governed Execution." It uses **Human-in-the-Loop (HITL)** governance: before external tools run, the agent pauses until you choose **Authorize Mission** or **Abort Action** in the command stream (the **Manual Authorization Required** gate). With **Upstash Redis** persistence and **LangSmith** telemetry, Vanguard provides a stateful, verifiable, and cost-aware workflow for modern security teams.
 
 ---
@@ -43,16 +45,145 @@ Here is how Vanguard differs from a standard AI chat:
 
 ---
 
+## 🛰️ What Vanguard Does
+
+Vanguard is a governed autonomous reconnaissance system for defensive security operations.  
+Its job is not just to answer prompts, but to execute a mission lifecycle with explicit control points and traceable decisions.
+
+At runtime, Vanguard:
+
+- **Accepts a mission objective** from the operator (target + defensive intent).
+- **Plans reconnaissance steps** through a multi-agent flow (Supervisor, Scout, Auditor).
+- **Prepares context-bound actions** (tool, args preview, purpose, risk/side-effects, expiry).
+- **Enforces Human-in-the-Loop governance** before external tool execution.
+- **Executes approved reconnaissance actions** against public-source intelligence channels.
+- **Correlates and summarizes evidence** into an operator-readable defensive brief.
+- **Maintains mission state and decision history** for replay, auditing, and governance evidence.
+- **Applies guardrails** (approval binding, stale/replay protection, rate limits, policy checks).
+
+In practical terms, Vanguard converts “run recon on this target” into a controlled, auditable mission workflow where operator authority is preserved at the action boundary.
+
+---
+
+## 🧾 What Vanguard Produces
+
+Vanguard produces more than chat text.  
+Each mission is intended to end with decision-grade defensive intelligence and governance artifacts.
+
+Typical mission output includes:
+
+### 1) Mission Context and Scope
+
+- Target context used for the mission
+- Stated objective and bounded defensive intent
+- Operator-visible execution framing (what Vanguard is trying to validate)
+
+### 2) Evidence-Backed Findings
+
+- Public-source reconnaissance results (e.g., WHOIS/RDAP + corroborating web intelligence)
+- Key observations distilled into concise, actionable findings
+- Confidence annotations to help triage follow-up priorities
+
+### 3) Governance and Authorization Trail
+
+- What action was requested for authorization
+- Which context was approved/aborted
+- Approval freshness/integrity controls applied
+- Decision outcomes suitable for audit review
+
+### 4) Defensive Next Steps
+
+- Safe follow-up actions for security/engineering teams
+- Suggested validation paths when confidence is medium/low
+- Clear indication of what was _not_ executed (if mission was aborted or constrained)
+
+### 5) Export-Ready Evidence Foundation
+
+- Structured mission and governance records that can feed compliance artifacts
+- Trace-linked data suitable for downstream reporting (e.g., JSON today, PDF export roadmap)
+
+In short, Vanguard’s output is designed to support operational decisions, team handoffs, and compliance narratives from the same mission run.
+
+---
+
+## 🧭 How to Use Vanguard Output
+
+Vanguard output is most valuable when treated as an operational decision aid, not a final truth artifact by itself.  
+Use it to accelerate secure triage while preserving verification discipline.
+
+### A) Immediate Operator Workflow
+
+After each mission, use the output to:
+
+1. **Confirm target and scope alignment**  
+   Verify the brief matches the intended target and mission objective.
+
+2. **Review confidence and evidence quality**  
+   Distinguish high-confidence findings from leads that need secondary validation.
+
+3. **Prioritize response actions**  
+   Convert findings into practical next steps for security or engineering teams.
+
+4. **Record governance context**  
+   Retain who approved what, when, and under which mission conditions.
+
+### B) Team Handoff Workflow
+
+Use Vanguard briefs to hand off work across functions:
+
+- **Security analysts:** start investigation with structured findings and references.
+- **Engineers/platform teams:** act on concrete remediation follow-ups.
+- **Leadership/compliance stakeholders:** review traceable decision history and control posture.
+
+This reduces rework and improves consistency because mission context, findings, and governance decisions are already packaged together.
+
+### C) Compliance and Audit Workflow
+
+For governance-heavy environments, treat Vanguard output as evidence input:
+
+- Map mission actions to your internal control model.
+- Attach approval/decision records to change or incident tickets.
+- Use trace-linked outputs to support periodic governance reviews.
+- Build toward formalized reporting exports (JSON baseline now, PDF/reporting expansion next).
+
+### D) Good Usage Practices
+
+To get reliable value:
+
+- Use one clear objective per mission.
+- Keep requests defensive and bounded.
+- Treat medium/low-confidence findings as investigation leads, not conclusions.
+- Preserve governance logs alongside technical findings.
+
+### E) What Vanguard Is Not
+
+Vanguard is not intended as an autonomous offensive executor.  
+Its purpose is governed defensive reconnaissance with operator authority and auditable decision flow at the center.
+
+---
+
 ## 🎯 How to Engage Vanguard
 
 Use clear, target-specific defensive requests.  
 Best results come from one mission objective per prompt.
+
 **Examples:**
 
 - “Run a defensive OSINT reconnaissance on `openai.com`: collect registrar/domain ownership signals, recent public security mentions, and summarize with confidence + safe next actions.”
 - “Assess `example.com` for public exposure indicators: WHOIS/RDAP ownership context, subdomain-related public references, and potential defensive follow-ups.”
 
-✅ Operator note: If Vanguard requests authorization, review the approval context (tool, args, risk, side effects) before selecting **Authorize Mission** or **Abort Action**.
+✅ **Operator note:** If Vanguard requests authorization, review the approval context (tool, args, risk, side effects) before selecting **Authorize Mission** or **Abort Action**.
+
+### 🔐 Demo Access (Recruiter Testing)
+
+Use the live demo credentials below to test the full Command Center flow:
+
+- **Login URL:** `https://vanguard-agent.vercel.app/login`
+- **Username:** `demo`
+- **Password:** `R17bR-7MMwU_JRu_FeKtZ-rqkeY8vI`
+
+> Demo access is provided for evaluation and portfolio review only.
+> Demo credentials are rotated periodically.
 
 ---
 
