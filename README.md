@@ -180,7 +180,7 @@ Use the live demo credentials below to test the full Command Center flow:
 
 - **Login URL:** `https://vanguard-agent.vercel.app/login`
 - **Username:** `demo`
-- **Password:** `R17bR-7MMwU_JRu_FeKtZ-rqkeY8vI`
+- **Password:** `RqrEBqs0C8J_nTFvBrRu-jAboMsOJC`
 
 > Demo access is provided for evaluation and portfolio review only.
 > Demo credentials are rotated periodically.
