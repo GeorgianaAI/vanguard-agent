@@ -1,6 +1,10 @@
 import type { UIMessage } from "ai";
 
-export type DashboardMessage = UIMessage;
+export type VanguardMessageMetadata = {
+  agent_node?: "supervisor" | "scout" | "auditor";
+};
+
+export type DashboardMessage = UIMessage<VanguardMessageMetadata>;
 
 export type ToolPart = Extract<
   UIMessage["parts"][number],
