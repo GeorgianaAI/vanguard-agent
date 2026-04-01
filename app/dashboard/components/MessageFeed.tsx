@@ -1,12 +1,14 @@
 import type { DashboardMessage, ToolActionHandler } from "../lib/types";
-import { getApprovalContextFromMessage, getMessageSignature } from "../lib/utils";
+import {
+  getApprovalContextFromMessage,
+  getMessageSignature,
+} from "../lib/utils";
 import { EmptyState } from "./EmptyState";
 import { MessageBubble } from "./MessageBubble";
 
 type MessageFeedProps = {
   messages: DashboardMessage[];
   error?: Error;
-  /** Transport / governance messages surfaced for the operator */
   operatorNotice?: string | null;
   onAuthorize: ToolActionHandler;
   onAbort: ToolActionHandler;
@@ -36,18 +38,20 @@ export function MessageFeed({
   });
 
   return (
-    <div className="custom-scrollbar h-[520px] space-y-6 overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900/30 p-8 shadow-2xl relative">
+    <div className="custom-scrollbar relative h-[520px] space-y-6 overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900/30 p-8 shadow-2xl">
       {dedupedMessages.length === 0 && <EmptyState />}
 
       {dedupedMessages.map((message, index) => {
-        const hasResolutionAfter = dedupedMessages.slice(index + 1).some((m) => {
-          if (m.role !== "user") return false;
-          const txt = extractMessageText(m);
-          return (
-            txt.includes("mission authorized") ||
-            txt.includes("mission aborted")
-          );
-        });
+        const hasResolutionAfter = dedupedMessages
+          .slice(index + 1)
+          .some((m) => {
+            if (m.role !== "user") return false;
+            const txt = extractMessageText(m);
+            return (
+              txt.includes("mission authorized") ||
+              txt.includes("mission aborted")
+            );
+          });
 
         const previousApprovalContext = [...dedupedMessages]
           .slice(0, index)
@@ -56,22 +60,27 @@ export function MessageFeed({
           .find((ctx) => ctx !== null);
 
         return (
-          <MessageBubble
+          <div
             key={`${message.id}-${index}`}
-            message={message}
-            onAuthorize={onAuthorize}
-            onAbort={onAbort}
-            resolved={hasResolutionAfter}
-            approvalDisabled={approvalDisabled}
-            previousApprovalContext={previousApprovalContext ?? null}
-          />
+            id={`message-${message.id}`}
+            data-message-id={message.id}
+          >
+            <MessageBubble
+              message={message}
+              onAuthorize={onAuthorize}
+              onAbort={onAbort}
+              resolved={hasResolutionAfter}
+              approvalDisabled={approvalDisabled}
+              previousApprovalContext={previousApprovalContext ?? null}
+            />
+          </div>
         );
       })}
 
       {(operatorNotice || error) && (
         <div
           data-testid="operator-notice"
-          className="rounded-xl border border-red-900/50 bg-red-950/20 p-4 text-[10px] font-black tracking-widest uppercase text-red-400"
+          className="rounded-xl border border-red-900/50 bg-red-950/20 p-4 text-[10px] font-black uppercase tracking-widest text-red-400"
         >
           {operatorNotice ?? `Uplink error: ${error?.message ?? ""}`}
         </div>
