@@ -40,7 +40,7 @@ export function CommandInput({
         type="submit"
         data-testid="deploy-button"
         disabled={submitBlocked}
-        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-8 py-2.5 text-[11px] font-black tracking-[0.2em] text-white transition-all hover:bg-cyan-500 disabled:opacity-50 uppercase shadow-lg shadow-cyan-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-xl bg-cyan-600 px-8 py-2.5 text-[11px] font-black tracking-[0.2em] text-white transition-all hover:bg-cyan-500 disabled:opacity-50 uppercase shadow-lg shadow-cyan-500/20 focus:outline-none"
       >
         {label}
       </button>

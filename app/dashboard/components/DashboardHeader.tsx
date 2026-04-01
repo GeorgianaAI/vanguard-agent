@@ -15,8 +15,10 @@ import { ResetMissionButton } from "./ResetMissionButton";
 
 type DashboardHeaderProps = {
   loading: boolean;
-  /** Read-only restored transcript: green LED + SATELLITE LINK IDLE. */
+  /** Read-only restored transcript (affects satellite pulse only). */
   restored: boolean;
+  /** Amber + RECON IN PROGRESS while streaming or live HITL wait; green idle otherwise. */
+  reconLedActive: boolean;
   onLogout: () => void;
   logoutPending: boolean;
   onResetMission: () => void;
@@ -25,15 +27,15 @@ type DashboardHeaderProps = {
 export function DashboardHeader({
   loading,
   restored,
+  reconLedActive,
   onLogout,
   logoutPending,
   onResetMission,
 }: DashboardHeaderProps) {
   const linkLive = !restored;
-  const ledAmber = linkLive;
-  const statusLabel = restored
-    ? STATUS_SATELLITE_IDLE
-    : STATUS_RECON_IN_PROGRESS;
+  const statusLabel = reconLedActive
+    ? STATUS_RECON_IN_PROGRESS
+    : STATUS_SATELLITE_IDLE;
 
   return (
     <header className="mx-auto mb-12 max-w-4xl border-b border-slate-800 pb-10">
@@ -41,7 +43,7 @@ export function DashboardHeader({
         {/* Return to Base button */}
         <Link
           href="/"
-          className="group flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 transition-all hover:border-cyan-500/50 hover:bg-slate-900 hover:text-cyan-400 shadow-lg shadow-black/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+          className="group flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 transition-all hover:border-cyan-500/50 hover:bg-slate-900 hover:text-cyan-400 shadow-lg shadow-black/40 focus:outline-none"
         >
           <ChevronLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
           <span className="flex items-center gap-1.5">
@@ -58,7 +60,7 @@ export function DashboardHeader({
           type="button"
           onClick={onLogout}
           disabled={logoutPending}
-          className="group flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 transition-all hover:border-rose-900/50 hover:bg-rose-950/20 hover:text-rose-400 shadow-sm disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+          className="group flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 transition-all hover:border-rose-900/50 hover:bg-rose-950/20 hover:text-rose-400 shadow-sm disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none"
         >
           <Power className="h-3 w-3 opacity-40 transition-opacity group-hover:opacity-100 group-hover:text-rose-500" />
           <span>
@@ -87,7 +89,7 @@ export function DashboardHeader({
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 px-5 py-2.5 text-[11px] font-black tracking-widest uppercase shadow-lg shadow-black/20">
           <div className="flex items-center gap-3">
             <div
-              className={`w-2 h-2 rounded-full shrink-0 -translate-y-[2.5px] ${ledAmber ? "bg-amber-500 animate-ping" : "bg-emerald-500"}`}
+              className={`w-2 h-2 rounded-full shrink-0 -translate-y-[2.5px] ${reconLedActive ? "bg-amber-500 animate-ping" : "bg-emerald-500"}`}
             />
             <span className="text-slate-300">{statusLabel}</span>
           </div>
