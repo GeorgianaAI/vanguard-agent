@@ -38,7 +38,7 @@ export function DashboardHeader({
     : STATUS_SATELLITE_IDLE;
 
   return (
-    <header className="mx-auto mb-12 max-w-4xl border-b border-slate-800 pb-10">
+    <header className="mb-12 w-full min-w-0 border-b border-slate-800 pb-8">
       <div className="mb-15 flex items-center justify-between gap-3">
         {/* Return to Base button */}
         <Link
