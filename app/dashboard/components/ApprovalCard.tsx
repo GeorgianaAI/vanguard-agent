@@ -155,7 +155,7 @@ export function ApprovalCard({
           data-testid="abort-action"
           disabled={disabled}
           onClick={() => onAbort(part)}
-          className="flex-1 rounded-xl bg-slate-800 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-300 transition-all hover:bg-slate-700 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex-1 rounded-xl bg-slate-800 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-300 transition-all hover:bg-slate-700 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-slate-800"
         >
           <XCircle className="h-3.5 w-3.5" /> Abort Action
         </button>
