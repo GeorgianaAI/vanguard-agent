@@ -42,7 +42,9 @@ function formatChatTransportError(err: Error): string {
   if (/409|Approval already processed|no pending authorization/i.test(msg)) {
     return "This authorization step is no longer valid (already completed or expired). Try refreshing or starting a new mission.";
   }
-  if (/400|Invalid mission|Missing thread_id|Missing approved boolean/i.test(msg)) {
+  if (
+    /400|Invalid mission|Missing thread_id|Missing approved boolean/i.test(msg)
+  ) {
     return `Request rejected: ${msg}`;
   }
   if (/Missing approval context binding/i.test(msg)) {
@@ -87,14 +89,15 @@ export function useVanguardChat({
     [],
   );
 
-  const { messages, sendMessage, status, error, setMessages } = useChat<DashboardMessage>({
-    transport,
-    ...(threadId != null ? { id: threadId } : {}),
-    resume: false,
-    onError: (err) => {
-      setOperatorNotice(formatChatTransportError(err));
-    },
-  });
+  const { messages, sendMessage, status, error, setMessages } =
+    useChat<DashboardMessage>({
+      transport,
+      ...(threadId != null ? { id: threadId } : {}),
+      resume: false,
+      onError: (err) => {
+        setOperatorNotice(formatChatTransportError(err));
+      },
+    });
 
   const loading = isLoadingStatus(status);
 
@@ -157,6 +160,8 @@ export function useVanguardChat({
 
   const onSubmit = async (event: React.SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (surfaceMode === "restored") return;
 
     const text = input.trim();
     if (!text) return;
@@ -223,7 +228,8 @@ export function useVanguardChat({
         },
       );
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error ?? ""));
+      const err =
+        error instanceof Error ? error : new Error(String(error ?? ""));
       setOperatorNotice(formatChatTransportError(err));
     } finally {
       approvalInFlight.current = false;
