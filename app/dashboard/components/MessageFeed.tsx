@@ -38,7 +38,7 @@ export function MessageFeed({
   });
 
   return (
-    <div className="custom-scrollbar relative h-[520px] space-y-6 overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900/30 p-8 shadow-2xl">
+    <div className="custom-scrollbar relative h-[520px] min-w-0 space-y-6 overflow-x-hidden overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900/30 p-4 shadow-2xl sm:p-6 md:p-8">
       {dedupedMessages.length === 0 && <EmptyState />}
 
       {dedupedMessages.map((message, index) => {

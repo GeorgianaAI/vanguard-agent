@@ -109,7 +109,7 @@ export function MessageBubble({
         )}
       </div>
 
-      <div className="text-[13px] text-slate-300 font-medium leading-relaxed pl-4 border-l-2 border-slate-800 transition-colors group-hover:border-slate-700 whitespace-pre-wrap">
+      <div className="text-[13px] text-slate-300 font-medium leading-relaxed pl-4 border-l-2 border-slate-800 transition-colors group-hover:border-slate-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
         {text || (
           <span className="italic text-slate-600 tracking-tight">
             {NON_TEXT_EVENT_TEXT}
