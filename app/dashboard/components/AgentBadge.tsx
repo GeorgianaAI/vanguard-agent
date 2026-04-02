@@ -1,6 +1,6 @@
-import { Search, ShieldCheck, Cpu } from "lucide-react";
+import { Search, ShieldCheck, Cpu, Activity } from "lucide-react";
 
-export type AgentType = "SUPERVISOR" | "SCOUT" | "AUDITOR";
+export type AgentType = "SUPERVISOR" | "SCOUT" | "AUDITOR" | "PENDING";
 
 type AgentBadgeProps = {
   type: AgentType;
@@ -22,6 +22,11 @@ export function AgentBadge({ type }: AgentBadgeProps) {
       color: "text-indigo-400 border-indigo-900/30 bg-indigo-950/20",
       icon: <ShieldCheck className="h-3 w-3" />,
       label: "VANGUARD AUDITOR",
+    },
+    PENDING: {
+      color: "text-slate-400 border-slate-700/60 bg-slate-900/30",
+      icon: <Activity className="h-3 w-3" />,
+      label: "PENDING",
     },
   } as const;
 

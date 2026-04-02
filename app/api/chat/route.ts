@@ -105,11 +105,6 @@ function acquireLocalApprovalLock(key: string, ttlMs: number): boolean {
   return true;
 }
 
-function inferAgentNodeFromContent(content: string): VanguardAgentNode {
-  if (content.includes("AUTHORIZATION_REQUIRED")) return "scout";
-  return "auditor";
-}
-
 function streamSingleAssistantText(
   text: string,
   agentNode?: VanguardAgentNode,
@@ -128,6 +123,52 @@ function streamSingleAssistantText(
       controller.enqueue({ type: "text-delta", id: textId, delta: text });
       controller.enqueue({ type: "text-end", id: textId });
       controller.enqueue({ type: "finish", finishReason: "stop" });
+      controller.close();
+    },
+  });
+}
+
+function injectAgentNodeMetadataIntoStream(
+  stream: ReadableStream<UIMessageChunk>,
+  agentNode: VanguardAgentNode,
+): ReadableStream<UIMessageChunk> {
+  return new ReadableStream<UIMessageChunk>({
+    async start(controller) {
+      const reader = stream.getReader();
+      let inserted = false;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+
+        const chunkType = (value as { type?: string }).type;
+
+        if (!inserted && chunkType === "start") {
+          controller.enqueue(value);
+          controller.enqueue(
+            {
+              type: "message-metadata",
+              messageMetadata: { agent_node: agentNode },
+            } as unknown as UIMessageChunk,
+          );
+          inserted = true;
+          continue;
+        }
+
+        if (!inserted) {
+          controller.enqueue(
+            {
+              type: "message-metadata",
+              messageMetadata: { agent_node: agentNode },
+            } as unknown as UIMessageChunk,
+          );
+          inserted = true;
+        }
+
+        controller.enqueue(value);
+      }
+
       controller.close();
     },
   });
@@ -637,8 +678,14 @@ export async function POST(req: Request) {
         actorId,
         actorRole,
       });
+      const approvalAgentNode: VanguardAgentNode = isAuthorized
+        ? "scout"
+        : "auditor";
       const streamRes = createUIMessageStreamResponse({
-        stream: toUIMessageStream(stream),
+        stream: injectAgentNodeMetadataIntoStream(
+          toUIMessageStream(stream) as ReadableStream<UIMessageChunk>,
+          approvalAgentNode,
+        ),
         headers: { "x-vanguard-thread-id": threadId },
       });
       return withRequestIdHeaders(streamRes, reqId);
@@ -772,9 +819,8 @@ export async function POST(req: Request) {
 
     const agentNode: VanguardAgentNode | undefined =
       latestAssistant && AIMessage.isInstance(latestAssistant)
-        ? (readAgentNodeFromLangchainMessage(latestAssistant) ??
-          inferAgentNodeFromContent(assistantText))
-        : inferAgentNodeFromContent(assistantText);
+        ? readAgentNodeFromLangchainMessage(latestAssistant)
+        : undefined;
 
     const streamRes = createUIMessageStreamResponse({
       stream: streamSingleAssistantText(assistantText, agentNode),

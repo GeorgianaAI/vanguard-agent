@@ -72,7 +72,7 @@ export function MessageBubble({
             Operator
           </span>
         ) : (
-          <AgentBadge type={agentType ?? "AUDITOR"} />
+          <AgentBadge type={agentType ?? "PENDING"} />
         )}
       </div>
 
