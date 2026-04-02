@@ -47,6 +47,7 @@ import {
   injectAgentNodeMetadataIntoStream,
   streamSingleAssistantText,
 } from "./streaming";
+import { acquireLocalApprovalLock, getClientIp } from "./locks";
 
 export const runtime = "edge";
 
@@ -94,20 +95,6 @@ const approvalRatelimit = redis
       prefix: `@${redisEnv.keyPrefix}/ratelimit/approval`,
     })
   : null;
-
-function getClientIp(req: Request): string {
-  const forwardedFor = req.headers.get("x-forwarded-for") ?? "";
-  return forwardedFor.split(",")[0]?.trim() || "127.0.0.1";
-}
-
-function acquireLocalApprovalLock(key: string, ttlMs: number): boolean {
-  const now = Date.now();
-  const existing = approvalLocks.get(key);
-  if (typeof existing === "number" && existing > now) return false;
-
-  approvalLocks.set(key, now + ttlMs);
-  return true;
-}
 
 export async function POST(req: Request) {
   const reqId = newRequestId(req);
@@ -348,7 +335,13 @@ export async function POST(req: Request) {
       const approvalLockKey = formatApprovalLockKey(threadId, tool_call_id);
       const lockTtlMs = 1000 * 60 * 30;
 
-      if (!acquireLocalApprovalLock(approvalLockKey, lockTtlMs)) {
+      if (
+        !acquireLocalApprovalLock(
+          approvalLocks,
+          approvalLockKey,
+          lockTtlMs,
+        )
+      ) {
         vanguardChatLog({
           reqId,
           phase: "approval",
