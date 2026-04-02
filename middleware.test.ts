@@ -38,6 +38,15 @@ describe("middleware auth/rbac", () => {
     expect(res.headers.get("location")).toContain("/login");
   });
 
+  it("redirects unauthenticated user from /governance to /login", async () => {
+    const middleware = await loadMiddleware();
+    const req = new NextRequest("http://localhost/governance");
+    const res = await middleware(req);
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toContain("/login");
+  });
+
   it("blocks viewer on /api/chat with 403", async () => {
     hoisted.verifySessionToken.mockResolvedValue({
       sub: "viewer1",

@@ -3,6 +3,7 @@ import {
   STATUS_RECON_IN_PROGRESS,
   STATUS_SATELLITE_IDLE,
 } from "../lib/constants";
+import { GovernanceLedgerButton } from "./GovernanceLedgerButton";
 import { ResetMissionButton } from "./ResetMissionButton";
 import { ReturnToBaseButton } from "./ReturnToBaseButton";
 import { TerminateMissionButton } from "./TerminateMissionButton";
@@ -36,6 +37,8 @@ export function DashboardHeader({
       <div className="mb-15 flex items-center justify-between gap-3">
         {/* Return to Base button */}
         <ReturnToBaseButton />
+
+        <GovernanceLedgerButton />
 
         {/* Reset Mission button */}
         <ResetMissionButton onReset={onResetMission} />

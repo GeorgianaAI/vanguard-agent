@@ -20,6 +20,7 @@ function shouldBypassAuthForE2E(): boolean {
 
 function routePermission(pathname: string): Permission | null {
   if (pathname.startsWith("/dashboard")) return "ui:access";
+  if (pathname.startsWith("/governance")) return "ui:access";
   if (pathname.startsWith("/api/chat")) return "mission:run";
   if (pathname.startsWith("/api/audit/evidence")) return "audit:evidence:read";
   return null;
@@ -51,6 +52,8 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/governance",
+    "/governance/:path*",
     "/api/chat",
     "/api/chat/:path*",
     "/api/audit/evidence",
