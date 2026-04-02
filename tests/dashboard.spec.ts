@@ -30,6 +30,7 @@ test.describe("Vanguard dashboard", () => {
     await page.goto("/dashboard");
     await page.getByTestId("target-input").fill("openai.com");
     await page.getByTestId("mission-input").fill("test mission");
+    await expect(page.getByTestId("deploy-button")).toBeEnabled();
     await page.getByTestId("deploy-button").click();
 
     await expect.poll(() => sawChatPost, { timeout: 15_000 }).toBe(true);
@@ -59,6 +60,7 @@ test.describe("Vanguard dashboard", () => {
     await page.goto("/dashboard");
     await page.getByTestId("target-input").fill("openai.com");
     await page.getByTestId("mission-input").fill("delayed mission");
+    await expect(page.getByTestId("deploy-button")).toBeEnabled();
 
     const chatPost = page.waitForRequest(
       (req) =>
@@ -92,6 +94,7 @@ test.describe("Vanguard dashboard", () => {
     await page.goto("/dashboard");
     await page.getByTestId("target-input").fill("openai.com");
     await page.getByTestId("mission-input").fill("rate limit probe");
+    await expect(page.getByTestId("deploy-button")).toBeEnabled();
     await page.getByTestId("deploy-button").click();
 
     await expect(page.getByTestId("operator-notice")).toBeVisible({
