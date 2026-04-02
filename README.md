@@ -47,6 +47,12 @@ Here is how Vanguard differs from a standard AI chat:
 
 ## ![Vanguard Command Stream - Restored Session](./docs/assets/vanguard-command-restored-session.png)
 
+> 5. Vanguard Command Stream - Governance Ledger
+
+## ![Vanguard Command Stream - Header Buttons](./docs/assets/vanguard-command-header-buttons.png)
+
+## ![Vanguard Command Stream - Restored Session](./docs/assets/vanguard-governance-ledger.png)
+
 ---
 
 ## 🛰️ What Vanguard Does
@@ -254,9 +260,9 @@ Use the live demo credentials below to test the full Command Center flow:
 - [x] **Demo Access (Recruiter-Friendly):** Add a rotating `demo_admin` account and document public demo access workflow.
 - [x] **Mission Timeline & Replay (Command Center UI):** Compact event timeline with read-only playback.
 - [x] **Compliance Evidence Export (PDF):** Generate downloadable audit reports from trace-linked mission evidence (LangSmith + governance logs).
+- [x] **NIST-Aligned Governance Dashboard:** Decision integrity ledger, mission timeline replay, and traceable control evidence mapped to AI risk management and compliance oversight (`/governance`).
 - [ ] **Dependency & CVE hygiene:** Run `npm audit` (and CI scanning if desired), patch or document accepted risk for high/critical findings.
 - [ ] **Target-oriented CVE & advisory signals:** Enrich recon output with relevant public CVE/advisory context for observed stack or exposure (defensive OSINT scope).
-- [ ] **NIST-Aligned Governance Dashboard:** Decision integrity ledger, mission timeline replay, and traceable control evidence mapped to AI risk management and compliance oversight (`/governance`).
 - [ ] **Auth: evaluate / migrate to Clerk (optional):** Replace custom session flow with Clerk if product direction confirms; preserve roles, `/dashboard` access, middleware, and Playwright e2e bypass or Clerk test mode.
 
 ---
