@@ -10,9 +10,3 @@ export const APPROVAL_TITLE = "Manual Authorization Required";
 export const APPROVAL_REASON_AUTH = "Authorized by operator";
 export const APPROVAL_REASON_DENY = "Denied by operator";
 export const APPROVAL_ERROR_TEXT = "Action denied by operator";
-
-export const RESET_MISSION_TOOLTIP =
-  "Clears the mission transcript, target, and command field; starts a new mission thread; and returns to live mode.";
-
-export const RESTORED_TRANSCRIPT_HINT =
-  "Transcript is read-only. Reset Mission to return to live mode, then deploy when you’re ready.";
