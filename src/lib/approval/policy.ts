@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { ApprovalRiskLevel, ApprovalSideEffects } from "./types";
 
 const DOMAIN_RE =
-  /^(?=.{1,253}$)(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/i;
+  /^(?=.{1,253}$)(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+\.?$/i;
 
 const toolArgValidators = {
   domain_whois: z.object({
