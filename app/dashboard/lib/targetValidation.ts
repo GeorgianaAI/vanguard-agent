@@ -17,8 +17,7 @@ export function validateTargetInput(raw: string): {
   const normalized = normalizeTargetInput(raw);
 
   if (!normalized) {
-    // Empty target is allowed; backend falls back to DEFAULT_TARGET.
-    return { normalized, error: null };
+    return { normalized, error: "Enter a target domain (e.g. openai.com)." };
   }
 
   if (!DOMAIN_RE.test(normalized)) {
