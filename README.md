@@ -218,7 +218,7 @@ Use the live demo credentials below to test the full Command Center flow:
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** Next.js 16 (App Router), Tailwind CSS 4, Lucide Icons (Tactical Set)
+- **Frontend:** Next.js 16 (App Router), Tailwind CSS 4, Lucide Icons (Tactical Set) — **Command Center** at `/dashboard`, **Governance Ledger** (NIST-aligned shell) at `/governance`.
 - **Vercel AI SDK:** **`ai`**, **`@ai-sdk/react`**, **`@ai-sdk/langchain`** — streaming UI messages, chat transport, and LangGraph → UI message stream bridging for `/dashboard`.
 - **Agentic Brain:** Anthropic Claude Sonnet 4.6 (Primary Scout)
 - **Autonomous Auditor:** OpenAI GPT-4o-mini (The Judge)
