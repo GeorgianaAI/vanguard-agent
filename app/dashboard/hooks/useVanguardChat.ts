@@ -170,13 +170,17 @@ export function useVanguardChat({
     dismissNotice();
     setInput("");
     setSurfaceMode("live");
-    const activeThreadId = shouldStartFreshMission(messages)
+
+    // Mission is considered "terminal" once there are messages and no open approval.
+    const shouldAutoStartNewMission = shouldStartFreshMission(messages);
+
+    const activeThreadId = shouldAutoStartNewMission
       ? createThreadId()
       : ensureThreadId();
 
-    if (activeThreadId !== threadId) {
+    if (shouldAutoStartNewMission) {
+      // Start fresh thread automatically so Deploy always works post-mission.
       lastCompletedHistoryForThreadRef.current = null;
-      setThreadId(activeThreadId);
       setMessages([]);
     }
 
@@ -191,12 +195,16 @@ export function useVanguardChat({
           },
         },
       );
+      // Switch active thread after the message has been sent to avoid
+      // re-creating chat state mid-submit.
+      if (shouldAutoStartNewMission && activeThreadId !== threadId) {
+        setThreadId(activeThreadId);
+      }
     } catch (e) {
       const err = e instanceof Error ? e : new Error(String(e));
       setOperatorNotice(formatChatTransportError(err));
     }
   };
-
   async function sendApproval({
     approved,
     toolCallId,
