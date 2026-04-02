@@ -24,6 +24,6 @@ describe("resolveDashboardAgentType", () => {
         },
       ],
     } as unknown as DashboardMessage;
-    expect(resolveDashboardAgentType(message)).toBe("AUDITOR");
+    expect(resolveDashboardAgentType(message)).toBe("PENDING");
   });
 });

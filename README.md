@@ -1,6 +1,6 @@
 # 🛰️ Vanguard Agent: Autonomous Security Reconnaissance & Governance
 
-**[🚀 View Live Demo](https://vanguard-agent.vercel.app/dashboard)** | **[📂 View Codebase](https://github.com/GeorgiDS9/vanguard-agent)**
+**[🚀 View Live Demo](https://vanguard-agent.vercel.app)** | **[📂 View Codebase](https://github.com/GeorgiDS9/vanguard-agent)**
 
 **Agentic AI | Phase 2 Operational Autonomy | Next.js 16 | LangGraph Orchestration | HITL (manual authorization) | NIST-Aligned Governance**
 
@@ -46,14 +46,6 @@ Here is how Vanguard differs from a standard AI chat:
 > 4. Vanguard Command Stream - Restored Session
 
 ## ![Vanguard Command Stream - Restored Session](./docs/assets/vanguard-command-restored-session.png)
-
-> 5. Vanguard Command Stream - Control Buttons
-
-## ![Vanguard Command Stream - Return to Base Buttons](./docs/assets/vanguard-command-return-to-base-button.png)
-
-## ![Vanguard Command Stream - Return to Base Buttons](./docs/assets/vanguard-command-reset-mission-button.png)
-
-## ![Vanguard Command Stream - Terminate Mission Button](./docs/assets/vanguard-command-terminate-mission-button.png)
 
 ---
 
