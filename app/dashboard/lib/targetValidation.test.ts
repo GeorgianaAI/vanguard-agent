@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import { normalizeTargetInput, validateTargetInput } from "./targetValidation";
 
 describe("target validation", () => {
+  it("allows empty target for default fallback", () => {
+    const result = validateTargetInput("");
+    expect(result.normalized).toBe("");
+    expect(result.error).toBeNull();
+  });
+
   it("normalizes scheme/path/trailing punctuation", () => {
     expect(normalizeTargetInput(" https://stripe.com./abc ")).toBe(
       "stripe.com",
