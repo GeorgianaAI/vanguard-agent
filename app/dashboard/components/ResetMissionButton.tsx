@@ -18,7 +18,7 @@ export function ResetMissionButton({ onReset }: ResetMissionButtonProps) {
         <span className="text-[10px] font-black uppercase tracking-widest">
           Reset Mission
         </span>
-        <span className="text-[7px] font-bold uppercase tracking-widest text-slate-600">
+        <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500">
           Wipe History & Restart
         </span>
       </div>
