@@ -34,16 +34,13 @@ export function DashboardHeader({
 
   return (
     <header className="mb-12 w-full min-w-0 border-b border-slate-800 pb-8">
-      <div className="mb-15 flex items-center justify-between gap-3">
-        {/* Return to Base button */}
+      <div className="mb-12 flex items-center justify-between gap-3">
         <ReturnToBaseButton />
 
         <GovernanceLedgerButton />
 
-        {/* Reset Mission button */}
         <ResetMissionButton onReset={onResetMission} />
 
-        {/* Terminate Mission button */}
         <TerminateMissionButton
           disabled={logoutPending}
           pending={logoutPending}
@@ -57,10 +54,10 @@ export function DashboardHeader({
             className={`h-12 w-12 text-cyan-500 mt-[-4px] ${loading && linkLive ? "animate-pulse" : ""}`}
           />
           <div>
-            <h1 className="text-3xl font-black tracking-tighter uppercase text-white leading-none mb-2">
+            <h1 className="text-3xl font-black tracking-tighter uppercase sm:text-4xl">
               VANGUARD COMMAND CENTER <span className="text-cyan-500">🛰️</span>
             </h1>
-            <div className="flex items-center gap-2 text-[13px] text-cyan-400 font-bold tracking-[0.25em] uppercase opacity-90">
+            <div className="flex items-center gap-2 text-[12px] text-cyan-400 font-bold tracking-[0.25em] uppercase opacity-90">
               <Activity className="w-3.5 h-3.5" /> Autonomous Reconnaissance
               Terminal
             </div>
