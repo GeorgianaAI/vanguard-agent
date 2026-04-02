@@ -61,3 +61,19 @@ select:focus-visible {
   outline: none;
   box-shadow: none;
 }
+
+/* Vanguard: prevent browser autofill from forcing white input background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #e2e8f0; /* slate-200 */
+  transition: background-color 5000s ease-in-out 0s;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(2, 6, 23, 0.5) inset; /* bg-slate-950/50 */
+  box-shadow: 0 0 0px 1000px rgba(2, 6, 23, 0.5) inset;
+}
+
+/* Firefox */
+input:-moz-autofill {
+  background-color: rgba(2, 6, 23, 0.5) !important;
+  color: #e2e8f0 !important;
+}
