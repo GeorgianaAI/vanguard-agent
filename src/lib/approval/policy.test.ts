@@ -18,6 +18,9 @@ describe("validateApprovalToolArgs", () => {
     expect(validateApprovalToolArgs("domain_whois", { domain: "openai.com" })).toBe(
       true,
     );
+    expect(validateApprovalToolArgs("domain_whois", { domain: "openai.com." })).toBe(
+      true,
+    );
     expect(validateApprovalToolArgs("domain_whois", { domain: "bad domain" })).toBe(
       false,
     );
