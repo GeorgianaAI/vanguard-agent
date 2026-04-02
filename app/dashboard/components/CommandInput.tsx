@@ -5,6 +5,7 @@ type CommandInputProps = {
   restored: boolean;
   setInput: (value: string) => void;
   onSubmit: (event: React.SyntheticEvent<HTMLFormElement>) => Promise<void>;
+  submitBlockedOverride?: boolean;
 };
 
 export function CommandInput({
@@ -14,8 +15,10 @@ export function CommandInput({
   restored,
   setInput,
   onSubmit,
+  submitBlockedOverride = false,
 }: CommandInputProps) {
-  const submitBlocked = loading || awaitingAuthorization || restored;
+  const submitBlocked =
+    loading || awaitingAuthorization || restored || submitBlockedOverride;
 
   const label = loading
     ? "EXECUTING..."
