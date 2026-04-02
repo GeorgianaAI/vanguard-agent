@@ -28,6 +28,7 @@ test.describe("Vanguard dashboard", () => {
     });
 
     await page.goto("/dashboard");
+    await page.getByTestId("target-input").fill("openai.com");
     await page.getByTestId("mission-input").fill("test mission");
     await page.getByTestId("deploy-button").click();
 
@@ -56,6 +57,7 @@ test.describe("Vanguard dashboard", () => {
     });
 
     await page.goto("/dashboard");
+    await page.getByTestId("target-input").fill("openai.com");
     await page.getByTestId("mission-input").fill("delayed mission");
 
     const chatPost = page.waitForRequest(
@@ -88,6 +90,7 @@ test.describe("Vanguard dashboard", () => {
     });
 
     await page.goto("/dashboard");
+    await page.getByTestId("target-input").fill("openai.com");
     await page.getByTestId("mission-input").fill("rate limit probe");
     await page.getByTestId("deploy-button").click();
 
