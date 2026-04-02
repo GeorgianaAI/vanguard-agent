@@ -1,17 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { validateTargetInput } from "./lib/targetValidation";
 import { CommandInput } from "./components/CommandInput";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { MessageFeed } from "./components/MessageFeed";
 import { MissionReplayHeader } from "./components/MissionReplayHeader";
 import { TargetInput } from "./components/TargetInput";
 import { TimelineSidebar } from "./components/TimelineSidebar";
+import { ExportEvidenceButton } from "./components/ExportEvidenceButton";
 import { useVanguardChat } from "./hooks/useVanguardChat";
 import { buildMissionTimelineEvents } from "./lib/timeline";
 import type { MissionTimelineEvent } from "./lib/types";
 import { hasOpenApproval } from "./lib/missionState";
-import { RESTORED_TRANSCRIPT_HINT } from "./lib/constants";
 
 export default function VanguardDashboard() {
   const [target, setTarget] = useState<string>("");
@@ -30,6 +31,9 @@ export default function VanguardDashboard() {
     }
   }
 
+  const targetValidation = useMemo(() => validateTargetInput(target), [target]);
+  const targetError = targetValidation.error;
+
   const {
     messages,
     error,
@@ -41,7 +45,8 @@ export default function VanguardDashboard() {
     operatorNotice,
     surfaceMode,
     startNewMission,
-  } = useVanguardChat({ target, input, setInput });
+    threadId,
+  } = useVanguardChat({ target: targetValidation.normalized, input, setInput });
 
   const awaitingAuthorizationLive = useMemo(
     () => surfaceMode === "live" && hasOpenApproval(messages),
@@ -86,6 +91,56 @@ export default function VanguardDashboard() {
     }
   }
 
+  const hasCompletedAssistantResponse = useMemo(() => {
+    return messages.some((message) => {
+      if (message.role !== "assistant") return false;
+
+      const text = message.parts
+        .filter((part) => part.type === "text" || part.type === "reasoning")
+        .map((part) => part.text ?? "")
+        .join("\n")
+        .trim()
+        .toLowerCase();
+
+      if (!text) return false;
+      return !text.includes("authorization_required:");
+    });
+  }, [messages]);
+
+  const showMissionCompleteExportBar =
+    (surfaceMode === "live" || surfaceMode === "restored") &&
+    !loading &&
+    !awaitingAuthorizationLive &&
+    hasCompletedAssistantResponse;
+
+  const hintLedClass =
+    surfaceMode === "restored" ? "bg-emerald-500" : "bg-amber-500";
+
+  function handleExportEvidenceJson() {
+    const payload = {
+      exported_at: new Date().toISOString(),
+      thread_id: threadId,
+      target: targetValidation.normalized || target,
+      surface_mode: surfaceMode,
+      timeline_events: timelineEvents,
+      messages,
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const safeThread = threadId ?? "mission";
+    a.href = url;
+    a.download = `vanguard-evidence-${safeThread}-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="isolate min-h-screen w-full overflow-x-hidden bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-[1200px] px-4 pb-24 pt-32 sm:px-6 md:p-8">
@@ -99,7 +154,11 @@ export default function VanguardDashboard() {
         />
 
         <main className="mx-auto grid w-full min-w-0 max-w-[1200px] gap-6">
-          <TargetInput target={target} setTarget={setTarget} />
+          <TargetInput
+            target={target}
+            setTarget={setTarget}
+            error={target ? targetError : null}
+          />
 
           <div className="flex w-full min-w-0 flex-col gap-6 lg:flex-row lg:items-start">
             <section className="min-w-0 w-full flex-1 lg:min-h-0">
@@ -124,19 +183,48 @@ export default function VanguardDashboard() {
               />
 
               <div className="mt-6">
-                {surfaceMode === "restored" ? (
-                  <p className="mb-2 text-xs italic text-slate-500">
-                    {RESTORED_TRANSCRIPT_HINT}
-                  </p>
-                ) : null}
-                <CommandInput
-                  input={input}
-                  loading={loading}
-                  awaitingAuthorization={awaitingAuthorizationLive}
-                  restored={surfaceMode === "restored"}
-                  setInput={setInputValue}
-                  onSubmit={onSubmit}
-                />
+                <div className="mb-4 flex flex-col gap-3 px-2">
+                  {showMissionCompleteExportBar ? (
+                    <div className="flex items-center justify-between border-t border-slate-900 pt-4">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`h-1.5 w-1.5 rounded-full animate-pulse ${hintLedClass}`}
+                        />
+                        {surfaceMode === "restored" ? (
+                          <p className="text-[10px] font-bold tracking-wider text-slate-500 uppercase italic">
+                            Transcript is read-only.{" "}
+                            <span className="font-black text-slate-400">
+                              Reset Mission
+                            </span>{" "}
+                            to start a new mission, then deploy.
+                          </p>
+                        ) : (
+                          <p className="text-[10px] font-bold tracking-wider text-slate-500 uppercase italic">
+                            Mission complete. Next deploy starts a fresh thread.
+                            <span className="text-slate-400">
+                              {" "}
+                              Export evidence before redeploy.
+                            </span>
+                          </p>
+                        )}
+                      </div>
+
+                      <ExportEvidenceButton
+                        onExport={handleExportEvidenceJson}
+                      />
+                    </div>
+                  ) : null}
+
+                  <CommandInput
+                    input={input}
+                    loading={loading}
+                    awaitingAuthorization={awaitingAuthorizationLive}
+                    restored={surfaceMode === "restored"}
+                    setInput={setInputValue}
+                    onSubmit={onSubmit}
+                    submitBlockedOverride={Boolean(targetError)}
+                  />
+                </div>
               </div>
             </section>
 

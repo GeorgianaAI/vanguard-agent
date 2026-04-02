@@ -10,15 +10,14 @@ import { getCheckpointer } from "./checkpointer";
 import { VanguardStateAnnotation, VanguardStateType } from "./state";
 import { toolNode, vanguardTools } from "./tools";
 import { computeApprovalContextHash, computeArgHash } from "../approval/hash";
-import {
-  attachAgentNode,
-} from "./agentNode";
+import { attachAgentNode } from "./agentNode";
 import {
   APPROVAL_TOOL_ALLOWLIST,
   getApprovalRisk,
   getApprovalSideEffects,
 } from "../approval/policy";
 import type { ApprovalContextV1 } from "../approval/types";
+import { lookupDomainRdapJson } from "../recon/rdapDomainSummary";
 
 export const runtime = "edge";
 
@@ -66,7 +65,54 @@ function normalizeTargetToDomain(target: string): string {
   const trimmed = target.trim().toLowerCase();
   if (!trimmed) return "example.com";
   const withoutScheme = trimmed.replace(/^https?:\/\//, "");
-  return withoutScheme.split("/")[0] || "example.com";
+  const host = withoutScheme.split("/")[0] || "example.com";
+  // Remove trailing punctuation users commonly type in prompts/inputs.
+  const cleaned = host.replace(/[.,;:!?]+$/g, "");
+  return cleaned || "example.com";
+}
+
+function isUnresolvableTargetError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message.toLowerCase();
+
+  return (
+    msg.includes("rdap request failed (404)") ||
+    msg.includes("not found") ||
+    msg.includes("no such domain") ||
+    msg.includes("nxdomain")
+  );
+}
+
+async function runTargetPreflight(domain: string): Promise<{
+  ok: boolean;
+  reason?: string;
+}> {
+  try {
+    // Reuse same data source as domain_whois tool.
+    await lookupDomainRdapJson(domain);
+    return { ok: true };
+  } catch (error) {
+    if (isUnresolvableTargetError(error)) {
+      return {
+        ok: false,
+        reason:
+          error instanceof Error
+            ? error.message
+            : "Target appears unresolvable in RDAP preflight.",
+      };
+    }
+    // Non-resolution failures (timeouts/network/provider) should not hard-stop mission.
+    return { ok: true };
+  }
+}
+
+function hasTargetUnresolvableSignal(state: VanguardStateType): boolean {
+  return state.messages.some(
+    (m) =>
+      AIMessage.isInstance(m) &&
+      typeof m.content === "string" &&
+      m.content.includes("TARGET_UNRESOLVABLE:"),
+  );
 }
 
 function diffSinceLastApproval(
@@ -82,7 +128,8 @@ function diffSinceLastApproval(
   if (previous.tool_arg_hash !== current.toolArgHash) {
     changes.push("Tool arguments changed from prior approval.");
   }
-  const previousTarget = state.pendingApprovalContext?.constraints.target_lock ?? "";
+  const previousTarget =
+    state.pendingApprovalContext?.constraints.target_lock ?? "";
   if (previousTarget && previousTarget !== current.target) {
     changes.push(`Target changed: ${previousTarget} -> ${current.target}`);
   }
@@ -187,10 +234,37 @@ async function scoutNode(state: VanguardStateType) {
   }
 
   if (!state.isAuthorized) {
+    const targetDomain = normalizeTargetToDomain(state.target || "example.com");
+    const preflight = await runTargetPreflight(targetDomain);
+
+    if (!preflight.ok) {
+      const earlyExit = [
+        "TARGET_UNRESOLVABLE:",
+        `Target "${targetDomain}" could not be resolved in RDAP preflight.`,
+        `Reason: ${preflight.reason ?? "not found"}`,
+        "Mission will end early to avoid low-value external calls.",
+        "Recommended next step: verify spelling/TLD and retry.",
+      ].join(" ");
+
+      return {
+        messages: [attachAgentNode(new AIMessage(earlyExit), "scout")],
+        isPendingApproval: false,
+        pendingApprovalContext: null,
+        pendingApprovalHash: null,
+        pendingApprovalId: null,
+        isAuthorized: false,
+        scoutHasRun: true,
+        next: "auditor",
+      };
+    }
+
     const { context, contextHash } = await buildApprovalContext(state);
     const serializedContext = JSON.stringify(context);
     const approvalPayload = `${APPROVAL_SIGNAL_PREFIX}${serializedContext}`;
-    const approvalMessage = attachAgentNode(new AIMessage(approvalPayload), "scout");
+    const approvalMessage = attachAgentNode(
+      new AIMessage(approvalPayload),
+      "scout",
+    );
 
     return {
       isPendingApproval: true,
@@ -240,6 +314,7 @@ async function auditorNode(state: VanguardStateType) {
 
   const hasEvidence = state.messages.some((m) => ToolMessage.isInstance(m));
   const wasAborted = state.missionAborted === true;
+  const targetUnresolvable = hasTargetUnresolvableSignal(state);
 
   let systemPromptLines: string[];
 
@@ -248,6 +323,13 @@ async function auditorNode(state: VanguardStateType) {
       "You are Vanguard Auditor.",
       "The operator aborted this mission before any tools were executed.",
       "Acknowledge the abort, confirm no external tools were run, and suggest safe next steps in 2-3 sentences.",
+      "Do not include offensive guidance.",
+    ];
+  } else if (targetUnresolvable) {
+    systemPromptLines = [
+      "You are Vanguard Auditor.",
+      "Target appears unresolvable/invalid from preflight checks.",
+      "Provide a brief closure with: (1) what failed, (2) confidence=low, (3) safe next steps to verify target spelling/TLD.",
       "Do not include offensive guidance.",
     ];
   } else if (hasEvidence) {

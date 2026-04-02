@@ -43,7 +43,9 @@ export function TimelineItem({ event, onSelect }: TimelineItemProps) {
                 ? "text-cyan-400/80"
                 : event.node === "AUDITOR"
                   ? "text-indigo-400/80"
-                  : "text-amber-400/80"
+                  : event.node === "SUPERVISOR"
+                    ? "text-amber-400/80"
+                    : "text-slate-400/80"
             }`}
           >
             [{event.node}]
