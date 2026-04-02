@@ -1,17 +1,11 @@
-import Link from "next/link";
-import {
-  Satellite,
-  Activity,
-  ChevronLeft,
-  Home,
-  LogOut,
-  Power,
-} from "lucide-react";
+import { Activity, Satellite } from "lucide-react";
 import {
   STATUS_RECON_IN_PROGRESS,
   STATUS_SATELLITE_IDLE,
 } from "../lib/constants";
 import { ResetMissionButton } from "./ResetMissionButton";
+import { ReturnToBaseButton } from "./ReturnToBaseButton";
+import { TerminateMissionButton } from "./TerminateMissionButton";
 
 type DashboardHeaderProps = {
   loading: boolean;
@@ -41,33 +35,17 @@ export function DashboardHeader({
     <header className="mb-12 w-full min-w-0 border-b border-slate-800 pb-8">
       <div className="mb-15 flex items-center justify-between gap-3">
         {/* Return to Base button */}
-        <Link
-          href="/"
-          className="group flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 transition-all hover:border-cyan-500/50 hover:bg-slate-900 hover:text-cyan-400 shadow-lg shadow-black/40 focus:outline-none"
-        >
-          <ChevronLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
-          <span className="flex items-center gap-1.5">
-            <Home className="h-3 w-3 opacity-60" />
-            Return to Base
-          </span>
-        </Link>
+        <ReturnToBaseButton />
 
         {/* Reset Mission button */}
         <ResetMissionButton onReset={onResetMission} />
 
         {/* Terminate Mission button */}
-        <button
-          type="button"
-          onClick={onLogout}
+        <TerminateMissionButton
           disabled={logoutPending}
-          className="group flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase text-slate-400 transition-all hover:border-rose-900/50 hover:bg-rose-950/20 hover:text-rose-400 shadow-sm disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none"
-        >
-          <Power className="h-3 w-3 opacity-40 transition-opacity group-hover:opacity-100 group-hover:text-rose-500" />
-          <span>
-            {logoutPending ? "Terminating mission..." : "Terminate Mission"}
-          </span>
-          <LogOut className="h-2.5 w-2.5 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
-        </button>
+          pending={logoutPending}
+          onClick={onLogout}
+        />
       </div>
 
       <div className="flex items-center justify-between">
