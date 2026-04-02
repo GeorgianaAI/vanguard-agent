@@ -19,6 +19,26 @@ function formatStep(index: number): string {
   return String(index + 1).padStart(2, "0");
 }
 
+function nodeFromMetadata(message: DashboardMessage): TimelineNode | null {
+  const raw = message.metadata?.agent_node;
+  if (raw === "supervisor") return "SUPERVISOR";
+  if (raw === "scout") return "SCOUT";
+  if (raw === "auditor") return "AUDITOR";
+  return null;
+}
+
+function fallbackNodeFromHeuristics(text: string, hasToolParts: boolean): TimelineNode {
+  if (
+    text.includes("final") ||
+    text.includes("summary") ||
+    text.includes("findings")
+  ) {
+    return "AUDITOR";
+  }
+  if (hasToolParts) return "SCOUT";
+  return "SCOUT";
+}
+
 function labelForMessage(
   message: DashboardMessage,
   text: string,
@@ -35,23 +55,34 @@ function labelForMessage(
 
   const approvalContext = getApprovalContextFromMessage(message);
   if (approvalContext) {
-    return { label: "Approval Requested", node: "SCOUT" };
+    return {
+      label: "Approval Requested",
+      node: nodeFromMetadata(message) ?? "SCOUT",
+    };
   }
 
   const toolParts = message.parts.filter(isToolUIPart);
   if (toolParts.length > 0) {
-    return { label: "Tool Execution", node: "SCOUT" };
+    return { label: "Tool Execution", node: nodeFromMetadata(message) ?? "SCOUT" };
   }
 
-  if (
-    text.includes("final") ||
-    text.includes("summary") ||
-    text.includes("findings")
-  ) {
+  const metadataNode = nodeFromMetadata(message);
+  if (metadataNode === "AUDITOR") {
+    return { label: "Final Auditor Summary", node: "AUDITOR" };
+  }
+  if (metadataNode === "SUPERVISOR") {
+    return { label: "Supervisor Routing", node: "SUPERVISOR" };
+  }
+  if (metadataNode === "SCOUT") {
+    return { label: "Scout Response", node: "SCOUT" };
+  }
+
+  const fallbackNode = fallbackNodeFromHeuristics(text, toolParts.length > 0);
+  if (fallbackNode === "AUDITOR") {
     return { label: "Final Auditor Summary", node: "AUDITOR" };
   }
 
-  return { label: "Agent Response", node: "SCOUT" };
+  return { label: "Agent Response", node: fallbackNode };
 }
 
 export function buildMissionTimelineEvents(
