@@ -181,6 +181,7 @@ Best results come from one mission objective per prompt.
 
 - “Run a defensive OSINT reconnaissance on `openai.com`: collect registrar/domain ownership signals, recent public security mentions, and summarize with confidence + safe next actions.”
 - “Assess `example.com` for public exposure indicators: WHOIS/RDAP ownership context, subdomain-related public references, and potential defensive follow-ups.”
+- “Run defensive OSINT only. After domain_whois and tavily_search, briefly list any publicly disclosed CVE IDs that are relevant to technologies or versions you infer from open sources (cite IDs like CVE-2024-1234 only if they appear in public references you find). Do not exploit anything.”
 
 ✅ **Operator note:** If Vanguard requests authorization, review the approval context (tool, args, risk, side effects) before selecting **Authorize Mission** or **Abort Action**.
 
