@@ -1,16 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
-
-async function openDashboard(page: Page) {
-  await page.goto("/dashboard");
-  await page.getByTestId("target-input").waitFor({
-    state: "visible",
-    timeout: 60_000,
-  });
-}
+import { expect, test } from "@playwright/test";
 
 test.describe("Vanguard dashboard", () => {
   test("renders target, mission input, and deploy control", async ({ page }) => {
-    await openDashboard(page);
+    await page.goto("/dashboard");
 
     await expect(page.getByTestId("target-input")).toBeVisible();
     await expect(page.getByTestId("mission-input")).toBeVisible();
@@ -18,7 +10,7 @@ test.describe("Vanguard dashboard", () => {
   });
 
   test("shows empty feed state before first mission", async ({ page }) => {
-    await openDashboard(page);
+    await page.goto("/dashboard");
     await expect(
       page.getByText("Waiting for mission coordinates", { exact: false }),
     ).toBeVisible();
@@ -35,7 +27,7 @@ test.describe("Vanguard dashboard", () => {
       });
     });
 
-    await openDashboard(page);
+    await page.goto("/dashboard");
     await page.getByTestId("target-input").fill("openai.com");
     await page.getByTestId("mission-input").fill("test mission");
     await expect(page.getByTestId("deploy-button")).toBeEnabled();
@@ -65,7 +57,7 @@ test.describe("Vanguard dashboard", () => {
       });
     });
 
-    await openDashboard(page);
+    await page.goto("/dashboard");
     await page.getByTestId("target-input").fill("openai.com");
     await page.getByTestId("mission-input").fill("delayed mission");
     await expect(page.getByTestId("deploy-button")).toBeEnabled();
@@ -99,7 +91,7 @@ test.describe("Vanguard dashboard", () => {
       await route.continue();
     });
 
-    await openDashboard(page);
+    await page.goto("/dashboard");
     await page.getByTestId("target-input").fill("openai.com");
     await page.getByTestId("mission-input").fill("rate limit probe");
     await expect(page.getByTestId("deploy-button")).toBeEnabled();
@@ -135,7 +127,7 @@ test.describe("HITL live flow", () => {
   test("one approval card and authorize path", async ({ page }) => {
     test.setTimeout(180_000);
 
-    await openDashboard(page);
+    await page.goto("/dashboard");
     await page.getByTestId("target-input").fill("openai.com");
     await page
       .getByTestId("mission-input")

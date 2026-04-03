@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** Dynamic segment; AI SDK may touch Vercel OIDC during SSR — e2e sets VERCEL_OIDC_TOKEN for build/start. */
+/** Avoid static prerender of the segment; primary dashboard UI is client-only via dynamic(ssr:false). */
 export const dynamic = "force-dynamic";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
