@@ -15,8 +15,7 @@ export function NistMetricsCards() {
     >
       <div
         data-testid="governance-nist-measure"
-        className="flex min-h-[11rem] w-full min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/20 p-6 md:min-h-[12rem] md:p-8"
-      >
+        className="flex w-full min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/20 p-5 md:p-6"      >
         <div className="mb-4 flex items-center justify-between gap-2">
           <h3 className="flex min-w-0 items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
             <BarChart3 className="h-4 w-4 shrink-0 text-emerald-500" /> NIST:
@@ -28,9 +27,7 @@ export function NistMetricsCards() {
         </div>
         <div className="min-w-0 space-y-3">
           <div className="flex justify-between gap-2 text-[11px]">
-            <span className="text-slate-500 uppercase">
-              {measure.label}
-            </span>
+            <span className="text-slate-500 uppercase">{measure.label}</span>
             <span className="shrink-0 font-mono text-[10px] tracking-widest text-emerald-400">
               {measure.value}
             </span>
@@ -46,7 +43,7 @@ export function NistMetricsCards() {
 
       <div
         data-testid="governance-nist-manage"
-        className="flex min-h-[11rem] w-full min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/20 p-6 md:min-h-[12rem] md:p-8"
+        className="flex w-full min-w-0 flex-col rounded-2xl border border-slate-800 bg-slate-900/20 p-5 md:p-6"
       >
         <div className="mb-4 flex items-center justify-between gap-2">
           <h3 className="flex min-w-0 items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
