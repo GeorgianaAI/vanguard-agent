@@ -6,6 +6,7 @@ import {
 import type { EvidencePackage } from "@/src/lib/audit/evidence";
 
 import {
+  ADVISORY_MOCK,
   EVIDENCE_TRAIL,
   LEDGER_MOCK,
 } from "../governance-mock-data";
@@ -30,6 +31,13 @@ export type GovernanceMetricCard = {
 export type GovernanceViewModel = {
   source: "mock" | "derived";
   ledgerRows: GovernanceLedgerRow[];
+  advisorySignals: Array<{
+    id: string;
+    stack: string;
+    severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+    cvss: string;
+    note: string;
+  }>;
   evidenceTrail: GovernanceEvidenceItem[];
   nistMeasure: GovernanceMetricCard;
   nistManage: GovernanceMetricCard;
@@ -90,6 +98,96 @@ function hasAuditorSummary(messages: DashboardMessage[]): boolean {
     if (m.metadata?.agent_node === "auditor") return true;
   }
   return false;
+}
+
+function collectToolNames(messages: DashboardMessage[]): string[] {
+  const names = new Set<string>();
+
+  for (const message of messages) {
+    for (const part of message.parts) {
+      if (
+        typeof part === "object" &&
+        part != null &&
+        "toolName" in part &&
+        typeof part.toolName === "string"
+      ) {
+        names.add(part.toolName.toLowerCase());
+      }
+    }
+  }
+
+  return [...names];
+}
+
+function toCvssSeverity(severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"): string {
+  if (severity === "CRITICAL") return "9.0";
+  if (severity === "HIGH") return "7.5";
+  if (severity === "MEDIUM") return "5.0";
+  return "3.1";
+}
+
+function deriveAdvisorySignals(
+  messages: DashboardMessage[],
+  evidence: EvidencePackage | null,
+): GovernanceViewModel["advisorySignals"] {
+  const textBlob = messages
+    .map((m) => extractRenderableText(m).toLowerCase())
+    .join("\n");
+  const tools = collectToolNames(messages);
+  const advisories: GovernanceViewModel["advisorySignals"] = [];
+
+  const hasTavily =
+    tools.some((t) => t.includes("tavily")) || textBlob.includes("tavily");
+  const hasWhois =
+    tools.some((t) => t.includes("whois") || t.includes("rdap")) ||
+    textBlob.includes("whois") ||
+    textBlob.includes("rdap");
+
+  if (hasWhois) {
+    advisories.push({
+      id: "ADV-2026-1001",
+      stack: "Domain Registration Surface",
+      severity: "MEDIUM",
+      cvss: toCvssSeverity("MEDIUM"),
+      note: "WHOIS/RDAP metadata indicates externally visible ownership and lifecycle exposure signals.",
+    });
+  }
+
+  if (hasTavily) {
+    advisories.push({
+      id: "ADV-2026-1002",
+      stack: "Public Recon Corroboration",
+      severity: "LOW",
+      cvss: toCvssSeverity("LOW"),
+      note: "Open-source reconnaissance path confirmed by Tavily-based corroboration queries.",
+    });
+  }
+
+  const warningCount = evidence?.warnings.length ?? 0;
+  if (warningCount > 0 || evidence?.evidence_status === "degraded") {
+    advisories.push({
+      id: "ADV-2026-1003",
+      stack: "Trace Integrity Controls",
+      severity: warningCount > 0 ? "HIGH" : "MEDIUM",
+      cvss: toCvssSeverity(warningCount > 0 ? "HIGH" : "MEDIUM"),
+      note:
+        warningCount > 0
+          ? `Evidence ingestion reported ${warningCount} warning(s); validate trace completeness before final attestation.`
+          : "Evidence pipeline is degraded; verify trace capture before relying on advisory conclusions.",
+    });
+  }
+
+  if (advisories.length === 0) {
+    return ADVISORY_MOCK.map((item) => ({
+      id: item.id,
+      stack: item.stack,
+      severity: item.severity === "CRITICAL" ? "CRITICAL" : "HIGH",
+      cvss: item.cvss,
+      note: "Scout detected matching version signal in observed public telemetry.",
+    }));
+  }
+
+  return advisories;
 }
 
 function buildEvidenceTrailDerived(
@@ -191,6 +289,7 @@ export function buildGovernanceViewModelFromData(
     return {
       source: "mock",
       ledgerRows: [...LEDGER_MOCK] as unknown as GovernanceLedgerRow[],
+      advisorySignals: deriveAdvisorySignals([], null),
       evidenceTrail: [...EVIDENCE_TRAIL],
       nistMeasure: DEFAULT_NIST_MEASURE,
       nistManage: DEFAULT_NIST_MANAGE,
@@ -203,6 +302,7 @@ export function buildGovernanceViewModelFromData(
     return {
       source: "mock",
       ledgerRows: [...LEDGER_MOCK] as unknown as GovernanceLedgerRow[],
+      advisorySignals: deriveAdvisorySignals([], null),
       evidenceTrail: [...EVIDENCE_TRAIL],
       nistMeasure: DEFAULT_NIST_MEASURE,
       nistManage: DEFAULT_NIST_MANAGE,
@@ -215,6 +315,7 @@ export function buildGovernanceViewModelFromData(
   return {
     source: "derived",
     ledgerRows,
+    advisorySignals: deriveAdvisorySignals(messages, evidence),
     evidenceTrail: buildEvidenceTrailDerived(
       decision,
       ledgerRows,
