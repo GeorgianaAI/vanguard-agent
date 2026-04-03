@@ -26,26 +26,34 @@ const GovernanceDataContext = createContext<GovernanceDataContextValue | null>(
   null,
 );
 
+export type StorageReader = Pick<Storage, "getItem">;
+
+export function getThreadIdFromStorage(
+  storage: StorageReader | null | undefined,
+): string | null {
+  if (!storage) return null;
+  const threadId = storage.getItem(THREAD_STORAGE_KEY);
+  if (!threadId || threadId.trim().length === 0) return null;
+  return threadId;
+}
+
 export function GovernanceDataProvider({ children }: { children: ReactNode }) {
   const [model, setModel] = useState<GovernanceViewModel>(() =>
     buildGovernanceViewModelFromData([], null),
   );
 
-  const hasThreadStorage = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem(THREAD_STORAGE_KEY) != null;
+  const threadId = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    return getThreadIdFromStorage(window.localStorage);
   }, []);
 
   useEffect(() => {
-    if (!hasThreadStorage) return;
+    if (!threadId) return;
 
     const controller = new AbortController();
 
     void (async () => {
       try {
-        const threadId = window.localStorage.getItem(THREAD_STORAGE_KEY);
-        if (!threadId) return;
-
         const historyRes = await fetch(
           `/api/chat/history?thread_id=${encodeURIComponent(threadId)}`,
           {
@@ -84,7 +92,7 @@ export function GovernanceDataProvider({ children }: { children: ReactNode }) {
     })();
 
     return () => controller.abort();
-  }, [hasThreadStorage]);
+  }, [threadId]);
 
   return (
     <GovernanceDataContext.Provider value={{ model }}>
