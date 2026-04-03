@@ -92,6 +92,7 @@ describe("buildGovernanceViewModelFromData", () => {
     const vm = buildGovernanceViewModelFromData([], null);
     expect(vm.source).toBe("mock");
     expect(vm.ledgerRows).toHaveLength(3);
+    expect(vm.advisorySignals).toHaveLength(2);
     expect(vm.evidenceTrail).toHaveLength(3);
   });
 
@@ -101,6 +102,7 @@ describe("buildGovernanceViewModelFromData", () => {
       null,
     );
     expect(vm.source).toBe("mock");
+    expect(vm.advisorySignals).toHaveLength(2);
   });
 
   it("derives evidence + nist cards for authorized flow", () => {
@@ -116,6 +118,8 @@ describe("buildGovernanceViewModelFromData", () => {
 
     expect(vm.source).toBe("derived");
     expect(vm.ledgerRows[1]?.status).toBe("Policy Match");
+    expect(vm.advisorySignals.length).toBeGreaterThan(0);
+    expect(vm.advisorySignals[0]?.id.startsWith("ADV-")).toBe(true);
     expect(vm.evidenceTrail[1]?.desc.toLowerCase()).toContain("authorized");
     expect(vm.nistMeasure.value).toMatch(/%/);
     expect(vm.nistManage.value).toBe("AUTHORIZED");
@@ -140,6 +144,48 @@ describe("buildGovernanceViewModelFromData", () => {
     expect(vm.nistManage.value).toBe("ABORTED");
     expect(vm.nistMeasure.mode).toBe("TEVV-DEGRADED");
     expect(vm.nistMeasure.percent).toBeGreaterThanOrEqual(0);
+  });
+
+  it("penalizes measure score when warnings increase", () => {
+    const messages: DashboardMessage[] = [
+      assistant(approvalPayload({ riskLevel: "low", toolName: "tavily_search" })),
+      user("Mission authorized"),
+      assistant("Final auditor summary.", { agent_node: "auditor" }),
+    ];
+
+    const withoutWarnings = buildGovernanceViewModelFromData(
+      messages,
+      evidencePackage("complete", 2, []),
+    );
+    const withWarnings = buildGovernanceViewModelFromData(
+      messages,
+      evidencePackage("complete", 2, ["w1", "w2"]),
+    );
+
+    expect(withWarnings.nistMeasure.percent).toBeLessThan(
+      withoutWarnings.nistMeasure.percent,
+    );
+  });
+
+  it("penalizes measure score when traces are missing", () => {
+    const messages: DashboardMessage[] = [
+      assistant(approvalPayload({ riskLevel: "low", toolName: "domain_whois" })),
+      user("Mission authorized"),
+      assistant("Final auditor summary.", { agent_node: "auditor" }),
+    ];
+
+    const withTraces = buildGovernanceViewModelFromData(
+      messages,
+      evidencePackage("complete", 2, []),
+    );
+    const withoutTraces = buildGovernanceViewModelFromData(
+      messages,
+      evidencePackage("complete", 0, []),
+    );
+
+    expect(withoutTraces.nistMeasure.percent).toBeLessThan(
+      withTraces.nistMeasure.percent,
+    );
   });
 });
 
