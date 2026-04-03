@@ -32,6 +32,8 @@ export function DashboardHeader({
     ? STATUS_RECON_IN_PROGRESS
     : STATUS_SATELLITE_IDLE;
 
+  throw new Error();
+
   return (
     <header className="mb-12 w-full min-w-0 border-b border-slate-800 pb-8">
       <div className="mb-12 flex items-center justify-between gap-3">

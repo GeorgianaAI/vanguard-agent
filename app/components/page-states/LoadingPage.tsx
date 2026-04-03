@@ -1,10 +1,10 @@
 import { Satellite } from "lucide-react";
 
 /** Full-route loading shell: telemetry pulse while the segment resolves. */
-export default function UplinkSynchronizingHud() {
+export default function LoadingPage() {
   return (
     <main
-      data-testid="tactical-uplink-loading"
+      data-testid="page-state-loading"
       className="flex min-h-screen items-center justify-center bg-slate-950 p-6"
     >
       <div className="flex flex-col items-center">
@@ -13,12 +13,12 @@ export default function UplinkSynchronizingHud() {
           <Satellite className="relative h-8 w-8 text-cyan-500" />
         </div>
         <div className="flex flex-col items-center gap-2">
-          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-500">
-            Synchronizing Uplink
-          </span>
-          <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-600">
+          <h1 className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-500">
+            Loading Content
+          </h1>
+          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-600">
             Fetching Mission Telemetry...
-          </span>
+          </p>
         </div>
       </div>
     </main>

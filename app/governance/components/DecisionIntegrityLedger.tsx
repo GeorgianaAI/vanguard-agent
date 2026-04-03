@@ -3,15 +3,14 @@
 import { Gavel, ShieldAlert } from "lucide-react";
 
 import { useGovernanceData } from "../hooks/useGovernanceData";
-import { GovernanceInlineUplinkSync } from "./GovernanceInlineUplinkSync";
+import { GovernanceLedgerLoadingPanel } from "./GovernanceLedgerLoadingPanel";
 
 export function DecisionIntegrityLedger() {
   const { model, loadPhase, threadId } = useGovernanceData();
   const ledgerRows = model.ledgerRows;
   const hasMissionLedger = model.source === "derived";
   const synchronizing = loadPhase === "synchronizing";
-  const uplinkBadge =
-    synchronizing && Boolean(threadId);
+  const uplinkBadge = synchronizing && Boolean(threadId);
 
   return (
     <div
@@ -56,7 +55,7 @@ export function DecisionIntegrityLedger() {
       </div>
 
       {synchronizing ? (
-        <GovernanceInlineUplinkSync />
+        <GovernanceLedgerLoadingPanel />
       ) : hasMissionLedger ? (
         <div className="min-w-0 space-y-4">
           {ledgerRows.map((log) => (

@@ -1,3 +1,3 @@
-import SignalLostNotFound from "@/app/components/tactical-system-states/SignalLostNotFound";
+import NotFoundPage from "@/app/components/page-states/NotFoundPage";
 
-export default SignalLostNotFound;
+export default NotFoundPage;
