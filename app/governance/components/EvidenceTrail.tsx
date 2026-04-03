@@ -1,8 +1,13 @@
+"use client";
+
 import { FileCheck, History } from "lucide-react";
 
-import { EVIDENCE_TRAIL } from "../governance-mock-data";
+import { useGovernanceData } from "../hooks/useGovernanceData";
 
 export function EvidenceTrail() {
+  const { model } = useGovernanceData();
+  const evidenceTrail = model.evidenceTrail;
+
   return (
     <aside
       data-testid="governance-evidence-trail"
@@ -21,7 +26,7 @@ export function EvidenceTrail() {
             className="pointer-events-none absolute bottom-4 left-2.5 top-10 w-px border-l border-dashed border-slate-800"
             aria-hidden
           />
-          {EVIDENCE_TRAIL.map((item) => (
+          {evidenceTrail.map((item) => (
             <div
               key={item.id}
               data-testid={`governance-evidence-${item.id}`}
