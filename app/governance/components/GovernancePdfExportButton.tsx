@@ -1,6 +1,6 @@
 "use client";
 
-import { FileDown } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { useGovernanceData } from "../hooks/useGovernanceData";
@@ -11,8 +11,13 @@ export function GovernancePdfExportButton() {
   const [err, setErr] = useState<string | null>(null);
 
   const onExport = useCallback(async () => {
-    if (!threadId) return;
     setErr(null);
+    if (!threadId?.trim()) {
+      setErr(
+        "No Command session thread in storage — open the dashboard and run a chat first, then export.",
+      );
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch(
@@ -41,19 +46,29 @@ export function GovernancePdfExportButton() {
   }, [threadId]);
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-start gap-1">
       <button
         type="button"
         data-testid="governance-export-pdf"
-        disabled={!threadId || busy}
+        disabled={busy}
         onClick={() => void onExport()}
-        className="inline-flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-900/80 px-3 py-2 text-[11px] font-black uppercase tracking-wider text-slate-200 transition-colors hover:border-cyan-500/40 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
+        className="group flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 shadow-lg shadow-black/40 transition-all hover:border-blue-500/50 hover:bg-slate-900 hover:text-blue-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-slate-800 disabled:hover:bg-slate-950/40 disabled:hover:text-slate-400"
       >
-        <FileDown className="h-4 w-4 shrink-0" />
-        {busy ? "Exporting…" : "Export PDF"}
+        <FileText className="h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-blue-500" />
+
+        <div className="flex min-w-0 flex-col items-start gap-1 leading-none">
+          <span className="text-[10px] font-black uppercase tracking-widest">
+            {busy ? "Generating…" : "Generate NIST Audit Report"}
+          </span>
+          <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500">
+            NIST-ALIGNED PDF (ISO 27001)
+          </span>
+        </div>
+
+        <Download className="h-2.5 w-2.5 shrink-0 translate-y-0.5 opacity-40 transition-all group-hover:translate-y-0 group-hover:opacity-100" />
       </button>
       {err ? (
-        <p className="max-w-[14rem] text-right text-[10px] text-rose-400">{err}</p>
+        <p className="max-w-[14rem] text-[10px] text-rose-400">{err}</p>
       ) : null}
     </div>
   );
