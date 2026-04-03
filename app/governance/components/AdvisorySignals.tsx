@@ -2,11 +2,13 @@
 
 import { AlertTriangle, ExternalLink } from "lucide-react";
 
+import { TerminalIdleEmptyState } from "@/app/components/tactical-system-states/TerminalIdleEmptyState";
+
 import { useGovernanceData } from "../hooks/useGovernanceData";
 import { GOVERNANCE_ADVISORY_TOP_N } from "../lib/buildGovernanceViewModel";
 
 export function AdvisorySignals() {
-  const { model } = useGovernanceData();
+  const { model, loadPhase } = useGovernanceData();
   const advisories = model.advisorySignals;
 
   return (
@@ -37,6 +39,9 @@ export function AdvisorySignals() {
       </div>
 
       <div className="grid min-w-0 gap-4">
+        {loadPhase === "ready" && advisories.length === 0 ? (
+          <TerminalIdleEmptyState />
+        ) : null}
         {advisories.map((cve) => (
           <div
             key={cve.id}

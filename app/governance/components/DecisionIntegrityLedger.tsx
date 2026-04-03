@@ -3,11 +3,15 @@
 import { Gavel, ShieldAlert } from "lucide-react";
 
 import { useGovernanceData } from "../hooks/useGovernanceData";
+import { GovernanceInlineUplinkSync } from "./GovernanceInlineUplinkSync";
 
 export function DecisionIntegrityLedger() {
-  const { model } = useGovernanceData();
+  const { model, loadPhase, threadId } = useGovernanceData();
   const ledgerRows = model.ledgerRows;
   const hasMissionLedger = model.source === "derived";
+  const synchronizing = loadPhase === "synchronizing";
+  const uplinkBadge =
+    synchronizing && Boolean(threadId);
 
   return (
     <div
@@ -29,6 +33,17 @@ export function DecisionIntegrityLedger() {
             >
               LIVE AUDIT ACTIVE
             </span>
+          ) : synchronizing ? (
+            <span
+              data-testid="governance-ledger-sync-badge"
+              className={`rounded border px-2 py-1 text-[10px] font-bold animate-pulse ${
+                uplinkBadge
+                  ? "border-cyan-500/30 bg-cyan-950/30 text-cyan-400/90"
+                  : "border-slate-600/40 bg-slate-900/50 text-slate-500"
+              }`}
+            >
+              {uplinkBadge ? "UPLINK SYNC" : "SESSION INIT"}
+            </span>
           ) : (
             <span
               data-testid="governance-ledger-standby-badge"
@@ -40,7 +55,9 @@ export function DecisionIntegrityLedger() {
         </div>
       </div>
 
-      {hasMissionLedger ? (
+      {synchronizing ? (
+        <GovernanceInlineUplinkSync />
+      ) : hasMissionLedger ? (
         <div className="min-w-0 space-y-4">
           {ledgerRows.map((log) => (
             <div

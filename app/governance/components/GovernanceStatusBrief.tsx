@@ -5,7 +5,9 @@ import { useGovernanceData } from "../hooks/useGovernanceData";
 
 /** 🛰️ MISSION STATUS BRIEFING: Rendered in the Evidence Rail when telemetry is absent. */
 export function GovernanceStatusBrief() {
-  const { model } = useGovernanceData();
+  const { model, loadPhase } = useGovernanceData();
+
+  if (loadPhase === "synchronizing") return null;
 
   // If data is derived (present), the brief is suppressed.
   if (model.source === "derived") return null;

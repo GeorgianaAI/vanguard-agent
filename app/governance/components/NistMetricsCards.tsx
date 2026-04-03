@@ -4,10 +4,11 @@ import { BarChart3, Settings2 } from "lucide-react";
 import { useGovernanceData } from "../hooks/useGovernanceData";
 
 export function NistMetricsCards() {
-  const { model } = useGovernanceData();
+  const { model, loadPhase } = useGovernanceData();
   const measure = model.nistMeasure;
   const manage = model.nistManage;
-  const standby = model.source !== "derived";
+  const standby =
+    loadPhase !== "ready" || model.source !== "derived";
 
   return (
     <div

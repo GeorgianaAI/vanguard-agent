@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -19,9 +20,13 @@ import {
   type GovernanceViewModel,
 } from "../lib/buildGovernanceViewModel";
 
+/** Client mount + thread + fetch settlement — drives empty vs uplink-sync vs ready UI. */
+export type GovernanceLoadPhase = "synchronizing" | "no-session" | "ready";
+
 type GovernanceDataContextValue = {
   model: GovernanceViewModel;
   threadId: string | null;
+  loadPhase: GovernanceLoadPhase;
 };
 
 const GovernanceDataContext = createContext<GovernanceDataContextValue | null>(
@@ -39,20 +44,58 @@ export function getThreadIdFromStorage(
   return threadId;
 }
 
+/**
+ * Derives UX phase for governance shell. Exported for unit tests.
+ * - synchronizing: client not yet mounted, or thread present and fetch not settled
+ * - no-session: mounted, no thread id in storage
+ * - ready: mounted, fetch attempt finished for current thread (or no-thread path)
+ */
+export function deriveGovernanceLoadPhase(
+  mounted: boolean,
+  threadId: string | null,
+  fetchSettled: boolean,
+): GovernanceLoadPhase {
+  if (!mounted) return "synchronizing";
+  if (!threadId) return "no-session";
+  if (!fetchSettled) return "synchronizing";
+  return "ready";
+}
+
 export function GovernanceDataProvider({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useLayoutEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const threadId = useMemo(() => {
+    if (!mounted || typeof window === "undefined") return null;
+    return getThreadIdFromStorage(window.localStorage);
+  }, [mounted]);
+
   const [model, setModel] = useState<GovernanceViewModel>(() =>
     buildGovernanceViewModelFromData([], null),
   );
 
-  const threadId = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    return getThreadIdFromStorage(window.localStorage);
-  }, []);
+  const [fetchSettled, setFetchSettled] = useState(false);
+
+  const loadPhase = useMemo(
+    () => deriveGovernanceLoadPhase(mounted, threadId, fetchSettled),
+    [mounted, threadId, fetchSettled],
+  );
 
   useEffect(() => {
-    if (!threadId) return;
+    if (!mounted) return;
 
     const controller = new AbortController();
+
+    if (!threadId) {
+      setModel(buildGovernanceViewModelFromData([], null));
+      setFetchSettled(true);
+      return () => controller.abort();
+    }
+
+    setFetchSettled(false);
+    setModel(buildGovernanceViewModelFromData([], null));
 
     void (async () => {
       try {
@@ -63,7 +106,13 @@ export function GovernanceDataProvider({ children }: { children: ReactNode }) {
             credentials: "include",
           },
         );
-        if (!historyRes.ok) return;
+
+        if (!historyRes.ok) {
+          if (!controller.signal.aborted) {
+            setModel(buildGovernanceViewModelFromData([], null));
+          }
+          return;
+        }
 
         const historyData = (await historyRes.json()) as {
           messages?: DashboardMessage[];
@@ -71,12 +120,22 @@ export function GovernanceDataProvider({ children }: { children: ReactNode }) {
           advisory_enrichment_warnings?: string[];
         };
         const messages = historyData.messages ?? [];
-        if (!messages.length) return;
 
         const extras: GovernanceCheckpointExtras = {
           vulnerabilities: historyData.vulnerabilities,
           advisoryWarnings: historyData.advisory_enrichment_warnings,
         };
+
+        if (!messages.length) {
+          if (!controller.signal.aborted) {
+            setModel(
+              buildGovernanceViewModelFromData([], null, extras, {
+                threadId,
+              }),
+            );
+          }
+          return;
+        }
 
         let evidence: EvidencePackage | null = null;
         try {
@@ -94,21 +153,29 @@ export function GovernanceDataProvider({ children }: { children: ReactNode }) {
           evidence = null;
         }
 
-        setModel(
-          buildGovernanceViewModelFromData(messages, evidence, extras, {
-            threadId,
-          }),
-        );
+        if (!controller.signal.aborted) {
+          setModel(
+            buildGovernanceViewModelFromData(messages, evidence, extras, {
+              threadId,
+            }),
+          );
+        }
       } catch {
-        // Keep defaults/mocks on any fetch or parsing failure.
+        if (!controller.signal.aborted) {
+          setModel(buildGovernanceViewModelFromData([], null));
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setFetchSettled(true);
+        }
       }
     })();
 
     return () => controller.abort();
-  }, [threadId]);
+  }, [mounted, threadId]);
 
   return (
-    <GovernanceDataContext.Provider value={{ model, threadId }}>
+    <GovernanceDataContext.Provider value={{ model, threadId, loadPhase }}>
       {children}
     </GovernanceDataContext.Provider>
   );
@@ -121,4 +188,3 @@ export function useGovernanceData(): GovernanceDataContextValue {
   }
   return ctx;
 }
-

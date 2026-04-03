@@ -7,8 +7,9 @@ import { deriveGovernanceTrustScore } from "../lib/deriveGovernanceTrustScore";
 import { GovernancePdfExportButton } from "./GovernancePdfExportButton";
 
 export function GovernancePageHeader() {
-  const { model } = useGovernanceData();
+  const { model, loadPhase, threadId } = useGovernanceData();
   const trust = deriveGovernanceTrustScore(model);
+  const uplinkSync = loadPhase === "synchronizing" && Boolean(threadId);
 
   return (
     <header
@@ -39,15 +40,21 @@ export function GovernancePageHeader() {
           <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">
             System Trust Score
           </p>
-          {trust.mode === "derived" ? (
-            <p className="text-2xl font-black text-emerald-400">
+          {uplinkSync ? (
+            <p
+              data-testid="governance-trust-score-sync"
+              className="text-2xl font-black tabular-nums animate-pulse text-cyan-500/60"
+            >
+              ···
+            </p>
+          ) : trust.mode === "derived" ? (
+            <p className="text-2xl font-black tabular-nums text-emerald-400">
               {trust.formatted}
             </p>
           ) : (
             <p
               data-testid="governance-trust-score-standby"
-              className="text-xl font-black tracking-tight text-blue-400"
-              title="Insufficient mission telemetry. Use Command Center to run an authorized mission."
+              className="text-2xl font-black tracking-tight tabular-nums text-blue-400"
             >
               {trust.display}
             </p>
