@@ -13,8 +13,8 @@ test.describe("Governance ledger", () => {
     ).toBeVisible();
     await expect(page.getByTestId("governance-export-pdf")).toBeVisible();
     await expect(page.getByTestId("governance-trust-score")).toBeVisible();
-    await expect(
-      page.getByTestId("governance-trust-score-illustrative"),
-    ).toBeVisible();
+    await expect(page.getByTestId("governance-trust-score-standby")).toBeVisible();
+    await expect(page.getByTestId("governance-ledger-standby")).toBeVisible();
+    await expect(page.getByTestId("governance-status-brief")).toBeVisible();
   });
 });
