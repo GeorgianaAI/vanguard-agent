@@ -55,12 +55,43 @@ describe("GET /api/chat/history", () => {
       ),
     );
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { messages: unknown[] };
+    const body = (await res.json()) as {
+      messages: unknown[];
+      vulnerabilities?: unknown;
+      advisory_enrichment_warnings?: string[];
+    };
     expect(body.messages).toHaveLength(1);
     expect(
       (body.messages[0] as { metadata?: { agent_node?: string } }).metadata
         ?.agent_node,
     ).toBe("auditor");
+    expect(body.vulnerabilities).toBeUndefined();
+    expect(body.advisory_enrichment_warnings).toBeUndefined();
+  });
+
+  it("returns checkpoint vulnerabilities and advisory warnings when present", async () => {
+    getState.mockResolvedValue({
+      values: {
+        messages: [attachAgentNode(new AIMessage("done"), "auditor")],
+        vulnerabilities: [{ cveId: "CVE-2024-1234", schemaVersion: 1 }],
+        advisoryEnrichmentWarnings: ["ADVISORY_BUDGET_EXHAUSTED"],
+      },
+    });
+    const res = await GET(
+      new Request(
+        "http://localhost/api/chat/history?thread_id=vanguard-thread-abc",
+        { headers: { "x-actor-id": "alice" } },
+      ),
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      vulnerabilities: unknown[];
+      advisory_enrichment_warnings: string[];
+    };
+    expect(body.vulnerabilities).toHaveLength(1);
+    expect(body.advisory_enrichment_warnings).toEqual([
+      "ADVISORY_BUDGET_EXHAUSTED",
+    ]);
   });
 
   it("returns empty array when getState throws", async () => {
