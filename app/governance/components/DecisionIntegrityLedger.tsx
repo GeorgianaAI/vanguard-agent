@@ -20,12 +20,20 @@ export function DecisionIntegrityLedger() {
             Decision Integrity Ledger
           </h2>
         </div>
-        <span
-          data-testid="governance-ledger-live-badge"
-          className="rounded border border-cyan-500/20 bg-cyan-950/40 px-2 py-1 text-[10px] font-bold text-cyan-400"
-        >
-          LIVE AUDIT ACTIVE
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            data-testid="governance-ledger-live-badge"
+            className="rounded border border-cyan-500/20 bg-cyan-950/40 px-2 py-1 text-[10px] font-bold text-cyan-400"
+          >
+            LIVE AUDIT ACTIVE
+          </span>
+          <span
+            data-testid="governance-data-mode"
+            className="rounded border border-slate-700 bg-slate-900/70 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-slate-400"
+          >
+            {model.source === "derived" ? "Derived" : "Fallback"}
+          </span>
+        </div>
       </div>
 
       <div className="min-w-0 space-y-4">
