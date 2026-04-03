@@ -83,13 +83,12 @@ function evidence(
 }
 
 describe("deriveGovernanceTrustScore", () => {
-  it("returns illustrative mode for mock / insufficient transcript", () => {
+  it("returns standby mask when mission-linked data is absent", () => {
     const vm = buildGovernanceViewModelFromData([], null);
     const t = deriveGovernanceTrustScore(vm);
-    expect(t.mode).toBe("illustrative");
-    if (t.mode === "illustrative") {
-      expect(t.primaryDisplay).toBe("—");
-      expect(t.caption).toBe("Illustrative");
+    expect(t.mode).toBe("standby");
+    if (t.mode === "standby") {
+      expect(t.display).toBe("--.%");
     }
   });
 

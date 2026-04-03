@@ -1,6 +1,7 @@
 import { AdvisorySignals } from "./components/AdvisorySignals";
 import { DecisionIntegrityLedger } from "./components/DecisionIntegrityLedger";
 import { EvidenceTrail } from "./components/EvidenceTrail";
+import { GovernanceStatusBrief } from "./components/GovernanceStatusBrief";
 import { GovernanceBackToDashboardButton } from "./components/GovernanceBackToDashboardButton";
 import { GovernancePageHeader } from "./components/GovernancePageHeader";
 import { NistMetricsCards } from "./components/NistMetricsCards";
@@ -29,7 +30,10 @@ export default function VanguardGovernancePage() {
                 <NistMetricsCards />
               </section>
 
-              <EvidenceTrail />
+              <div className="order-2 col-span-12 flex w-full min-w-0 max-w-full flex-col gap-6 lg:col-span-4 lg:order-2 lg:self-start">
+                <EvidenceTrail />
+                <GovernanceStatusBrief />
+              </div>
             </div>
           </main>
         </GovernanceDataProvider>

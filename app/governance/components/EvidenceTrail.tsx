@@ -11,7 +11,7 @@ export function EvidenceTrail() {
   return (
     <aside
       data-testid="governance-evidence-trail"
-      className="order-2 col-span-12 w-full min-w-0 max-w-full lg:col-span-4 lg:order-2 lg:self-start"
+      className="w-full min-w-0 max-w-full"
     >
       <div className="box-border flex h-fit w-full min-w-0 max-w-full flex-col overflow-x-hidden rounded-2xl border border-slate-800 bg-slate-900/40 p-6 text-left backdrop-blur-xl md:p-8 lg:sticky lg:top-8">
         <div className="mb-8 flex shrink-0 items-center gap-3">
