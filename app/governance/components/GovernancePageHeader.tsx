@@ -1,4 +1,8 @@
+"use client";
+
 import { Scale } from "lucide-react";
+
+import { GovernancePdfExportButton } from "./GovernancePdfExportButton";
 
 export function GovernancePageHeader() {
   return (
@@ -21,7 +25,8 @@ export function GovernancePageHeader() {
         </p>
       </div>
 
-      <div className="flex shrink-0 gap-4">
+      <div className="flex shrink-0 flex-wrap items-end justify-end gap-4">
+        <GovernancePdfExportButton />
         <div
           data-testid="governance-trust-score"
           className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-2 text-right shadow-inner"

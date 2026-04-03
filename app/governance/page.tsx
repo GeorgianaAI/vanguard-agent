@@ -12,13 +12,13 @@ export default function VanguardGovernancePage() {
       <div className="mx-auto w-full min-w-0 max-w-[min(100%,90rem)] overflow-x-clip px-4 pb-24 pt-32 sm:px-6 md:p-8">
         <GovernanceBackToDashboardButton />
 
-        <main
-          data-testid="governance-ledger"
-          className="min-w-0 max-w-full pb-[max(1.5rem,env(safe-area-inset-bottom))]"
-        >
-          <GovernancePageHeader />
+        <GovernanceDataProvider>
+          <main
+            data-testid="governance-ledger"
+            className="min-w-0 max-w-full pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+          >
+            <GovernancePageHeader />
 
-          <GovernanceDataProvider>
             <div className="grid w-full min-w-0 grid-cols-12 gap-4 md:gap-6 lg:items-start">
               <section
                 data-testid="governance-primary-stack"
@@ -31,8 +31,8 @@ export default function VanguardGovernancePage() {
 
               <EvidenceTrail />
             </div>
-          </GovernanceDataProvider>
-        </main>
+          </main>
+        </GovernanceDataProvider>
       </div>
     </div>
   );
