@@ -11,12 +11,12 @@ export type GovernanceLedgerRow = {
   agent: "SCOUT" | "SUPERVISOR" | "AUDITOR";
   action: string;
   status: string;
-  risk: "Low" | "Neutral" | "High";
+  risk: "Low" | "Medium" | "High";
 };
 
 const RISK_MAP: Record<string, GovernanceLedgerRow["risk"]> = {
   low: "Low",
-  medium: "Neutral",
+  medium: "Medium",
   high: "High",
 };
 
@@ -122,7 +122,7 @@ export function buildGovernanceLedgerRowsFromMessages(
   const auditorPresent = findAuditorPresent(messages);
   void auditorPresent;
 
-  const risk = RISK_MAP[approvalContext.risk_level] ?? "Neutral";
+  const risk = RISK_MAP[approvalContext.risk_level] ?? "Medium";
   const toolChain = collectOrderedToolLabelsFromMessages(messages);
   const scoutAction =
     toolChain.length > 0 ? toolChain.join(" · ") : prettyAction(approvalContext.tool.name);

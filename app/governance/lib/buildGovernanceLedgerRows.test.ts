@@ -97,7 +97,7 @@ describe("buildGovernanceLedgerRowsFromMessages (A) approval events + risk first
 
     const rows = buildGovernanceLedgerRowsFromMessages(messages);
 
-    expect(rows[0].risk).toBe("Neutral");
+    expect(rows[0].risk).toBe("Medium");
     expect(rows[0].action).toBe("Tavily Search");
     expect(rows[1].status).toBe("Policy Mismatch");
     expect(rows[2].status).toBe("Unverified");
