@@ -2,9 +2,14 @@
 
 import { Scale } from "lucide-react";
 
+import { useGovernanceData } from "../hooks/useGovernanceData";
+import { deriveGovernanceTrustScore } from "../lib/deriveGovernanceTrustScore";
 import { GovernancePdfExportButton } from "./GovernancePdfExportButton";
 
 export function GovernancePageHeader() {
+  const { model } = useGovernanceData();
+  const trust = deriveGovernanceTrustScore(model);
+
   return (
     <header
       data-testid="governance-page-header"
@@ -34,7 +39,21 @@ export function GovernancePageHeader() {
           <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">
             System Trust Score
           </p>
-          <p className="text-xl font-black text-emerald-400">98.4%</p>
+          {trust.mode === "derived" ? (
+            <p className="text-xl font-black text-emerald-400">{trust.formatted}</p>
+          ) : (
+            <>
+              <p
+                data-testid="governance-trust-score-illustrative"
+                className="text-xl font-black text-slate-500"
+              >
+                {trust.primaryDisplay}
+              </p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-600">
+                {trust.caption}
+              </p>
+            </>
+          )}
         </div>
       </div>
     </header>

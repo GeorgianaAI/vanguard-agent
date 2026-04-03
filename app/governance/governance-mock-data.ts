@@ -11,7 +11,7 @@ export const LEDGER_MOCK = [
     agent: "SUPERVISOR",
     action: "Tool Delegation",
     status: "Policy Match",
-    risk: "Neutral",
+    risk: "Medium",
   },
   {
     time: "14:25:10",

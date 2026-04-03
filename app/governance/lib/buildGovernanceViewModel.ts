@@ -352,32 +352,64 @@ function buildNistMeasureCard(
   };
 }
 
+type ManageCardContext = {
+  advisoryOverflowCount: number;
+  advisoryEnrichmentWarnings: string[];
+  evidenceStatus: GovernanceViewModel["evidenceStatus"];
+};
+
+/** NIST Manage: HITL gate outcome, with small penalties when trace/advisory posture is stressed. */
 function buildNistManageCard(
   decision: "authorized" | "aborted" | "unknown",
+  ctx?: ManageCardContext,
 ): GovernanceMetricCard {
+  let percent: number;
+  let mode: string;
+  let label: string;
+  let value: string;
+
   if (decision === "authorized") {
-    return {
-      mode: "CONTROL-LIVE",
-      label: "Gate Resolution",
-      value: "AUTHORIZED",
-      percent: 92,
-    };
+    mode = "CONTROL-LIVE";
+    label = "Gate Resolution";
+    value = "AUTHORIZED";
+    percent = 92;
+  } else if (decision === "aborted") {
+    mode = "CONTROL-LIVE";
+    label = "Gate Resolution";
+    value = "ABORTED";
+    percent = 42;
+  } else {
+    mode = "CONTROL-PENDING";
+    label = "Gate Resolution";
+    value = "PENDING";
+    percent = 28;
   }
 
-  if (decision === "aborted") {
-    return {
-      mode: "CONTROL-LIVE",
-      label: "Gate Resolution",
-      value: "ABORTED",
-      percent: 42,
-    };
+  if (ctx) {
+    if (ctx.evidenceStatus === "degraded") {
+      percent -= 10;
+    }
+    if (ctx.advisoryEnrichmentWarnings.length > 0) {
+      percent -= Math.min(12, ctx.advisoryEnrichmentWarnings.length * 3);
+    }
+    if (ctx.advisoryOverflowCount > 0) {
+      percent -= Math.min(10, ctx.advisoryOverflowCount * 2);
+    }
+    percent = clampPercent(percent);
+    if (
+      ctx.evidenceStatus === "degraded" ||
+      ctx.advisoryEnrichmentWarnings.length > 0 ||
+      ctx.advisoryOverflowCount > 0
+    ) {
+      label = "Gate + oversight posture";
+    }
   }
 
   return {
-    mode: "CONTROL-PENDING",
-    label: "Gate Resolution",
-    value: "PENDING",
-    percent: 28,
+    mode,
+    label,
+    value,
+    percent,
   };
 }
 
@@ -458,7 +490,11 @@ export function buildGovernanceViewModelFromData(
       evidence,
       checkpointFindings,
     ),
-    nistManage: buildNistManageCard(decision),
+    nistManage: buildNistManageCard(decision, {
+      advisoryOverflowCount: adv.overflow,
+      advisoryEnrichmentWarnings: advisoryWarn,
+      evidenceStatus: evidence?.evidence_status ?? "unknown",
+    }),
     threadId: opts?.threadId,
     missionId: evidence?.mission_id,
     requestId: evidence?.request_id,
