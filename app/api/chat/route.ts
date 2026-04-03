@@ -69,6 +69,8 @@ const approvalLocks = new Map<string, number>();
 
 const MISSION_RATE_LIMIT_WINDOW = "60 s";
 const MISSION_RATE_LIMIT_REQUESTS = 5;
+const MISSION_HOURLY_RATE_LIMIT_WINDOW = "1 h";
+const MISSION_HOURLY_RATE_LIMIT_REQUESTS = 5;
 const APPROVAL_RATE_LIMIT_WINDOW = "60 s";
 const APPROVAL_RATE_LIMIT_REQUESTS = 20;
 
@@ -81,6 +83,18 @@ const missionRatelimit = redis
       ),
       analytics: true,
       prefix: `@${redisEnv.keyPrefix}/ratelimit/mission`,
+    })
+  : null;
+
+const missionHourlyRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(
+        MISSION_HOURLY_RATE_LIMIT_REQUESTS,
+        MISSION_HOURLY_RATE_LIMIT_WINDOW,
+      ),
+      analytics: true,
+      prefix: `@${redisEnv.keyPrefix}/ratelimit/mission/hourly`,
     })
   : null;
 
@@ -619,7 +633,7 @@ export async function POST(req: Request) {
       return withRequestIdHeaders(streamRes, reqId);
     }
 
-    if (!missionRatelimit) {
+    if (!missionRatelimit || !missionHourlyRatelimit) {
       vanguardChatLog({
         reqId,
         phase: "error",
@@ -638,10 +652,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const { success } = await missionRatelimit.limit(
-      `${getClientIp(req)}:mission`,
+    const clientIp = getClientIp(req);
+    const { success: minuteOk } = await missionRatelimit.limit(
+      `${clientIp}:mission`,
     );
-    if (!success) {
+    if (!minuteOk) {
       vanguardChatLog({
         reqId,
         phase: "rate_limit",
@@ -654,6 +669,28 @@ export async function POST(req: Request) {
       });
       return withRequestIdHeaders(
         new Response("Too many missions. Cool down.", { status: 429 }),
+        reqId,
+      );
+    }
+
+    const { success: hourOk } = await missionHourlyRatelimit.limit(
+      `${clientIp}:mission:hour`,
+    );
+    if (!hourOk) {
+      vanguardChatLog({
+        reqId,
+        phase: "rate_limit",
+        status: 429,
+        threadId,
+        message: "Hourly rate limit exceeded",
+        isApproval: false,
+        actorId,
+        actorRole,
+      });
+      return withRequestIdHeaders(
+        new Response("Too many missions this hour. Cool down.", {
+          status: 429,
+        }),
         reqId,
       );
     }

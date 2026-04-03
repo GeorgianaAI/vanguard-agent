@@ -329,7 +329,7 @@ describe("POST /api/chat governance", () => {
     expect(res.status).toBe(200);
   });
 
-  it("returns 429 when rate limit fails", async () => {
+  it("returns 429 when per-minute mission rate limit fails", async () => {
     hoisted.ratelimitLimit.mockResolvedValue({ success: false });
     const POST = await loadPost();
     const res = await POST(
@@ -344,7 +344,36 @@ describe("POST /api/chat governance", () => {
       }),
     );
     expect(res.status).toBe(429);
+    const text = await res.text();
+    expect(text).toBe("Too many missions. Cool down.");
     expect(hoisted.ratelimitLimit).toHaveBeenCalledWith("127.0.0.1:mission");
+    expect(hoisted.ratelimitLimit).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 429 when hourly mission rate limit fails", async () => {
+    hoisted.ratelimitLimit.mockImplementation(
+      async (identifier: string) =>
+        identifier === "127.0.0.1:mission:hour"
+          ? { success: false }
+          : { success: true },
+    );
+    const POST = await loadPost();
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          messages: [],
+          target: "example.com",
+          thread_id: "v-rate-hourly",
+        }),
+      }),
+    );
+    expect(res.status).toBe(429);
+    const text = await res.text();
+    expect(text).toBe("Too many missions this hour. Cool down.");
+    expect(hoisted.ratelimitLimit).toHaveBeenCalledWith("127.0.0.1:mission");
+    expect(hoisted.ratelimitLimit).toHaveBeenCalledWith("127.0.0.1:mission:hour");
   });
 
   it("returns 503 for mission when redis config is missing", async () => {
