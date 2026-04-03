@@ -25,11 +25,11 @@ Here is how Vanguard differs from a standard AI chat:
 
 ## 📹 Operational Demo
 
-<div align="center">
-  <a href="REPLACE_WITH_YOUR_VIDEO_URL">
-    <img src="https://shields.io" alt="Vanguard Operational Demo" />
-  </a>
-  <p align="center">
+  <video src="./public/vanguard-demo.mp4" width="100%" controls muted poster="./public/vanguard-poster.png">
+    Your browser may not support the video tag.
+  </video>
+  
+  <p align="center" style="margin-top: 15px;">
     <i>Full product walkthrough: Command Center Protocol ➔ Scout Recon ➔ Governance Ledger Audit.</i>
   </p>
 </div>
