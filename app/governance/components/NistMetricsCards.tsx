@@ -1,6 +1,13 @@
+"use client";
+
 import { BarChart3, Settings2 } from "lucide-react";
+import { useGovernanceData } from "../hooks/useGovernanceData";
 
 export function NistMetricsCards() {
+  const { model } = useGovernanceData();
+  const measure = model.nistMeasure;
+  const manage = model.nistManage;
+
   return (
     <div
       data-testid="governance-nist-metrics"
@@ -16,20 +23,23 @@ export function NistMetricsCards() {
             MEASURE
           </h3>
           <span className="shrink-0 font-mono text-[9px] text-emerald-500">
-            TEVV-ACTIVE
+            {measure.mode}
           </span>
         </div>
         <div className="min-w-0 space-y-3">
           <div className="flex justify-between gap-2 text-[11px]">
             <span className="text-slate-500 uppercase">
-              Detection Grounding
+              {measure.label}
             </span>
             <span className="shrink-0 font-mono text-[10px] tracking-widest text-emerald-400">
-              99.2%
+              {measure.value}
             </span>
           </div>
           <div className="h-1.5 w-full min-w-0 overflow-hidden rounded-full bg-slate-800 shadow-inner">
-            <div className="h-full w-[99%] bg-emerald-500" />
+            <div
+              className="h-full bg-emerald-500"
+              style={{ width: `${measure.percent}%` }}
+            />
           </div>
         </div>
       </div>
@@ -44,18 +54,21 @@ export function NistMetricsCards() {
             MANAGE
           </h3>
           <span className="shrink-0 font-mono text-[9px] text-cyan-500">
-            CONTROL-LIVE
+            {manage.mode}
           </span>
         </div>
         <div className="min-w-0 space-y-3">
           <div className="flex justify-between gap-2 text-[11px]">
-            <span className="text-slate-500 uppercase">HITL Response Time</span>
+            <span className="text-slate-500 uppercase">{manage.label}</span>
             <span className="shrink-0 font-mono text-[10px] tracking-widest text-cyan-400">
-              12.4s (Avg)
+              {manage.value}
             </span>
           </div>
           <div className="h-1.5 w-full min-w-0 overflow-hidden rounded-full bg-slate-800 shadow-inner">
-            <div className="h-full w-[88%] bg-cyan-500" />
+            <div
+              className="h-full bg-cyan-500"
+              style={{ width: `${manage.percent}%` }}
+            />
           </div>
         </div>
       </div>
