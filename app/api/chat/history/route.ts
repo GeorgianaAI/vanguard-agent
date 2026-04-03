@@ -17,6 +17,26 @@ function messagesFromStateValues(values: unknown): unknown[] | null {
   return null;
 }
 
+function vulnerabilitiesFromStateValues(values: unknown): unknown {
+  if (values != null && typeof values === "object" && "vulnerabilities" in values) {
+    return (values as { vulnerabilities: unknown }).vulnerabilities;
+  }
+  return undefined;
+}
+
+function advisoryWarningsFromStateValues(values: unknown): string[] | undefined {
+  if (
+    values != null &&
+    typeof values === "object" &&
+    "advisoryEnrichmentWarnings" in values
+  ) {
+    const w = (values as { advisoryEnrichmentWarnings: unknown })
+      .advisoryEnrichmentWarnings;
+    return Array.isArray(w) ? (w as string[]) : undefined;
+  }
+  return undefined;
+}
+
 /**
  * Read-only mission transcript from LangGraph checkpoint (Redis).
  * Requires authenticated session with `mission:run` (middleware).
@@ -49,7 +69,12 @@ export async function GET(req: Request) {
 
     const revived = reviveCheckpointMessages(raw);
     const messages = checkpointMessagesToDashboardMessages(revived);
-    return Response.json({ messages });
+    const values = snapshot?.values;
+    return Response.json({
+      messages,
+      vulnerabilities: vulnerabilitiesFromStateValues(values),
+      advisory_enrichment_warnings: advisoryWarningsFromStateValues(values),
+    });
   } catch (error) {
     console.error("GET /api/chat/history:", error);
     return Response.json({ messages: [] });
