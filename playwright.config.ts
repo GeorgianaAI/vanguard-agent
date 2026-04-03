@@ -1,5 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
+/** Non-secret placeholder so @vercel/oidc getVercelOidcTokenSync() does not throw during Node SSR in `next build` / `next start`. */
+const E2E_SERVER_ENV =
+  "AUTH_E2E_BYPASS=true VERCEL_OIDC_TOKEN=e2e_ci_nonsecret_placeholder";
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
@@ -24,14 +28,13 @@ export default defineConfig({
 
   webServer: process.env.CI
     ? {
-        command:
-          "AUTH_E2E_BYPASS=true npm run build && AUTH_E2E_BYPASS=true npm run start",
+        command: `${E2E_SERVER_ENV} npm run build && ${E2E_SERVER_ENV} npm run start`,
         url: "http://localhost:3000",
         reuseExistingServer: false,
         timeout: 300_000,
       }
     : {
-        command: "AUTH_E2E_BYPASS=true npm run dev",
+        command: `${E2E_SERVER_ENV} npm run dev`,
         url: "http://localhost:3000",
         reuseExistingServer: true,
         timeout: 120_000,

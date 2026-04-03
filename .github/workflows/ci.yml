@@ -18,6 +18,9 @@ concurrency:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    env:
+      # Satisfies @vercel/oidc sync read during Next SSR of /dashboard (AI SDK); not a real secret.
+      VERCEL_OIDC_TOKEN: e2e_ci_nonsecret_placeholder
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -58,6 +61,7 @@ jobs:
     timeout-minutes: 20
     env:
       CI: true
+      VERCEL_OIDC_TOKEN: e2e_ci_nonsecret_placeholder
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
