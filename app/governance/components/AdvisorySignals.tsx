@@ -2,7 +2,7 @@
 
 import { AlertTriangle, ExternalLink } from "lucide-react";
 
-import { TerminalIdleEmptyState } from "@/app/components/tactical-system-states/TerminalIdleEmptyState";
+import { EmptyStatePage } from "@/app/components/page-states/EmptyStatePage";
 
 import { useGovernanceData } from "../hooks/useGovernanceData";
 import { GOVERNANCE_ADVISORY_TOP_N } from "../lib/buildGovernanceViewModel";
@@ -30,7 +30,8 @@ export function AdvisorySignals() {
           {model.advisoryOverflowCount > 0 ? (
             <span
               data-testid="governance-advisory-overflow"
-              className="text-[9px] font-bold text-amber-400/90">
+              className="text-[9px] font-bold text-amber-400/90"
+            >
               +{model.advisoryOverflowCount} additional (above top{" "}
               {GOVERNANCE_ADVISORY_TOP_N})
             </span>
@@ -40,7 +41,7 @@ export function AdvisorySignals() {
 
       <div className="grid min-w-0 gap-4">
         {loadPhase === "ready" && advisories.length === 0 ? (
-          <TerminalIdleEmptyState />
+          <EmptyStatePage />
         ) : null}
         {advisories.map((cve) => (
           <div
@@ -85,7 +86,9 @@ export function AdvisorySignals() {
                 Audit Evidence <ExternalLink className="h-2.5 w-2.5 shrink-0" />
               </button>
             </div>
-            <p className="min-w-0 break-words text-[10px] text-slate-400">{cve.note}</p>
+            <p className="min-w-0 break-words text-[10px] text-slate-400">
+              {cve.note}
+            </p>
           </div>
         ))}
       </div>

@@ -1,10 +1,10 @@
 import { Satellite } from "lucide-react";
 
 /** Inline ledger body while mission telemetry is being fetched (avoids false empty-state copy). */
-export function GovernanceInlineUplinkSync() {
+export function GovernanceLedgerLoadingPanel() {
   return (
     <div
-      data-testid="governance-ledger-uplink-sync"
+      data-testid="governance-ledger-loading"
       className="flex flex-col items-center justify-center rounded-xl border border-dashed border-cyan-500/20 bg-slate-950/30 py-16"
     >
       <div className="relative mb-5 flex h-12 w-12 items-center justify-center">
@@ -15,7 +15,7 @@ export function GovernanceInlineUplinkSync() {
         Synchronizing Ledger
       </span>
       <span className="mt-2 max-w-xs text-center text-[9px] font-bold uppercase tracking-widest text-slate-600">
-        Fetching mission telemetry from Command session…
+        Fetching mission telemetry from Command Center...
       </span>
     </div>
   );

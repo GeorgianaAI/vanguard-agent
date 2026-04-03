@@ -2,15 +2,15 @@ import Link from "next/link";
 import { ArrowLeft, Radar } from "lucide-react";
 
 /** Global / segment 404: resource outside mission scope. */
-export default function SignalLostNotFound() {
+export default function NotFoundPage() {
   return (
     <main
-      data-testid="tactical-signal-lost"
+      data-testid="page-state-not-found"
       className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-6 text-center"
     >
       <Radar className="mb-6 h-12 w-12 text-rose-500 opacity-50" />
       <h1 className="text-sm font-black uppercase tracking-[0.3em] text-white">
-        Resource Out of Range
+        Page Not Found
       </h1>
       <p className="mt-2 max-w-xs text-[10px] font-bold uppercase tracking-widest text-slate-500">
         The requested coordinate does not exist within the Vanguard Command

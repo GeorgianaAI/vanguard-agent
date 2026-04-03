@@ -1,5 +1,5 @@
 "use client";
 
-import TacticalSegmentError from "@/app/components/tactical-system-states/TacticalSegmentError";
+import ErrorPage from "@/app/components/page-states/ErrorPage";
 
-export default TacticalSegmentError;
+export default ErrorPage;

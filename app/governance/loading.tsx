@@ -1,3 +1,3 @@
-import UplinkSynchronizingHud from "@/app/components/tactical-system-states/UplinkSynchronizingHud";
+import LoadingPage from "@/app/components/page-states/LoadingPage";
 
-export default UplinkSynchronizingHud;
+export default LoadingPage;
