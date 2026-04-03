@@ -257,7 +257,7 @@ This project uses a **narrow, documented** defensive posture — not generic pro
 - **Multi-provider primary advisory fetch** beyond **NVD** as the catalog for correlated CVE rows.
 - **Full SCA** or “find every vulnerability in my stack” automation — out of scope for this codebase’s stated mission.
 
-**System Trust Score** (Governance header): When the ledger is **derived** from a real approval-gated transcript, the headline blends **NIST Measure** (telemetry / trace posture) and **NIST Manage** (HITL gate outcome), with penalties for degraded evidence, evidence warnings, advisory enrichment warnings, and advisory overflow. When data is **mock / illustrative** (insufficient transcript for derivation), the UI shows **no numeric precision** (em dash + “Illustrative”).
+**System Trust Score** (Governance header): With **mission-linked** data (`source === "derived"` in code), the headline blends **NIST Measure** and **NIST Manage**, with penalties for degraded evidence, warnings, and advisory overflow. In **standby** (insufficient transcript / no populated integrity ledger), the score shows a dimmed **`--.%`** placeholder; a **System Status: Standby** brief under Evidence Trail explains that an **authorized Command Center** mission is needed to calibrate scores and the ledger.
 
 **NIST Manage (card):** Reflects **HITL gate resolution** (authorized / aborted / pending). When trace or advisory posture is stressed (degraded evidence, enrichment warnings, overflow), the card applies **small documented penalties** to the percent and may adjust the label to **“Gate + oversight posture.”**
 

@@ -79,7 +79,7 @@ export async function renderGovernanceCompliancePdf(
 
   addHeading("Identifiers");
   addLine(
-    `Data mode: ${model.source === "derived" ? "Derived from mission checkpoint" : "Fallback / insufficient transcript"}`,
+    `Data mode: ${model.source === "derived" ? "Mission-linked data" : "Insufficient transcript for mission-linked governance"}`,
   );
   if (model.threadId) addLine(`Thread ID: ${model.threadId}`);
   if (model.missionId) addLine(`Mission ID: ${model.missionId}`);
