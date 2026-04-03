@@ -42,17 +42,13 @@ export function GovernancePageHeader() {
           {trust.mode === "derived" ? (
             <p className="text-xl font-black text-emerald-400">{trust.formatted}</p>
           ) : (
-            <>
-              <p
-                data-testid="governance-trust-score-illustrative"
-                className="text-xl font-black text-slate-500"
-              >
-                {trust.primaryDisplay}
-              </p>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-600">
-                {trust.caption}
-              </p>
-            </>
+            <p
+              data-testid="governance-trust-score-standby"
+              className="text-xl font-black tracking-tight text-slate-700"
+              title="Insufficient mission telemetry. Use Command Center to run an authorized mission."
+            >
+              {trust.display}
+            </p>
           )}
         </div>
       </div>

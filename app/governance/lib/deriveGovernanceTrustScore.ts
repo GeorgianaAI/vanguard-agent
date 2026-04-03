@@ -7,16 +7,16 @@ type GovernanceTrustDerived = {
   formatted: string;
 };
 
-type GovernanceTrustIllustrative = {
-  mode: "illustrative";
-  /** No numeric precision — mock / insufficient transcript for derivation */
-  primaryDisplay: "—";
-  caption: "Illustrative";
+/** Standby: mission-linked score not available — dimmed placeholder only (no user-facing “illustrative” label). */
+type GovernanceTrustStandby = {
+  mode: "standby";
+  /** Fixed hardware-style placeholder when telemetry is absent */
+  display: "--.%";
 };
 
 export type GovernanceTrustDisplay =
   | GovernanceTrustDerived
-  | GovernanceTrustIllustrative;
+  | GovernanceTrustStandby;
 
 function clampPercent(value: number): number {
   if (!Number.isFinite(value)) return 0;
@@ -31,17 +31,15 @@ function clampPercent(value: number): number {
  * - `derived`: weighted blend of NIST Measure (telemetry/trace exposure) and
  *   NIST Manage (HITL gate outcome), then penalties for degraded evidence,
  *   evidence warnings, advisory enrichment noise, and advisory overflow.
- * - `illustrative`: sessions without a derived ledger (mock rows, missing
- *   approval context) — show no fake precision.
+ * - `standby`: insufficient mission-linked data (`model.source !== "derived"`).
  */
 export function deriveGovernanceTrustScore(
   model: GovernanceViewModel,
 ): GovernanceTrustDisplay {
   if (model.source !== "derived") {
     return {
-      mode: "illustrative",
-      primaryDisplay: "—",
-      caption: "Illustrative",
+      mode: "standby",
+      display: "--.%",
     };
   }
 
