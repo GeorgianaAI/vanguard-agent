@@ -1,17 +1,7 @@
-import { buildEvidencePackage } from "../../../../src/lib/audit/evidence";
-import { fetchLangSmithRunsForThread } from "../../../../src/lib/audit/langsmith";
-import type { LangSmithRun } from "../../../../src/lib/audit/evidence";
+import { buildEvidencePackageForThread } from "../../../../src/lib/audit/buildEvidencePackageForThread";
 import { newRequestId, withRequestIdHeaders } from "../../chat/telemetry";
 
 export const runtime = "edge";
-
-function shouldRequireLangSmithConfig(): boolean {
-  return (
-    process.env.NODE_ENV === "production" ||
-    process.env.VERCEL_ENV === "production" ||
-    process.env.VERCEL_ENV === "preview"
-  );
-}
 
 export async function GET(req: Request) {
   const reqId = newRequestId(req);
@@ -29,40 +19,10 @@ export async function GET(req: Request) {
     );
   }
 
-  const warnings: string[] = [];
-  let runs: LangSmithRun[] = [];
-  let evidenceStatus: "complete" | "degraded" = "complete";
-
-  const missingLangSmithConfig =
-    !process.env.LANGSMITH_API_KEY || !process.env.LANGSMITH_PROJECT;
-
-  if (shouldRequireLangSmithConfig() && missingLangSmithConfig) {
-    evidenceStatus = "degraded";
-    warnings.push(
-      "LangSmith is not configured in this non-development environment.",
-    );
-  }
-
-  try {
-    runs = await fetchLangSmithRunsForThread(threadId);
-    if (runs.length === 0) {
-      warnings.push("No LangSmith traces found for this thread.");
-    }
-  } catch (err) {
-    evidenceStatus = "degraded";
-    warnings.push(
-      err instanceof Error ? err.message : "LangSmith trace query failed.",
-    );
-  }
-
-  const pkg = buildEvidencePackage({
-    missionId: missionId ?? threadId,
+  const pkg = await buildEvidencePackageForThread({
     threadId,
+    missionId,
     requestId: reqId,
-    generatedAt: new Date().toISOString(),
-    runs,
-    evidenceStatus,
-    warnings,
   });
 
   return withRequestIdHeaders(
