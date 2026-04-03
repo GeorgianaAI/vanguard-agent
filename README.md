@@ -25,14 +25,10 @@ Here is how Vanguard differs from a standard AI chat:
 
 ## 📹 Operational Demo
 
-  <video src="./public/vanguard-demo.mp4" width="100%" controls muted poster="./public/vanguard-poster.png">
-    Your browser may not support the video tag.
-  </video>
-  
-  <p align="center" style="margin-top: 15px;">
-    <i>Full product walkthrough: Command Center Protocol ➔ Scout Recon ➔ Governance Ledger Audit.</i>
-  </p>
-</div>
+### Full product walkthrough: Command Center Protocol ➔ Scout Recon ➔ Governance Ledger Audit
+
+> [!IMPORTANT]
+> **Manual Download Protocol:** To view the high-resolution product demo directly, navigate to [vanguard-demo.mp4](https://github.com/GeorgiDS9/vanguard-agent/blob/main/public/vanguard-demo.mp4) and select **"View raw"** to initialize the local download.
 
 ---
 
