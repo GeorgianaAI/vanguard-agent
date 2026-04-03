@@ -12,5 +12,9 @@ test.describe("Governance ledger", () => {
       page.getByRole("link", { name: /back to command center/i }),
     ).toBeVisible();
     await expect(page.getByTestId("governance-export-pdf")).toBeVisible();
+    await expect(page.getByTestId("governance-trust-score")).toBeVisible();
+    await expect(
+      page.getByTestId("governance-trust-score-illustrative"),
+    ).toBeVisible();
   });
 });
