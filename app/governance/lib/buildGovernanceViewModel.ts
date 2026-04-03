@@ -47,11 +47,22 @@ export type GovernanceViewModel = {
   evidenceTrail: GovernanceEvidenceItem[];
   nistMeasure: GovernanceMetricCard;
   nistManage: GovernanceMetricCard;
+  /** Export / PDF identifiers (when evidence or thread context exists) */
+  threadId?: string;
+  missionId?: string;
+  requestId?: string;
+  evidenceStatus: "complete" | "degraded" | "unknown";
+  evidenceWarnings: string[];
+  advisoryEnrichmentWarnings: string[];
 };
 
 export type GovernanceCheckpointExtras = {
   vulnerabilities?: unknown;
   advisoryWarnings?: string[];
+};
+
+export type GovernanceBuildOptions = {
+  threadId?: string;
 };
 
 const DEFAULT_NIST_MEASURE: GovernanceMetricCard = {
@@ -251,6 +262,7 @@ function buildEvidenceTrailDerived(
   auditorPresent: boolean,
   evidence: EvidencePackage | null,
   vulnerabilities: VulnerabilityFinding[],
+  advisoryEnrichmentWarnings: string[],
 ): GovernanceEvidenceItem[] {
   const traceCount = evidence?.traces.length ?? 0;
   const warningCount = evidence?.warnings.length ?? 0;
@@ -273,6 +285,17 @@ function buildEvidenceTrailDerived(
       id: `GOV-CVE-${String(i + 1).padStart(2, "0")}`,
     }));
 
+  const advisoryPipe: GovernanceEvidenceItem[] =
+    advisoryEnrichmentWarnings.length > 0
+      ? [
+          {
+            label: "Advisory Pipeline",
+            desc: advisoryEnrichmentWarnings.join(" • "),
+            id: "GOV-ADV-PIPE",
+          },
+        ]
+      : [];
+
   const hitl: GovernanceEvidenceItem = {
     label: "Human-in-the-Loop Gate",
     desc:
@@ -294,7 +317,7 @@ function buildEvidenceTrailDerived(
     id: "GOV-AUD",
   };
 
-  return [triage, ...cveEvents, hitl, aud];
+  return [triage, ...cveEvents, ...advisoryPipe, hitl, aud];
 }
 
 function buildNistMeasureCard(
@@ -358,14 +381,22 @@ function buildNistManageCard(
   };
 }
 
+const EMPTY_EXPORT_FIELDS = {
+  evidenceStatus: "unknown" as const,
+  evidenceWarnings: [] as string[],
+  advisoryEnrichmentWarnings: [] as string[],
+};
+
 export function buildGovernanceViewModelFromData(
   messages: DashboardMessage[],
   evidence: EvidencePackage | null,
   extras?: GovernanceCheckpointExtras,
+  opts?: GovernanceBuildOptions,
 ): GovernanceViewModel {
   const checkpointFindings = parseCheckpointVulnerabilities(
     extras?.vulnerabilities,
   );
+  const advisoryWarn = extras?.advisoryWarnings ?? [];
 
   if (messages.length === 0) {
     const adv = deriveAdvisorySignals([], null, checkpointFindings);
@@ -377,6 +408,11 @@ export function buildGovernanceViewModelFromData(
       evidenceTrail: [...EVIDENCE_TRAIL],
       nistMeasure: DEFAULT_NIST_MEASURE,
       nistManage: DEFAULT_NIST_MANAGE,
+      threadId: opts?.threadId,
+      missionId: evidence?.mission_id,
+      requestId: evidence?.request_id,
+      ...EMPTY_EXPORT_FIELDS,
+      advisoryEnrichmentWarnings: advisoryWarn,
     };
   }
 
@@ -392,6 +428,11 @@ export function buildGovernanceViewModelFromData(
       evidenceTrail: [...EVIDENCE_TRAIL],
       nistMeasure: DEFAULT_NIST_MEASURE,
       nistManage: DEFAULT_NIST_MANAGE,
+      threadId: opts?.threadId,
+      missionId: evidence?.mission_id,
+      requestId: evidence?.request_id,
+      ...EMPTY_EXPORT_FIELDS,
+      advisoryEnrichmentWarnings: advisoryWarn,
     };
   }
 
@@ -410,6 +451,7 @@ export function buildGovernanceViewModelFromData(
       auditorPresent,
       evidence,
       checkpointFindings,
+      advisoryWarn,
     ),
     nistMeasure: buildNistMeasureCard(
       auditorPresent,
@@ -417,6 +459,12 @@ export function buildGovernanceViewModelFromData(
       checkpointFindings,
     ),
     nistManage: buildNistManageCard(decision),
+    threadId: opts?.threadId,
+    missionId: evidence?.mission_id,
+    requestId: evidence?.request_id,
+    evidenceStatus: evidence?.evidence_status ?? "unknown",
+    evidenceWarnings: evidence?.warnings ?? [],
+    advisoryEnrichmentWarnings: advisoryWarn,
   };
 }
 

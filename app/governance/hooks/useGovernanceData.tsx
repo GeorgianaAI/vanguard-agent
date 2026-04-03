@@ -21,6 +21,7 @@ import {
 
 type GovernanceDataContextValue = {
   model: GovernanceViewModel;
+  threadId: string | null;
 };
 
 const GovernanceDataContext = createContext<GovernanceDataContextValue | null>(
@@ -93,7 +94,11 @@ export function GovernanceDataProvider({ children }: { children: ReactNode }) {
           evidence = null;
         }
 
-        setModel(buildGovernanceViewModelFromData(messages, evidence, extras));
+        setModel(
+          buildGovernanceViewModelFromData(messages, evidence, extras, {
+            threadId,
+          }),
+        );
       } catch {
         // Keep defaults/mocks on any fetch or parsing failure.
       }
@@ -103,7 +108,7 @@ export function GovernanceDataProvider({ children }: { children: ReactNode }) {
   }, [threadId]);
 
   return (
-    <GovernanceDataContext.Provider value={{ model }}>
+    <GovernanceDataContext.Provider value={{ model, threadId }}>
       {children}
     </GovernanceDataContext.Provider>
   );
