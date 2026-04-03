@@ -1,8 +1,13 @@
+"use client";
+
 import { AlertTriangle, ExternalLink } from "lucide-react";
 
-import { ADVISORY_MOCK } from "../governance-mock-data";
+import { useGovernanceData } from "../hooks/useGovernanceData";
 
 export function AdvisorySignals() {
+  const { model } = useGovernanceData();
+  const advisories = model.advisorySignals;
+
   return (
     <div
       data-testid="governance-advisory-signals"
@@ -21,7 +26,7 @@ export function AdvisorySignals() {
       </div>
 
       <div className="grid min-w-0 gap-4">
-        {ADVISORY_MOCK.map((cve) => (
+        {advisories.map((cve) => (
           <div
             key={cve.id}
             data-testid={`governance-advisory-${cve.id}`}
@@ -60,6 +65,9 @@ export function AdvisorySignals() {
                 Audit Evidence <ExternalLink className="h-2.5 w-2.5 shrink-0" />
               </button>
             </div>
+            <p className="min-w-0 break-words text-[10px] italic text-slate-500">
+              {cve.note}
+            </p>
           </div>
         ))}
       </div>
