@@ -4,6 +4,7 @@ import {
   getApprovalContextFromMessage,
 } from "@/app/dashboard/lib/utils";
 import type { EvidencePackage } from "@/src/lib/audit/evidence";
+import type { VulnerabilityFinding } from "@/src/lib/vulnerability/vulnerabilityFinding";
 
 import {
   ADVISORY_MOCK,
@@ -14,6 +15,7 @@ import {
   buildGovernanceLedgerRowsFromMessages,
   type GovernanceLedgerRow,
 } from "./buildGovernanceLedgerRows";
+import { parseCheckpointVulnerabilities } from "./parseCheckpointVulnerabilities";
 
 export type GovernanceEvidenceItem = {
   label: string;
@@ -37,10 +39,19 @@ export type GovernanceViewModel = {
     severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
     cvss: string;
     note: string;
+    remediationHint: string;
+    confidenceLevel?: "HIGH" | "MEDIUM" | "LOW";
   }>;
+  /** Count of findings above top-N display cap */
+  advisoryOverflowCount: number;
   evidenceTrail: GovernanceEvidenceItem[];
   nistMeasure: GovernanceMetricCard;
   nistManage: GovernanceMetricCard;
+};
+
+export type GovernanceCheckpointExtras = {
+  vulnerabilities?: unknown;
+  advisoryWarnings?: string[];
 };
 
 const DEFAULT_NIST_MEASURE: GovernanceMetricCard = {
@@ -126,10 +137,42 @@ function toCvssSeverity(severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"): strin
   return "3.1";
 }
 
+/** Top advisory cards shown; remainder counted as overflow. */
+export const GOVERNANCE_ADVISORY_TOP_N = 3;
+
+function mapFindingToAdvisoryCard(
+  f: VulnerabilityFinding,
+): GovernanceViewModel["advisorySignals"][number] {
+  return {
+    id: f.cveId,
+    stack: `${f.affectedComponent} · ${f.observedVersion}`.trim(),
+    severity: f.severity,
+    cvss: f.cvssScore.toFixed(1),
+    note: f.confidence.rationale.slice(0, 280),
+    remediationHint: `Review vendor advisory for ${f.cveId}; treat as ${f.confidence.level} confidence OSINT correlation.`,
+    confidenceLevel: f.confidence.level,
+  };
+}
+
 function deriveAdvisorySignals(
   messages: DashboardMessage[],
   evidence: EvidencePackage | null,
-): GovernanceViewModel["advisorySignals"] {
+  checkpointFindings: VulnerabilityFinding[],
+): {
+  signals: GovernanceViewModel["advisorySignals"];
+  overflow: number;
+} {
+  if (checkpointFindings.length > 0) {
+    const sorted = [...checkpointFindings].sort(
+      (a, b) => b.cvssScore - a.cvssScore,
+    );
+    const top = sorted.slice(0, GOVERNANCE_ADVISORY_TOP_N).map(mapFindingToAdvisoryCard);
+    return {
+      signals: top,
+      overflow: Math.max(0, sorted.length - GOVERNANCE_ADVISORY_TOP_N),
+    };
+  }
+
   const textBlob = messages
     .map((m) => extractRenderableText(m).toLowerCase())
     .join("\n");
@@ -150,6 +193,8 @@ function deriveAdvisorySignals(
       severity: "MEDIUM",
       cvss: toCvssSeverity("MEDIUM"),
       note: "WHOIS/RDAP metadata indicates externally visible ownership and lifecycle exposure signals.",
+      remediationHint:
+        "Validate registrar exposure against organizational domain policy.",
     });
   }
 
@@ -160,6 +205,7 @@ function deriveAdvisorySignals(
       severity: "LOW",
       cvss: toCvssSeverity("LOW"),
       note: "Open-source reconnaissance path confirmed by Tavily-based corroboration queries.",
+      remediationHint: "Corroborate public references independently where feasible.",
     });
   }
 
@@ -174,20 +220,29 @@ function deriveAdvisorySignals(
         warningCount > 0
           ? `Evidence ingestion reported ${warningCount} warning(s); validate trace completeness before final attestation.`
           : "Evidence pipeline is degraded; verify trace capture before relying on advisory conclusions.",
+      remediationHint: "Re-run mission or verify LangSmith trace capture before attestation.",
     });
   }
 
   if (advisories.length === 0) {
-    return ADVISORY_MOCK.map((item) => ({
-      id: item.id,
-      stack: item.stack,
-      severity: item.severity === "CRITICAL" ? "CRITICAL" : "HIGH",
-      cvss: item.cvss,
-      note: "Scout detected matching version signal in observed public telemetry.",
-    }));
+    return {
+      signals: ADVISORY_MOCK.map((item) => ({
+        id: item.id,
+        stack: item.stack,
+        severity: item.severity === "CRITICAL" ? "CRITICAL" : "HIGH",
+        cvss: item.cvss,
+        note: "Scout detected matching version signal in observed public telemetry.",
+        remediationHint:
+          "Patch or validate against vendor guidance; confirm with secondary OSINT sources.",
+      })),
+      overflow: Math.max(0, ADVISORY_MOCK.length - GOVERNANCE_ADVISORY_TOP_N),
+    };
   }
 
-  return advisories;
+  return {
+    signals: advisories.slice(0, GOVERNANCE_ADVISORY_TOP_N),
+    overflow: Math.max(0, advisories.length - GOVERNANCE_ADVISORY_TOP_N),
+  };
 }
 
 function buildEvidenceTrailDerived(
@@ -195,58 +250,80 @@ function buildEvidenceTrailDerived(
   ledgerRows: GovernanceLedgerRow[],
   auditorPresent: boolean,
   evidence: EvidencePackage | null,
+  vulnerabilities: VulnerabilityFinding[],
 ): GovernanceEvidenceItem[] {
   const traceCount = evidence?.traces.length ?? 0;
   const warningCount = evidence?.warnings.length ?? 0;
   const scoutAction = ledgerRows[0]?.action ?? "Tool Action";
 
-  return [
-    {
-      label: "Vulnerability Triage",
-      desc: `Primary recon path initiated via ${scoutAction}.`,
-      id: "GOV-TRIAGE",
-    },
-    {
-      label: "Human-in-the-Loop Gate",
-      desc:
-        decision === "authorized"
-          ? "Tool execution authorized by operator under active policy."
-          : decision === "aborted"
-            ? "Operator aborted execution at policy gate."
-            : "Awaiting explicit operator authorization signal.",
-      id: "GOV-HITL",
-    },
-    {
-      label: "Auditor Verification",
-      desc: auditorPresent
-        ? `Mission closure verified${
-            traceCount > 0 ? ` with ${traceCount} linked trace(s).` : "."
-          }${warningCount > 0 ? ` ${warningCount} warning(s) recorded.` : ""}`
-        : "Auditor closure not yet present in transcript state.",
-      id: "GOV-AUD",
-    },
-  ];
+  const triage: GovernanceEvidenceItem = {
+    label: "Vulnerability Triage",
+    desc:
+      vulnerabilities.length > 0
+        ? `Recon signals correlated with ${vulnerabilities.length} checkpointed public CVE record(s) (defensive OSINT). Primary path: ${scoutAction}.`
+        : `Primary recon path initiated via ${scoutAction}.`,
+    id: "GOV-TRIAGE",
+  };
+
+  const cveEvents: GovernanceEvidenceItem[] = vulnerabilities
+    .slice(0, 3)
+    .map((v, i) => ({
+      label: "Public Advisory Correlation",
+      desc: `${v.cveId} — ${v.severity} (CVSS ${v.cvssScore.toFixed(1)}). ${v.confidence.rationale.slice(0, 120)}${v.confidence.rationale.length > 120 ? "…" : ""}`,
+      id: `GOV-CVE-${String(i + 1).padStart(2, "0")}`,
+    }));
+
+  const hitl: GovernanceEvidenceItem = {
+    label: "Human-in-the-Loop Gate",
+    desc:
+      decision === "authorized"
+        ? "Tool execution authorized by operator under active policy."
+        : decision === "aborted"
+          ? "Operator aborted execution at policy gate."
+          : "Awaiting explicit operator authorization signal.",
+    id: "GOV-HITL",
+  };
+
+  const aud: GovernanceEvidenceItem = {
+    label: "Auditor Verification",
+    desc: auditorPresent
+      ? `Mission closure verified${
+          traceCount > 0 ? ` with ${traceCount} linked trace(s).` : "."
+        }${warningCount > 0 ? ` ${warningCount} warning(s) recorded.` : ""}`
+      : "Auditor closure not yet present in transcript state.",
+    id: "GOV-AUD",
+  };
+
+  return [triage, ...cveEvents, hitl, aud];
 }
 
 function buildNistMeasureCard(
   auditorPresent: boolean,
   evidence: EvidencePackage | null,
+  vulnerabilities: VulnerabilityFinding[],
 ): GovernanceMetricCard {
   const traceCount = evidence?.traces.length ?? 0;
   const warningCount = evidence?.warnings.length ?? 0;
   const degraded = evidence?.evidence_status === "degraded";
+
+  const critical = vulnerabilities.filter((v) => v.severity === "CRITICAL").length;
+  const high = vulnerabilities.filter((v) => v.severity === "HIGH").length;
 
   let score = 55;
   if (auditorPresent) score += 20;
   if (traceCount > 0) score += 15;
   score -= Math.min(20, warningCount * 10);
   if (degraded) score -= 10;
+  score -= Math.min(22, critical * 11 + high * 5);
 
   const percent = clampPercent(score);
 
   return {
     mode: degraded ? "TEVV-DEGRADED" : "TEVV-ACTIVE",
-    label: "Trace Completeness",
+    label:
+      critical + high > 0
+        ? "Trace + Advisory Exposure"
+        : "Trace Completeness",
     value: `${percent.toFixed(1)}%`,
     percent,
   };
@@ -284,12 +361,19 @@ function buildNistManageCard(
 export function buildGovernanceViewModelFromData(
   messages: DashboardMessage[],
   evidence: EvidencePackage | null,
+  extras?: GovernanceCheckpointExtras,
 ): GovernanceViewModel {
+  const checkpointFindings = parseCheckpointVulnerabilities(
+    extras?.vulnerabilities,
+  );
+
   if (messages.length === 0) {
+    const adv = deriveAdvisorySignals([], null, checkpointFindings);
     return {
       source: "mock",
       ledgerRows: [...LEDGER_MOCK] as unknown as GovernanceLedgerRow[],
-      advisorySignals: deriveAdvisorySignals([], null),
+      advisorySignals: adv.signals,
+      advisoryOverflowCount: adv.overflow,
       evidenceTrail: [...EVIDENCE_TRAIL],
       nistMeasure: DEFAULT_NIST_MEASURE,
       nistManage: DEFAULT_NIST_MANAGE,
@@ -299,10 +383,12 @@ export function buildGovernanceViewModelFromData(
   const decision = detectDecision(messages);
   const approvalPresent = hasApprovalContext(messages);
   if (!approvalPresent || decision === "unknown") {
+    const adv = deriveAdvisorySignals([], null, checkpointFindings);
     return {
       source: "mock",
       ledgerRows: [...LEDGER_MOCK] as unknown as GovernanceLedgerRow[],
-      advisorySignals: deriveAdvisorySignals([], null),
+      advisorySignals: adv.signals,
+      advisoryOverflowCount: adv.overflow,
       evidenceTrail: [...EVIDENCE_TRAIL],
       nistMeasure: DEFAULT_NIST_MEASURE,
       nistManage: DEFAULT_NIST_MANAGE,
@@ -311,18 +397,25 @@ export function buildGovernanceViewModelFromData(
 
   const ledgerRows = buildGovernanceLedgerRowsFromMessages(messages);
   const auditorPresent = hasAuditorSummary(messages);
+  const adv = deriveAdvisorySignals(messages, evidence, checkpointFindings);
 
   return {
     source: "derived",
     ledgerRows,
-    advisorySignals: deriveAdvisorySignals(messages, evidence),
+    advisorySignals: adv.signals,
+    advisoryOverflowCount: adv.overflow,
     evidenceTrail: buildEvidenceTrailDerived(
       decision,
       ledgerRows,
       auditorPresent,
       evidence,
+      checkpointFindings,
     ),
-    nistMeasure: buildNistMeasureCard(auditorPresent, evidence),
+    nistMeasure: buildNistMeasureCard(
+      auditorPresent,
+      evidence,
+      checkpointFindings,
+    ),
     nistManage: buildNistManageCard(decision),
   };
 }

@@ -20,6 +20,31 @@ const RISK_MAP: Record<string, GovernanceLedgerRow["risk"]> = {
   high: "High",
 };
 
+/** Ledger B: ordered unique tool labels from executed tool invocations. */
+export function collectOrderedToolLabelsFromMessages(
+  messages: DashboardMessage[],
+): string[] {
+  const labels: string[] = [];
+  const seen = new Set<string>();
+  for (const m of messages) {
+    for (const part of m.parts) {
+      if (
+        typeof part === "object" &&
+        part != null &&
+        "type" in part &&
+        (part as { type: string }).type === "tool-invocation" &&
+        "toolName" in part
+      ) {
+        const name = String((part as { toolName?: string }).toolName ?? "").trim();
+        if (!name || seen.has(name)) continue;
+        seen.add(name);
+        labels.push(prettyAction(name));
+      }
+    }
+  }
+  return labels;
+}
+
 function prettyAction(toolName: string | undefined): string {
   if (!toolName) return "Tool Action";
   const name = toolName.toLowerCase();
@@ -98,7 +123,9 @@ export function buildGovernanceLedgerRowsFromMessages(
   void auditorPresent;
 
   const risk = RISK_MAP[approvalContext.risk_level] ?? "Neutral";
-  const scoutAction = prettyAction(approvalContext.tool.name);
+  const toolChain = collectOrderedToolLabelsFromMessages(messages);
+  const scoutAction =
+    toolChain.length > 0 ? toolChain.join(" · ") : prettyAction(approvalContext.tool.name);
 
   return [
     {

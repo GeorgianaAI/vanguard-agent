@@ -113,5 +113,34 @@ describe("buildGovernanceLedgerRowsFromMessages (A) approval events + risk first
     const rows = buildGovernanceLedgerRowsFromMessages(messages);
     expect(rows[0].risk).toBe("High");
   });
+
+  it("Ledger B: joins ordered tool invocations into SCOUT action", () => {
+    const messages: DashboardMessage[] = [
+      assistant(approvalPayload({ riskLevel: "low", toolName: "domain_whois" })),
+      user("Mission authorized"),
+      {
+        id: "tools",
+        role: "assistant",
+        parts: [
+          {
+            type: "tool-invocation",
+            toolName: "domain_whois",
+            toolCallId: "c1",
+            state: "result",
+          } as unknown as DashboardMessage["parts"][number],
+          {
+            type: "tool-invocation",
+            toolName: "tavily_search",
+            toolCallId: "c2",
+            state: "result",
+          } as unknown as DashboardMessage["parts"][number],
+        ],
+      } as DashboardMessage,
+      assistant("Final auditor summary.", { agent_node: "auditor" }),
+    ];
+
+    const rows = buildGovernanceLedgerRowsFromMessages(messages);
+    expect(rows[0].action).toBe("WHOIS Lookup · Tavily Search");
+  });
 });
 
