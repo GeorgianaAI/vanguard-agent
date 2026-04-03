@@ -47,6 +47,9 @@ jobs:
           cache-dependency-path: mcp-server/package-lock.json
       - run: npm ci
         working-directory: mcp-server
+      - name: npm audit (high/critical; align with root policy)
+        run: npm audit --audit-level=high
+        working-directory: mcp-server
       - run: npx tsc -p tsconfig.json
         working-directory: mcp-server
 
