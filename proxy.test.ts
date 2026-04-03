@@ -9,7 +9,7 @@ vi.mock("./src/lib/auth/session", () => ({
   verifySessionToken: hoisted.verifySessionToken,
 }));
 
-describe("middleware auth/rbac", () => {
+describe("proxy auth/rbac", () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
@@ -24,24 +24,24 @@ describe("middleware auth/rbac", () => {
     process.env = { ...originalEnv };
   });
 
-  async function loadMiddleware() {
-    const mod = await import("./middleware");
-    return mod.middleware;
+  async function loadProxy() {
+    const mod = await import("./proxy");
+    return mod.proxy;
   }
 
   it("redirects unauthenticated user from /dashboard to /login", async () => {
-    const middleware = await loadMiddleware();
+    const proxyFn = await loadProxy();
     const req = new NextRequest("http://localhost/dashboard");
-    const res = await middleware(req);
+    const res = await proxyFn(req);
 
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toContain("/login");
   });
 
   it("redirects unauthenticated user from /governance to /login", async () => {
-    const middleware = await loadMiddleware();
+    const proxyFn = await loadProxy();
     const req = new NextRequest("http://localhost/governance");
-    const res = await middleware(req);
+    const res = await proxyFn(req);
 
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toContain("/login");
@@ -55,12 +55,12 @@ describe("middleware auth/rbac", () => {
       exp: 9999999999,
     });
 
-    const middleware = await loadMiddleware();
+    const proxyFn = await loadProxy();
     const req = new NextRequest("http://localhost/api/chat", {
       headers: { cookie: "vanguard_session=fake-token" },
     });
 
-    const res = await middleware(req);
+    const res = await proxyFn(req);
     expect(res.status).toBe(403);
   });
 
@@ -72,13 +72,13 @@ describe("middleware auth/rbac", () => {
       exp: 9999999999,
     });
 
-    const middleware = await loadMiddleware();
+    const proxyFn = await loadProxy();
     const req = new NextRequest(
       "http://localhost/api/governance/export/pdf?thread_id=vanguard-thread-x",
       { headers: { cookie: "vanguard_session=fake-token" } },
     );
 
-    const res = await middleware(req);
+    const res = await proxyFn(req);
     expect(res.status).toBe(403);
   });
 
@@ -90,13 +90,13 @@ describe("middleware auth/rbac", () => {
       exp: 9999999999,
     });
 
-    const middleware = await loadMiddleware();
+    const proxyFn = await loadProxy();
     const req = new NextRequest(
       "http://localhost/api/governance/export/pdf?thread_id=vanguard-thread-x",
       { headers: { cookie: "vanguard_session=fake-token" } },
     );
 
-    const res = await middleware(req);
+    const res = await proxyFn(req);
     expect(res.status).toBe(200);
   });
 
@@ -108,12 +108,12 @@ describe("middleware auth/rbac", () => {
       exp: 9999999999,
     });
 
-    const middleware = await loadMiddleware();
+    const proxyFn = await loadProxy();
     const req = new NextRequest("http://localhost/api/chat", {
       headers: { cookie: "vanguard_session=fake-token" },
     });
 
-    const res = await middleware(req);
+    const res = await proxyFn(req);
     expect(res.status).toBe(200);
   });
 
@@ -125,12 +125,12 @@ describe("middleware auth/rbac", () => {
       exp: 9999999999,
     });
 
-    const middleware = await loadMiddleware();
+    const proxyFn = await loadProxy();
     const req = new NextRequest("http://localhost/api/audit/evidence", {
       headers: { cookie: "vanguard_session=fake-token" },
     });
 
-    const res = await middleware(req);
+    const res = await proxyFn(req);
     expect(res.status).toBe(403);
   });
 });

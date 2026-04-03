@@ -6,10 +6,6 @@ import {
 } from "@langchain/core/messages";
 import type { DashboardMessage } from "@/app/dashboard/lib/types";
 import { readAgentNodeFromLangchainMessage } from "@/src/lib/agent/agentNode";
-import { reviveLangchainMessages } from "@/src/lib/langchain/reviveLangchainMessages";
-
-/** @deprecated Use reviveLangchainMessages; kept for history route imports. */
-export const reviveCheckpointMessages = reviveLangchainMessages;
 
 function humanText(m: HumanMessage): string {
   const c = m.content;

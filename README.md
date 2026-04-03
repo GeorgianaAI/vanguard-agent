@@ -270,7 +270,7 @@ This project uses a **narrow, documented** defensive posture — not generic pro
 - [x] **Persistence & Reliability:** Upstash Redis-backed checkpointing enables state recovery and multi-session mission continuity.
 - [x] **Command Center UI:** Streaming mission interface with approval context and operator controls.
 - [x] **Grounded Alignment:** Synchronized Home and Dashboard visuals to the Phase 2 standard.
-- [x] **Supervisor Refactor:** General/Scout/Auditor hierarchy implemented; routing and approval UX still being hardened.
+- [x] **Supervisor Refactor:** General/Scout/Auditor hierarchy implemented; routing and approval UX aligned with Phase 2 Command Center (iterative polish as needed).
 - [x] **Automated Unit Testing:** **Vitest** for API request validation (Zod), mission and approval state helpers, and dashboard message utilities.
 - [x] **CI/CD and e2e Validation:** **GitHub Actions** enforces lint, unit tests (with coverage), and production build on pushes/PRs to `main`, plus **Playwright** Chromium smoke checks for core dashboard behavior (shell controls, initial feed state, mocked `/api/chat` failure paths). Live HITL/API scenarios remain opt-in behind `E2E_LIVE`.
 - [x] **MCP server (stdio):** `mcp-server/` with **`vanguard_ping`** and **`domain_whois`** (RDAP, shared with LangGraph). Expand with **`nmap`** or other tools under explicit policy later.
@@ -284,7 +284,7 @@ This project uses a **narrow, documented** defensive posture — not generic pro
 - [x] **NIST-Aligned Governance Dashboard:** Decision integrity ledger, mission timeline replay, and traceable control evidence mapped to AI risk management and compliance oversight (`/governance`).
 - [x] **Dependency & audit hygiene:** `npm audit --audit-level=high` on **root** and **`mcp-server/`** in CI; policy in [`docs/dependency-audit-policy.md`](./docs/dependency-audit-policy.md); one-line register [`docs/dependency-risk-register.md`](./docs/dependency-risk-register.md).
 - [x] **Defensive CVE / advisory correlation (v1 documented):** Narrow scope — CVE IDs from **mission artifacts** → **NVD** correlation with existing budgets, checkpointing, governance UI + PDF; **not** standalone keyword/CPE enrichment without a CVE string, **not** multi-provider primary fetch beyond NVD, **not** full SCA (see section above).
-- [ ] **Auth: evaluate / migrate to Clerk (optional):** Replace custom session flow with Clerk if product direction confirms; preserve roles, `/dashboard` access, middleware, and Playwright e2e bypass or Clerk test mode.
+- [ ] **Auth: evaluate / migrate to Clerk (optional):** Replace custom session flow with Clerk if product direction confirms; preserve roles, `/dashboard` access, root `proxy` (auth/RBAC), and Playwright e2e bypass or Clerk test mode.
 
 ---
 
