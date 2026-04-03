@@ -1,6 +1,6 @@
 "use client";
 
-import { Gavel } from "lucide-react";
+import { Gavel, ShieldAlert } from "lucide-react";
 
 import { useGovernanceData } from "../hooks/useGovernanceData";
 
@@ -22,12 +22,21 @@ export function DecisionIntegrityLedger() {
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <span
-            data-testid="governance-ledger-live-badge"
-            className="rounded border border-cyan-500/20 bg-cyan-950/40 px-2 py-1 text-[10px] font-bold text-cyan-400"
-          >
-            LIVE AUDIT ACTIVE
-          </span>
+          {hasMissionLedger ? (
+            <span
+              data-testid="governance-ledger-live-badge"
+              className="rounded border border-cyan-500/20 bg-cyan-950/40 px-2 py-1 text-[10px] font-bold text-cyan-400"
+            >
+              LIVE AUDIT ACTIVE
+            </span>
+          ) : (
+            <span
+              data-testid="governance-ledger-standby-badge"
+              className="rounded border border-slate-700/50 bg-slate-900/50 px-2 py-1 text-[10px] font-bold text-slate-500"
+            >
+              AUDIT STANDBY
+            </span>
+          )}
         </div>
       </div>
 
@@ -67,13 +76,19 @@ export function DecisionIntegrityLedger() {
           className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-800/50 bg-slate-950/20 py-20"
         >
           <div className="mb-2 flex items-center gap-2">
-            <div className="h-1.5 w-1.5 rounded-full bg-slate-700" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
-              Awaiting Mission Telemetry
+            <div className="relative flex items-center justify-center">
+              <div className="absolute h-full w-full rounded-full bg-blue-500/20 blur-md animate-pulse" />
+              <ShieldAlert
+                className="relative h-6 w-6 text-blue-400"
+                aria-hidden
+              />
+            </div>
+            <span className="text-[12px] font-black leading-relaxed uppercase tracking-[0.3em] text-slate-600">
+              No Mission Telemetry Detected
             </span>
           </div>
-          <p className="max-w-xs text-center text-[9px] font-bold uppercase tracking-widest text-slate-500">
-            Authorize a Vanguard Scout mission to populate the integrity ledger.
+          <p className="max-w-xs text-center text-[11px] font-bold uppercase tracking-widest text-slate-500">
+            Authorize a Vanguard Scout mission to populate with findings
           </p>
         </div>
       )}

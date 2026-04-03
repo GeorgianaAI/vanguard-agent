@@ -40,11 +40,13 @@ export function GovernancePageHeader() {
             System Trust Score
           </p>
           {trust.mode === "derived" ? (
-            <p className="text-xl font-black text-emerald-400">{trust.formatted}</p>
+            <p className="text-2xl font-black text-emerald-400">
+              {trust.formatted}
+            </p>
           ) : (
             <p
               data-testid="governance-trust-score-standby"
-              className="text-xl font-black tracking-tight text-slate-700"
+              className="text-xl font-black tracking-tight text-blue-400"
               title="Insufficient mission telemetry. Use Command Center to run an authorized mission."
             >
               {trust.display}
