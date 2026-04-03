@@ -4,10 +4,8 @@ import {
 } from "@/app/governance/lib/buildGovernanceViewModel";
 import { vanguardGraph } from "@/src/lib/agent/graph";
 import { buildEvidencePackageForThread } from "@/src/lib/audit/buildEvidencePackageForThread";
-import {
-  checkpointMessagesToDashboardMessages,
-  reviveCheckpointMessages,
-} from "@/src/lib/chat/checkpointToUIMessages";
+import { checkpointMessagesToDashboardMessages } from "@/src/lib/chat/checkpointToUIMessages";
+import { reviveLangchainMessages } from "@/src/lib/langchain/reviveLangchainMessages";
 import { getThreadPrefix } from "@/src/lib/runtime/redteam";
 
 function messagesFromStateValues(values: unknown): unknown[] | null {
@@ -50,7 +48,7 @@ export async function loadGovernanceSnapshotForThread(
     return { ok: false, reason: "no_checkpoint" };
   }
 
-  const revived = reviveCheckpointMessages(raw);
+  const revived = reviveLangchainMessages(raw);
   const messages = checkpointMessagesToDashboardMessages(revived);
 
   const values = snapshot?.values as

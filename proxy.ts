@@ -27,7 +27,7 @@ function routePermission(pathname: string): Permission | null {
   return null;
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   if (shouldBypassAuthForE2E()) return NextResponse.next();
 
   const cookie = req.cookies.get(

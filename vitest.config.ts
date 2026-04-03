@@ -7,7 +7,7 @@ export default defineConfig({
     include: [
       "app/**/*.test.ts",
       "src/**/*.test.ts",
-      "middleware.test.ts",
+      "proxy.test.ts",
     ],
     exclude: ["tests/**/*.spec.ts", "node_modules/**", ".next/**"],
     coverage: {

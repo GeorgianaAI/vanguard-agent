@@ -14,7 +14,7 @@ When implementation changes, update this doc in the same PR.
 ## How to Read These Diagrams
 
 - **UI** = operator-facing dashboard and login pages.
-- **Middleware** = request gate for auth + permissions.
+- **Proxy** (root `proxy.ts`, formerly “middleware”) = request gate for auth + permissions.
 - **/api/chat** = mission orchestration and HITL enforcement.
 - **LangGraph** = agent decision/flow execution engine.
 - **Redis** = lock/state/persistence substrate for mission safety controls.
@@ -55,7 +55,7 @@ Approving stale or modified payloads is intentionally rejected.
 sequenceDiagram
 autonumber
 participant UI as Dashboard UI
-participant MW as Middleware
+participant MW as Proxy (proxy.ts)
 participant API as /api/chat
 participant G as LangGraph
 participant RS as Redis
@@ -109,7 +109,7 @@ E --> F[Set HttpOnly cookie]
 F --> G[Redirect/push to /dashboard]
 
 G --> H[Request protected route]
-H --> I[Middleware verifies session cookie]
+H --> I[Proxy verifies session cookie]
 I --> J{Token valid?}
 J -- no --> K[401 for API / redirect to /login]
 J -- yes --> L[Check permission by route]

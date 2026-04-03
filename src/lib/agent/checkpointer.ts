@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { RunnableConfig } from "@langchain/core/runnables";
 import {
   BaseCheckpointSaver,
@@ -103,7 +102,7 @@ export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
     config: RunnableConfig,
     checkpoint: Checkpoint,
     metadata: CheckpointMetadata,
-    newVersions: ChannelVersions,
+    _newVersions: ChannelVersions,
   ): Promise<RunnableConfig> {
     const threadId = getThreadId(config);
     const checkpointId = checkpoint.id;
@@ -150,7 +149,9 @@ export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
 
     const checkpointId =
       requestedCheckpointId ??
-      (await this.client.get<string>(latestPointerKey(this.keyPrefix, threadId)));
+      (await this.client.get<string>(
+        latestPointerKey(this.keyPrefix, threadId),
+      ));
 
     if (!checkpointId) return undefined;
 
@@ -214,7 +215,8 @@ export function getCheckpointer() {
           component: "vanguard.agent.checkpointer",
           level: "error",
           event: "production_checkpointer_init_failed",
-          detail: error instanceof Error ? error.message.slice(0, 120) : "unknown",
+          detail:
+            error instanceof Error ? error.message.slice(0, 120) : "unknown",
         }),
       );
       throw error;
@@ -228,7 +230,8 @@ export function getCheckpointer() {
           : isCiRuntime
             ? "ci_runtime_checkpointer_deferred"
             : "degraded_checkpointer_disabled",
-        detail: error instanceof Error ? error.message.slice(0, 120) : "unknown",
+        detail:
+          error instanceof Error ? error.message.slice(0, 120) : "unknown",
       }),
     );
     return undefined;

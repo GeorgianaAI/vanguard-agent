@@ -1,8 +1,6 @@
 import { vanguardGraph } from "@/src/lib/agent/graph";
-import {
-  checkpointMessagesToDashboardMessages,
-  reviveCheckpointMessages,
-} from "@/src/lib/chat/checkpointToUIMessages";
+import { checkpointMessagesToDashboardMessages } from "@/src/lib/chat/checkpointToUIMessages";
+import { reviveLangchainMessages } from "@/src/lib/langchain/reviveLangchainMessages";
 import { getThreadPrefix } from "@/src/lib/runtime/redteam";
 
 export const runtime = "edge";
@@ -39,7 +37,7 @@ function advisoryWarningsFromStateValues(values: unknown): string[] | undefined 
 
 /**
  * Read-only mission transcript from LangGraph checkpoint (Redis).
- * Requires authenticated session with `mission:run` (middleware).
+ * Requires authenticated session with `mission:run` (proxy).
  */
 export async function GET(req: Request) {
   const actorId = req.headers.get("x-actor-id");
@@ -67,7 +65,7 @@ export async function GET(req: Request) {
       return Response.json({ messages: [] });
     }
 
-    const revived = reviveCheckpointMessages(raw);
+    const revived = reviveLangchainMessages(raw);
     const messages = checkpointMessagesToDashboardMessages(revived);
     const values = snapshot?.values;
     return Response.json({

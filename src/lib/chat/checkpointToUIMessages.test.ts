@@ -1,10 +1,8 @@
 import { AIMessage, HumanMessage, ToolMessage } from "@langchain/core/messages";
 import { describe, expect, it } from "vitest";
 import { attachAgentNode } from "../agent/agentNode";
-import {
-  checkpointMessagesToDashboardMessages,
-  reviveCheckpointMessages,
-} from "./checkpointToUIMessages";
+import { checkpointMessagesToDashboardMessages } from "./checkpointToUIMessages";
+import { reviveLangchainMessages } from "@/src/lib/langchain/reviveLangchainMessages";
 
 describe("checkpointMessagesToDashboardMessages", () => {
   it("preserves agent_node metadata on assistant rows", () => {
@@ -51,7 +49,7 @@ describe("checkpointMessagesToDashboardMessages", () => {
   });
 });
 
-describe("reviveCheckpointMessages + checkpointMessagesToDashboardMessages", () => {
+describe("reviveLangchainMessages + checkpointMessagesToDashboardMessages", () => {
   it("rehydrates StoredMessage-shaped plain objects from checkpoint JSON", () => {
     const raw = [
       { type: "human" as const, data: { content: "scan example.com" } },
@@ -74,7 +72,7 @@ describe("reviveCheckpointMessages + checkpointMessagesToDashboardMessages", () 
         data: { content: "{}", tool_call_id: "call_1" },
       },
     ];
-    const ui = checkpointMessagesToDashboardMessages(reviveCheckpointMessages(raw));
+    const ui = checkpointMessagesToDashboardMessages(reviveLangchainMessages(raw));
     expect(ui).toHaveLength(2);
     expect(ui[0].role).toBe("user");
     expect(ui[0].parts[0]).toMatchObject({ type: "text", text: "scan example.com" });
@@ -95,7 +93,7 @@ describe("reviveCheckpointMessages + checkpointMessagesToDashboardMessages", () 
         kwargs: { content: "hello from redis" },
       },
     ];
-    const revived = reviveCheckpointMessages(raw);
+    const revived = reviveLangchainMessages(raw);
     expect(revived).toHaveLength(1);
     expect(HumanMessage.isInstance(revived[0])).toBe(true);
     const ui = checkpointMessagesToDashboardMessages(revived);
