@@ -4,6 +4,7 @@ import { EvidenceTrail } from "./components/EvidenceTrail";
 import { GovernanceBackToDashboardButton } from "./components/GovernanceBackToDashboardButton";
 import { GovernancePageHeader } from "./components/GovernancePageHeader";
 import { NistMetricsCards } from "./components/NistMetricsCards";
+import { GovernanceDataProvider } from "./hooks/useGovernanceData";
 
 export default function VanguardGovernancePage() {
   return (
@@ -17,18 +18,20 @@ export default function VanguardGovernancePage() {
         >
           <GovernancePageHeader />
 
-          <div className="grid w-full min-w-0 grid-cols-12 gap-4 md:gap-6 lg:items-start">
-            <section
-              data-testid="governance-primary-stack"
-              className="order-1 col-span-12 flex min-h-0 w-full min-w-0 max-w-full flex-col gap-6 text-left lg:col-span-8"
-            >
-              <DecisionIntegrityLedger />
-              <AdvisorySignals />
-              <NistMetricsCards />
-            </section>
+          <GovernanceDataProvider>
+            <div className="grid w-full min-w-0 grid-cols-12 gap-4 md:gap-6 lg:items-start">
+              <section
+                data-testid="governance-primary-stack"
+                className="order-1 col-span-12 flex min-h-0 w-full min-w-0 max-w-full flex-col gap-6 text-left lg:col-span-8"
+              >
+                <DecisionIntegrityLedger />
+                <AdvisorySignals />
+                <NistMetricsCards />
+              </section>
 
-            <EvidenceTrail />
-          </div>
+              <EvidenceTrail />
+            </div>
+          </GovernanceDataProvider>
         </main>
       </div>
     </div>
