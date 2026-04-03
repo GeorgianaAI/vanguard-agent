@@ -110,7 +110,7 @@ Typical mission output includes:
 ### 5) Export-Ready Evidence Foundation
 
 - Structured mission and governance records that can feed compliance artifacts
-- Trace-linked data suitable for downstream reporting (e.g., JSON today, PDF export roadmap)
+- Trace-linked data suitable for downstream reporting (JSON evidence export and **NIST-aligned governance PDF** from `/governance`)
 
 In short, Vanguard’s output is designed to support operational decisions, team handoffs, and compliance narratives from the same mission run.
 
@@ -241,6 +241,27 @@ Use the live demo credentials below to test the full Command Center flow:
 
 ---
 
+## 🔒 CVE scope, advisories & governance honesty (v1)
+
+This project uses a **narrow, documented** defensive posture — not generic product-wide CVE discovery.
+
+**In scope for v1**
+
+- **Defensive OSINT:** Reconnaissance and correlation from **public** sources (e.g. WHOIS/RDAP, web search) under HITL and policy.
+- **CVE correlation:** When a **CVE identifier** appears in **mission artifacts** (e.g. assistant/tool text, checkpointed state), findings are normalized, **NVD-backed**, budgeted, and checkpointed; they flow into **governance** (dashboard + **PDF export**).
+
+**Explicitly not in v1**
+
+- **Standalone CPE / stack keyword enrichment** that invents lookups **without** a CVE string in scope (no “silent” keyword NVD search path).
+- **Multi-provider primary advisory fetch** beyond **NVD** as the catalog for correlated CVE rows.
+- **Full SCA** or “find every vulnerability in my stack” automation — out of scope for this codebase’s stated mission.
+
+**System Trust Score** (Governance header): When the ledger is **derived** from a real approval-gated transcript, the headline blends **NIST Measure** (telemetry / trace posture) and **NIST Manage** (HITL gate outcome), with penalties for degraded evidence, evidence warnings, advisory enrichment warnings, and advisory overflow. When data is **mock / illustrative** (insufficient transcript for derivation), the UI shows **no numeric precision** (em dash + “Illustrative”).
+
+**NIST Manage (card):** Reflects **HITL gate resolution** (authorized / aborted / pending). When trace or advisory posture is stressed (degraded evidence, enrichment warnings, overflow), the card applies **small documented penalties** to the percent and may adjust the label to **“Gate + oversight posture.”**
+
+---
+
 ## 🚀 Project Roadmap
 
 - [x] **The Core Setup:** Implemented a LangGraph-based agent loop with stateful control flow.
@@ -261,8 +282,8 @@ Use the live demo credentials below to test the full Command Center flow:
 - [x] **Mission Timeline & Replay (Command Center UI):** Compact event timeline with read-only playback.
 - [x] **Compliance Evidence Export (PDF):** Generate downloadable audit reports from trace-linked mission evidence (LangSmith + governance logs).
 - [x] **NIST-Aligned Governance Dashboard:** Decision integrity ledger, mission timeline replay, and traceable control evidence mapped to AI risk management and compliance oversight (`/governance`).
-- [ ] **Dependency & CVE hygiene:** Run `npm audit` (and CI scanning if desired), patch or document accepted risk for high/critical findings.
-- [ ] **Target-oriented CVE & advisory signals:** Enrich recon output with relevant public CVE/advisory context for observed stack or exposure (defensive OSINT scope).
+- [x] **Dependency & audit hygiene:** `npm audit --audit-level=high` on **root** and **`mcp-server/`** in CI; policy in [`docs/dependency-audit-policy.md`](./docs/dependency-audit-policy.md); one-line register [`docs/dependency-risk-register.md`](./docs/dependency-risk-register.md).
+- [x] **Defensive CVE / advisory correlation (v1 documented):** Narrow scope — CVE IDs from **mission artifacts** → **NVD** correlation with existing budgets, checkpointing, governance UI + PDF; **not** standalone keyword/CPE enrichment without a CVE string, **not** multi-provider primary fetch beyond NVD, **not** full SCA (see section above).
 - [ ] **Auth: evaluate / migrate to Clerk (optional):** Replace custom session flow with Clerk if product direction confirms; preserve roles, `/dashboard` access, middleware, and Playwright e2e bypass or Clerk test mode.
 
 ---
