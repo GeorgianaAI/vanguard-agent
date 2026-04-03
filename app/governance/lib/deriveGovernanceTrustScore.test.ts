@@ -88,7 +88,7 @@ describe("deriveGovernanceTrustScore", () => {
     const t = deriveGovernanceTrustScore(vm);
     expect(t.mode).toBe("standby");
     if (t.mode === "standby") {
-      expect(t.display).toBe("--.%");
+      expect(t.display).toBe("--.-%");
     }
   });
 
