@@ -23,6 +23,19 @@ Here is how Vanguard differs from a standard AI chat:
 
 ---
 
+## 📹 Operational Demo
+
+<div align="center">
+  <a href="REPLACE_WITH_YOUR_VIDEO_URL">
+    <img src="https://shields.io" alt="Vanguard Operational Demo" />
+  </a>
+  <p align="center">
+    <i>Full product walkthrough: Command Center Protocol ➔ Scout Recon ➔ Governance Ledger Audit.</i>
+  </p>
+</div>
+
+---
+
 ## 🖼️ Product Snapshot
 
 **Vanguard Mission Briefing** - _Agentic AI: Phase 2 Operational Autonomy_
