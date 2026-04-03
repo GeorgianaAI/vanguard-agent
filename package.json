@@ -17,7 +17,8 @@
     "e2e:ui": "playwright test --ui",
     "mcp": "npm run start --prefix mcp-server",
     "verify:env": "node scripts/check-env-parity.mjs",
-    "verify:ready": "node scripts/verify-ready.mjs"
+    "verify:ready": "node scripts/verify-ready.mjs",
+    "audit:high": "npm audit --audit-level=high"
   },
   "dependencies": {
     "@ai-sdk/langchain": "^2.0.144",
@@ -35,6 +36,7 @@
     "jose": "^6.2.2",
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
+    "pdf-lib": "^1.17.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tailwind-merge": "^3.5.0",
