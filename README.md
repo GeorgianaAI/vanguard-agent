@@ -204,8 +204,9 @@ Use the live demo credentials below to test the full Command Center flow:
 - **Username:** `demo`
 - **Password:** `RqrEBqs0C8J_nTFvBrRu-jAboMsOJC`
 
-> Demo access is provided for evaluation and portfolio review only.
-> Demo credentials are rotated periodically.
+> Demo access is provided for evaluation and portfolio review only. Demo credentials are rotated periodically.
+
+> Each 
 
 ---
 
@@ -362,7 +363,7 @@ UPSTASH_VECTOR_REST_TOKEN=...
 
 # 🛡️ Economic Shield & Persistence (Upstash Redis)
 
-# Manages rate-limiting and stateful LangGraph mission checkpoints.
+# Manages rate-limiting (per client IP: 5 missions per rolling minute and 5 per rolling hour on POST /api/chat, plus approval limits) and stateful LangGraph mission checkpoints.
 
 UPSTASH_REDIS_REST_URL=https://...
 UPSTASH_REDIS_REST_TOKEN=...
