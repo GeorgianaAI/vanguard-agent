@@ -34,35 +34,47 @@ Here is how Vanguard differs from a standard AI chat:
 
 ## 🖼️ Product Snapshot
 
-**Vanguard Mission Briefing** - _Agentic AI: Phase 2 Operational Autonomy_
+### Vanguard Mission Briefing - _Agentic AI: Phase 2 Operational Autonomy_
 
-![Vanguard Home Page](./docs/assets/vanguard-home-page.png)
+> Vanguard Agent Landing Page
 
-**Vanguard Command Center** - _Autonomous Reconnaissance Terminal_
+## ![Vanguard Agent Landing Page](./docs/assets/vanguard-home-page.png)
 
-> 1. Vanguard Command Stream - Empty State
+### Vanguard Command Center - _Autonomous Reconnaissance Terminal_
+
+> Vanguard Command Stream - Empty State
 
 ## ![Vanguard Command Stream - Empty State](./docs/assets/vanguard-command-empty-state.png)
 
-> 2. Vanguard Command Stream - Mission Timeline
+> Vanguard Command Stream - Mission Timeline
 
 ## ![Vanguard Command Stream - Mission Timeline](./docs/assets/vanguard-command-mission-timeline.png)
 
-> 3. Vanguard Command Stream - Authorization Step
+> Vanguard Command Stream - Authorization Step
 
 ## ![Vanguard Command Stream - Authorization Step](./docs/assets/vanguard-command-authorization.png)
 
-> 4. Vanguard Command Stream - Restored Session
+> Vanguard Command Stream - Rehydrated Session
 
 ## ![Vanguard Command Stream - Restored Session](./docs/assets/vanguard-command-restored-session.png)
 
-> 5. Vanguard Command Stream - Governance Ledger
+### Vanguard Governance Ledger - _NIST AI RMF v1.0 Governance Report: Automated Audit Trail & Integrity Score_
 
-## ![Vanguard Command Stream - Header Buttons](./docs/assets/vanguard-command-header-buttons.png)
+> Navigate from Command Centre to Governance Ledger
 
-## ![Vanguard Command Stream - Governance Ledger - Data Available](./docs/assets/vanguard-governance-ledger.png)
+## ![Vanguard Command - Header Buttons](./docs/assets/vanguard-command-header-buttons.png)
 
-## ![Vanguard Command Stream - Governance Ledger - No Data](./docs/assets/vanguard-governance-ledger-no-data.png)
+> Vanguard Governance Ledger - Available Mission Data
+
+## ![Vanguard Governance Ledger - Data Available](./docs/assets/vanguard-governance-ledger.png)
+
+> Vanguard Governance Ledger - No Mission Data
+
+## ![Vanguard Governance Ledger - No Mission Data](./docs/assets/vanguard-governance-ledger-no-data.png)
+
+> Vanguard Governance Ledger - Mission Evidence & Compliance Report Example (Generated PDF)
+
+## ![Vanguard Governance Ledger - Generated PDF](./docs/assets/vanguard-governance-ledger-generated-pdf.png)
 
 ---
 
