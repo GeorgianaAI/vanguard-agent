@@ -17,7 +17,9 @@ import {
   getApprovalSideEffects,
 } from "../approval/policy";
 import type { ApprovalContextV1 } from "../approval/types";
+import { reviveLangchainMessages } from "../langchain/reviveLangchainMessages";
 import { lookupDomainRdapJson } from "../recon/rdapDomainSummary";
+import { runAdvisoryEnrichment } from "../vulnerability/advisoryEnrichment";
 
 export const runtime = "edge";
 
@@ -309,12 +311,28 @@ async function scoutNode(state: VanguardStateType) {
   };
 }
 
+async function advisoryEnrichmentNode(state: VanguardStateType) {
+  const messages = reviveLangchainMessages(state.messages as unknown[]);
+  const { findings, warnings } = await runAdvisoryEnrichment(
+    messages,
+    state.target,
+  );
+  return {
+    vulnerabilities: findings,
+    advisoryEnrichmentWarnings: warnings,
+  };
+}
+
 async function auditorNode(state: VanguardStateType) {
   const auditor = getSupervisorModel();
 
   const hasEvidence = state.messages.some((m) => ToolMessage.isInstance(m));
   const wasAborted = state.missionAborted === true;
   const targetUnresolvable = hasTargetUnresolvableSignal(state);
+  const vulnCount = state.vulnerabilities?.length ?? 0;
+  const criticalOrHigh = (state.vulnerabilities ?? []).filter(
+    (v) => v.severity === "CRITICAL" || v.severity === "HIGH",
+  ).length;
 
   let systemPromptLines: string[];
 
@@ -342,6 +360,11 @@ async function auditorNode(state: VanguardStateType) {
       "3) Safe defensive next actions",
       "Do not include offensive guidance.",
     ];
+    if (vulnCount > 0) {
+      systemPromptLines.push(
+        `Public CVE/advisory context (defensive OSINT, NVD-derived where applicable): ${vulnCount} finding(s) correlated; ${criticalOrHigh} rated High/Critical by CVSS. Prioritize these in Findings without implying certainty beyond stated confidence or vendor verification.`,
+      );
+    }
   } else {
     systemPromptLines = [
       "You are Vanguard Auditor.",
@@ -399,11 +422,13 @@ export const vanguardGraph = new StateGraph(VanguardStateAnnotation)
   .addNode("supervisor", supervisorNode)
   .addNode("scout", scoutNode)
   .addNode("tools", toolNode)
+  .addNode("advisory_enrichment", advisoryEnrichmentNode)
   .addNode("auditor", auditorNode)
   .addConditionalEdges("__start__", routeFromStart)
   .addConditionalEdges("supervisor", routeFromSupervisor)
   .addConditionalEdges("scout", routeFromScout)
-  .addEdge("tools", "auditor")
+  .addEdge("tools", "advisory_enrichment")
+  .addEdge("advisory_enrichment", "auditor")
   .addEdge("auditor", END)
   .compile({
     checkpointer,

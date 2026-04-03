@@ -4,6 +4,8 @@ import type {
   ApprovalContextV1,
   ApprovalDecision,
 } from "../approval/types";
+import { mergeVulnerabilityLists } from "../vulnerability/mergeFindings";
+import type { VulnerabilityFinding } from "../vulnerability/vulnerabilityFinding";
 
 export const VanguardStateAnnotation = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
@@ -67,6 +69,19 @@ export const VanguardStateAnnotation = Annotation.Root({
 
   approvalHistory: Annotation<ApprovalDecision[]>({
     reducer: (_x, y) => y,
+    default: () => [],
+  }),
+
+  /** Normalized CVE/advisory findings (checkpointed for replay determinism). */
+  vulnerabilities: Annotation<VulnerabilityFinding[]>({
+    reducer: (left, right) =>
+      mergeVulnerabilityLists(left ?? [], right ?? []),
+    default: () => [],
+  }),
+
+  /** Non-fatal advisory pipeline warnings (budget, source degradation). */
+  advisoryEnrichmentWarnings: Annotation<string[]>({
+    reducer: (x, y) => x.concat(y ?? []),
     default: () => [],
   }),
 });
