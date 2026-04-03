@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { DashboardMessage } from "@/app/dashboard/lib/types";
 import type { EvidencePackage } from "@/src/lib/audit/evidence";
+import { VulnerabilityFindingSchema } from "@/src/lib/vulnerability/vulnerabilityFinding";
 
 import { buildGovernanceViewModelFromData } from "./buildGovernanceViewModel";
 
@@ -93,6 +94,7 @@ describe("buildGovernanceViewModelFromData", () => {
     expect(vm.source).toBe("mock");
     expect(vm.ledgerRows).toHaveLength(3);
     expect(vm.advisorySignals).toHaveLength(2);
+    expect(vm.advisoryOverflowCount).toBe(0);
     expect(vm.evidenceTrail).toHaveLength(3);
   });
 
@@ -120,7 +122,8 @@ describe("buildGovernanceViewModelFromData", () => {
     expect(vm.ledgerRows[1]?.status).toBe("Policy Match");
     expect(vm.advisorySignals.length).toBeGreaterThan(0);
     expect(vm.advisorySignals[0]?.id.startsWith("ADV-")).toBe(true);
-    expect(vm.evidenceTrail[1]?.desc.toLowerCase()).toContain("authorized");
+    const hitl = vm.evidenceTrail.find((e) => e.id === "GOV-HITL");
+    expect(hitl?.desc.toLowerCase()).toContain("authorized");
     expect(vm.nistMeasure.value).toMatch(/%/);
     expect(vm.nistManage.value).toBe("AUTHORIZED");
     expect(vm.nistMeasure.percent).toBeGreaterThan(0);
@@ -140,7 +143,9 @@ describe("buildGovernanceViewModelFromData", () => {
 
     expect(vm.source).toBe("derived");
     expect(vm.ledgerRows[1]?.status).toBe("Policy Mismatch");
-    expect(vm.evidenceTrail[1]?.desc.toLowerCase()).toContain("aborted");
+    expect(
+      vm.evidenceTrail.find((e) => e.id === "GOV-HITL")?.desc.toLowerCase(),
+    ).toContain("aborted");
     expect(vm.nistManage.value).toBe("ABORTED");
     expect(vm.nistMeasure.mode).toBe("TEVV-DEGRADED");
     expect(vm.nistMeasure.percent).toBeGreaterThanOrEqual(0);
@@ -165,6 +170,45 @@ describe("buildGovernanceViewModelFromData", () => {
     expect(withWarnings.nistMeasure.percent).toBeLessThan(
       withoutWarnings.nistMeasure.percent,
     );
+  });
+
+  it("uses checkpoint vulnerabilities for advisory cards and GOV-CVE evidence", () => {
+    const finding = VulnerabilityFindingSchema.parse({
+      findingId: "a".repeat(32),
+      schemaVersion: 1,
+      cveId: "CVE-2024-9999",
+      affectedComponent: "testpkg",
+      observedVersion: "1.0.0",
+      severity: "CRITICAL",
+      cvssScore: 9.1,
+      provenance: {
+        primaryRiskSource: "NVD",
+        primaryDetailSource: "NVD",
+        enrichmentSources: [],
+        sourceUrls: ["https://nvd.nist.gov/vuln/detail/CVE-2024-9999"],
+      },
+      confidence: {
+        level: "HIGH",
+        score: 0.9,
+        rationale: "Synthetic test finding.",
+      },
+      status: "OPEN",
+      lastObservedAt: "2026-01-01T12:00:00.000Z",
+      evidenceRefs: ["e1"],
+    });
+
+    const messages: DashboardMessage[] = [
+      assistant(approvalPayload({ riskLevel: "low", toolName: "tavily_search" })),
+      user("Mission authorized"),
+      assistant("Final auditor summary.", { agent_node: "auditor" }),
+    ];
+    const vm = buildGovernanceViewModelFromData(messages, evidencePackage("complete", 1), {
+      vulnerabilities: [finding],
+    });
+
+    expect(vm.source).toBe("derived");
+    expect(vm.advisorySignals[0]?.id).toBe("CVE-2024-9999");
+    expect(vm.evidenceTrail.some((e) => e.id === "GOV-CVE-01")).toBe(true);
   });
 
   it("penalizes measure score when traces are missing", () => {

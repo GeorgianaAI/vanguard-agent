@@ -3,6 +3,7 @@
 import { AlertTriangle, ExternalLink } from "lucide-react";
 
 import { useGovernanceData } from "../hooks/useGovernanceData";
+import { GOVERNANCE_ADVISORY_TOP_N } from "../lib/buildGovernanceViewModel";
 
 export function AdvisorySignals() {
   const { model } = useGovernanceData();
@@ -20,9 +21,19 @@ export function AdvisorySignals() {
             Advisory Signals
           </h2>
         </div>
-        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
-          Enriched via OSINT Scope
-        </span>
+        <div className="flex flex-col items-end gap-1 text-right">
+          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
+            Enriched via OSINT Scope
+          </span>
+          {model.advisoryOverflowCount > 0 ? (
+            <span
+              data-testid="governance-advisory-overflow"
+              className="text-[9px] font-bold text-amber-400/90">
+              +{model.advisoryOverflowCount} additional (above top{" "}
+              {GOVERNANCE_ADVISORY_TOP_N})
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <div className="grid min-w-0 gap-4">
@@ -41,19 +52,23 @@ export function AdvisorySignals() {
                   {cve.stack}
                 </span>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <span className="rounded border border-rose-500/20 bg-rose-500/10 px-2 py-0.5 text-[9px] font-black text-rose-500">
                   {cve.severity}
                 </span>
                 <span className="text-[10px] font-bold tabular-nums text-slate-500">
                   CVSS {cve.cvss}
                 </span>
+                {cve.confidenceLevel ? (
+                  <span className="rounded border border-slate-600 bg-slate-900/80 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-slate-400">
+                    Conf {cve.confidenceLevel}
+                  </span>
+                ) : null}
               </div>
             </div>
             <div className="flex min-w-0 flex-col gap-2 text-[10px] text-slate-500 sm:flex-row sm:items-center sm:justify-between">
               <p className="min-w-0 break-words italic">
-                Scout detected matching version string in target response
-                headers.
+                {cve.remediationHint}
               </p>
               <button
                 type="button"
@@ -65,9 +80,7 @@ export function AdvisorySignals() {
                 Audit Evidence <ExternalLink className="h-2.5 w-2.5 shrink-0" />
               </button>
             </div>
-            <p className="min-w-0 break-words text-[10px] italic text-slate-500">
-              {cve.note}
-            </p>
+            <p className="min-w-0 break-words text-[10px] text-slate-400">{cve.note}</p>
           </div>
         ))}
       </div>

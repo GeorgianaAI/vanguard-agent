@@ -15,6 +15,7 @@ import type { EvidencePackage } from "@/src/lib/audit/evidence";
 
 import {
   buildGovernanceViewModelFromData,
+  type GovernanceCheckpointExtras,
   type GovernanceViewModel,
 } from "../lib/buildGovernanceViewModel";
 
@@ -65,9 +66,16 @@ export function GovernanceDataProvider({ children }: { children: ReactNode }) {
 
         const historyData = (await historyRes.json()) as {
           messages?: DashboardMessage[];
+          vulnerabilities?: unknown;
+          advisory_enrichment_warnings?: string[];
         };
         const messages = historyData.messages ?? [];
         if (!messages.length) return;
+
+        const extras: GovernanceCheckpointExtras = {
+          vulnerabilities: historyData.vulnerabilities,
+          advisoryWarnings: historyData.advisory_enrichment_warnings,
+        };
 
         let evidence: EvidencePackage | null = null;
         try {
@@ -85,7 +93,7 @@ export function GovernanceDataProvider({ children }: { children: ReactNode }) {
           evidence = null;
         }
 
-        setModel(buildGovernanceViewModelFromData(messages, evidence));
+        setModel(buildGovernanceViewModelFromData(messages, evidence, extras));
       } catch {
         // Keep defaults/mocks on any fetch or parsing failure.
       }
