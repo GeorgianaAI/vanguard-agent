@@ -205,8 +205,8 @@ Use the live demo credentials below to test the full Command Center flow:
 - **Password:** `RqrEBqs0C8J_nTFvBrRu-jAboMsOJC`
 
 > Demo access is provided for evaluation and portfolio review only. Demo credentials are rotated periodically.
-
-> Each 
+>
+> Rate limit is 5 missions per rolling minute and 5 per rolling hour per client IP.
 
 ---
 
