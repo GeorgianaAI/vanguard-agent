@@ -64,6 +64,42 @@ describe("middleware auth/rbac", () => {
     expect(res.status).toBe(403);
   });
 
+  it("blocks viewer on /api/governance/export/pdf with 403", async () => {
+    hoisted.verifySessionToken.mockResolvedValue({
+      sub: "viewer1",
+      role: "viewer",
+      iat: 1,
+      exp: 9999999999,
+    });
+
+    const middleware = await loadMiddleware();
+    const req = new NextRequest(
+      "http://localhost/api/governance/export/pdf?thread_id=vanguard-thread-x",
+      { headers: { cookie: "vanguard_session=fake-token" } },
+    );
+
+    const res = await middleware(req);
+    expect(res.status).toBe(403);
+  });
+
+  it("allows analyst on /api/governance/export/pdf", async () => {
+    hoisted.verifySessionToken.mockResolvedValue({
+      sub: "analyst1",
+      role: "analyst",
+      iat: 1,
+      exp: 9999999999,
+    });
+
+    const middleware = await loadMiddleware();
+    const req = new NextRequest(
+      "http://localhost/api/governance/export/pdf?thread_id=vanguard-thread-x",
+      { headers: { cookie: "vanguard_session=fake-token" } },
+    );
+
+    const res = await middleware(req);
+    expect(res.status).toBe(200);
+  });
+
   it("allows analyst on /api/chat", async () => {
     hoisted.verifySessionToken.mockResolvedValue({
       sub: "analyst1",
