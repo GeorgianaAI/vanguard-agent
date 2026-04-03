@@ -11,7 +11,7 @@ type GovernanceTrustDerived = {
 type GovernanceTrustStandby = {
   mode: "standby";
   /** Fixed hardware-style placeholder when telemetry is absent */
-  display: "--.%";
+  display: "--.-%";
 };
 
 export type GovernanceTrustDisplay =
@@ -39,7 +39,7 @@ export function deriveGovernanceTrustScore(
   if (model.source !== "derived") {
     return {
       mode: "standby",
-      display: "--.%",
+      display: "--.-%",
     };
   }
 

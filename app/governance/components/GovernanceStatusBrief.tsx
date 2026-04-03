@@ -1,29 +1,34 @@
 "use client";
 
+import { ShieldAlert } from "lucide-react";
 import { useGovernanceData } from "../hooks/useGovernanceData";
 
-/** Explains standby / insufficient mission-linked telemetry — under Evidence Trail only. */
+/** 🛰️ MISSION STATUS BRIEFING: Rendered in the Evidence Rail when telemetry is absent. */
 export function GovernanceStatusBrief() {
   const { model } = useGovernanceData();
 
+  // If data is derived (present), the brief is suppressed.
   if (model.source === "derived") return null;
 
   return (
     <div
       data-testid="governance-status-brief"
-      className="px-2 animate-in fade-in slide-in-from-bottom-2 duration-700"
+      className="mt-10 rounded-2xl border border-slate-800/60 bg-slate-950/40 p-8 text-center shadow-2xl backdrop-blur-xl transition-all duration-700 animate-in fade-in slide-in-from-bottom-3"
     >
-      <div className="mb-3 flex items-center gap-2">
-        <div className="h-1 w-1 rounded-full bg-slate-600" />
-        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
-          System Status: Standby
+      <div className="mb-6 flex flex-col items-center gap-4">
+        <div className="relative flex items-center justify-center">
+          <div className="absolute h-full w-full rounded-full bg-blue-500/20 blur-md animate-pulse" />
+          <ShieldAlert className="relative h-6 w-6 text-blue-400" aria-hidden />
+        </div>
+
+        <span className="text-[13px] font-black uppercase tracking-[0.3em] text-blue-400">
+          Insufficient Mission Telemetry
         </span>
       </div>
 
-      <p className="text-[10px] font-bold uppercase tracking-tight leading-relaxed text-slate-600 italic">
-        Insufficient mission telemetry for risk scoring. Complete an{" "}
-        <span className="text-slate-500">authorized Vanguard mission</span> from
-        Command Center to calibrate the integrity ledger and compute a trust score.
+      <p className="mx-auto max-w-md text-[12px] font-black uppercase tracking-[0.2em] leading-relaxed text-slate-600">
+        Initialize an authorized Vanguard Scout mission from the Command Center
+        to synchronize telemetry and compute an active trust score
       </p>
     </div>
   );
