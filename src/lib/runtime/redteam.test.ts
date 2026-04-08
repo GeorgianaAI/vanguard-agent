@@ -52,6 +52,19 @@ describe("redteam runtime config", () => {
     });
   });
 
+  it("returns default redis config in non-redteam mode", () => {
+    const env = {
+      REDTEAM_MODE: "false",
+      UPSTASH_REDIS_REST_URL: "https://prod.redis",
+      UPSTASH_REDIS_REST_TOKEN: "prod-token",
+    };
+    expect(resolveRedisEnv(env)).toEqual({
+      url: "https://prod.redis",
+      token: "prod-token",
+      keyPrefix: "vanguard",
+    });
+  });
+
   it("resolves vector namespace for redteam runs", () => {
     const env = {
       REDTEAM_MODE: "true",
@@ -62,6 +75,32 @@ describe("redteam runtime config", () => {
     expect(resolveVectorEnv(env).namespace).toBe("redteam-ci-0000000001");
   });
 
+  it("uses explicit redteam vector namespace override", () => {
+    const env = {
+      REDTEAM_MODE: "true",
+      RED_TEAM_VECTOR_NAMESPACE: "rt-namespace",
+      RED_TEAM_UPSTASH_VECTOR_REST_URL: "https://vector-red",
+      RED_TEAM_UPSTASH_VECTOR_REST_TOKEN: "token-red",
+    };
+    expect(resolveVectorEnv(env)).toEqual({
+      url: "https://vector-red",
+      token: "token-red",
+      namespace: "rt-namespace",
+    });
+  });
+
+  it("uses non-redteam vector defaults", () => {
+    const env = {
+      UPSTASH_VECTOR_REST_URL: "https://vector-default",
+      UPSTASH_VECTOR_REST_TOKEN: "token-default",
+    };
+    expect(resolveVectorEnv(env)).toEqual({
+      url: "https://vector-default",
+      token: "token-default",
+      namespace: "vanguard-default",
+    });
+  });
+
   it("uses redteam LangSmith project override when available", () => {
     const env = {
       REDTEAM_MODE: "true",
@@ -69,5 +108,14 @@ describe("redteam runtime config", () => {
       LANGSMITH_PROJECT: "vanguard-agent-recon",
     };
     expect(getLangSmithProject(env)).toBe("vanguard-red-team");
+  });
+
+  it("uses standard LangSmith project in non-redteam mode", () => {
+    const env = {
+      REDTEAM_MODE: "false",
+      LANGSMITH_PROJECT: "vanguard-agent-recon",
+      RED_TEAM_LANGSMITH_PROJECT: "vanguard-red-team",
+    };
+    expect(getLangSmithProject(env)).toBe("vanguard-agent-recon");
   });
 });
