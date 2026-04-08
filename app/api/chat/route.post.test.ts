@@ -32,7 +32,8 @@ const TEST_APPROVAL_CONTEXT: ApprovalContextV1 = {
 
 let TEST_APPROVAL_CONTEXT_HASH =
   "sha256:1111111111111111111111111111111111111111111111111111111111111111";
-const ORIGINAL_NODE_ENV = process.env.NODE_ENV;
+const ORIGINAL_ENV: NodeJS.ProcessEnv = { ...process.env };
+const ORIGINAL_REDTEAM_MODE = process.env.REDTEAM_MODE;
 
 const hoisted = vi.hoisted(() => ({
   redisSet: vi.fn(),
@@ -103,6 +104,7 @@ vi.mock("@ai-sdk/langchain", () => ({
 
 describe("POST /api/chat governance", () => {
   beforeEach(async () => {
+    process.env = { ...ORIGINAL_ENV };
     vi.resetModules();
     process.env.UPSTASH_REDIS_REST_URL = "https://test.redis";
     process.env.UPSTASH_REDIS_REST_TOKEN = "test-token";
@@ -130,7 +132,7 @@ describe("POST /api/chat governance", () => {
       },
     });
     hoisted.invoke.mockResolvedValue({
-      messages: [new AIMessage("AUTHORIZATION_REQUIRED:{\"version\":1}")],
+      messages: [new AIMessage('AUTHORIZATION_REQUIRED:{"version":1}')],
       isPendingApproval: true,
       pendingApprovalContext: TEST_APPROVAL_CONTEXT,
       pendingApprovalHash: TEST_APPROVAL_CONTEXT_HASH,
@@ -139,7 +141,8 @@ describe("POST /api/chat governance", () => {
   });
 
   afterEach(() => {
-    process.env.NODE_ENV = ORIGINAL_NODE_ENV;
+    process.env = { ...ORIGINAL_ENV };
+    process.env.REDTEAM_MODE = ORIGINAL_REDTEAM_MODE;
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
     vi.clearAllMocks();
@@ -351,11 +354,10 @@ describe("POST /api/chat governance", () => {
   });
 
   it("returns 429 when hourly mission rate limit fails", async () => {
-    hoisted.ratelimitLimit.mockImplementation(
-      async (identifier: string) =>
-        identifier === "127.0.0.1:mission:hour"
-          ? { success: false }
-          : { success: true },
+    hoisted.ratelimitLimit.mockImplementation(async (identifier: string) =>
+      identifier === "127.0.0.1:mission:hour"
+        ? { success: false }
+        : { success: true },
     );
     const POST = await loadPost();
     const res = await POST(
@@ -373,7 +375,9 @@ describe("POST /api/chat governance", () => {
     const text = await res.text();
     expect(text).toBe("Too many missions this hour. Cool down.");
     expect(hoisted.ratelimitLimit).toHaveBeenCalledWith("127.0.0.1:mission");
-    expect(hoisted.ratelimitLimit).toHaveBeenCalledWith("127.0.0.1:mission:hour");
+    expect(hoisted.ratelimitLimit).toHaveBeenCalledWith(
+      "127.0.0.1:mission:hour",
+    );
   });
 
   it("returns 503 for mission when redis config is missing", async () => {
@@ -395,7 +399,7 @@ describe("POST /api/chat governance", () => {
   });
 
   it("returns 503 in production when redis config is missing", async () => {
-    process.env.NODE_ENV = "production";
+    process.env = { ...process.env, NODE_ENV: "production" };
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
     const POST = await loadPost();
@@ -494,5 +498,134 @@ describe("POST /api/chat governance", () => {
         pendingApprovalId: TEST_APPROVAL_CONTEXT.approval_id,
       }),
     );
+  });
+  it("generates fallback thread id when mission request omits thread_id", async () => {
+    const POST = await loadPost();
+
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          messages: [],
+          target: "example.com",
+          // thread_id intentionally omitted
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(hoisted.invoke).toHaveBeenCalled();
+
+    const invokeConfig = hoisted.invoke.mock.calls[0]?.[1] as {
+      configurable?: { thread_id?: string };
+    };
+
+    expect(invokeConfig.configurable?.thread_id).toMatch(/^vanguard-\d+$/);
+  });
+
+  it("uses default mission input values when target/messages are omitted", async () => {
+    const POST = await loadPost();
+
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          thread_id: "v-default-inputs",
+          // target/messages omitted
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(hoisted.invoke).toHaveBeenCalled();
+
+    const invokeInput = hoisted.invoke.mock.calls[0]?.[0] as {
+      target?: string;
+      messages?: unknown[];
+    };
+
+    expect(invokeInput.target).toBe("General Recon");
+    expect(Array.isArray(invokeInput.messages)).toBe(true);
+    expect(invokeInput.messages).toHaveLength(0);
+  });
+
+  it("adds redteam tag when REDTEAM_MODE=true", async () => {
+    process.env.REDTEAM_MODE = "true";
+    const POST = await loadPost();
+
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          messages: [],
+          target: "example.com",
+          thread_id: "v-redteam-tag",
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(hoisted.invoke).toHaveBeenCalled();
+
+    const invokeConfig = hoisted.invoke.mock.calls[0]?.[1] as {
+      tags?: string[];
+    };
+
+    expect(invokeConfig.tags).toEqual(
+      expect.arrayContaining(["vanguard-agent-redteam"]),
+    );
+  });
+
+  it("rejects approval when thread_id is missing for approval requests", async () => {
+    const POST = await loadPost();
+
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          isApproval: true,
+          approved: true,
+          approval_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_context_hash: TEST_APPROVAL_CONTEXT_HASH,
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await res.text()).toContain("Missing thread_id for approval");
+  });
+
+  it("supports explicit approval abort path (approved=false)", async () => {
+    const POST = await loadPost();
+
+    const res = await POST(
+      new Request("http://localhost/api/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          isApproval: true,
+          approved: false,
+          thread_id: "v-abort",
+          tool_call_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_id: TEST_APPROVAL_CONTEXT.approval_id,
+          approval_context_hash: TEST_APPROVAL_CONTEXT_HASH,
+        }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(hoisted.updateState).toHaveBeenCalledWith(
+      { configurable: { thread_id: "v-abort" } },
+      expect.objectContaining({
+        isAuthorized: false,
+        missionAborted: true,
+        next: "auditor",
+      }),
+    );
+    expect(hoisted.streamEvents).toHaveBeenCalled();
   });
 });
