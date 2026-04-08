@@ -1,22 +1,23 @@
 import { newRequestId } from "@/app/api/chat/telemetry";
 import { loadGovernanceSnapshotForThread } from "@/src/lib/governance/loadGovernanceSnapshot";
 import { renderGovernanceCompliancePdf } from "@/src/lib/governance/renderGovernancePdf";
+import {
+  requireActorId,
+  requireThreadId,
+} from "../../../_shared/requestGuards";
 
 /** pdf-lib + checkpoint graph: Node runtime. */
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
-  const actorId = req.headers.get("x-actor-id");
+  const actorId = requireActorId(req);
   if (!actorId) {
     return new Response("Unauthorized", { status: 401 });
   }
-
-  const url = new URL(req.url);
-  const threadId = url.searchParams.get("thread_id")?.trim();
+  const threadId = requireThreadId(req);
   if (!threadId) {
     return new Response("Missing thread_id", { status: 400 });
   }
-
   const reqId = newRequestId(req);
   const loaded = await loadGovernanceSnapshotForThread(threadId, reqId);
   if (!loaded.ok) {
