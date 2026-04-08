@@ -4,6 +4,7 @@ import { Download, FileText } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { MissionActionButton } from "@/app/components/ui/MissionActionButton";
+import { downloadBlob } from "@/src/lib/browser/downloadBlob";
 import { useGovernanceData } from "../hooks/useGovernanceData";
 
 export function GovernancePdfExportButton() {
@@ -33,15 +34,10 @@ export function GovernancePdfExportButton() {
       }
 
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `vanguard-governance-${threadId.slice(-12)}.pdf`;
-      a.rel = "noopener";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      downloadBlob({
+        blob,
+        filename: `vanguard-governance-${threadId.slice(-12)}.pdf`,
+      });
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Export failed");
     } finally {

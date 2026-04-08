@@ -13,6 +13,7 @@ import { useVanguardChat } from "./hooks/useVanguardChat";
 import { buildMissionTimelineEvents } from "./lib/timeline";
 import type { MissionTimelineEvent } from "./lib/types";
 import { hasOpenApproval } from "./lib/missionState";
+import { downloadBlob } from "@/src/lib/browser/downloadBlob";
 
 export default function VanguardDashboard() {
   const [target, setTarget] = useState<string>("");
@@ -130,17 +131,12 @@ export default function VanguardDashboard() {
       type: "application/json",
     });
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
     const safeThread = threadId ?? "mission";
-    a.href = url;
-    a.download = `vanguard-evidence-${safeThread}-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob({
+      blob,
+      filename: `vanguard-evidence-${safeThread}-${Date.now()}.json`,
+    });
   }
-
   return (
     <div className="isolate min-h-screen w-full overflow-x-hidden bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-[1200px] px-4 pb-24 pt-32 sm:px-6 md:p-8">
