@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { useEnvTestHarness } from "@/tests/utils/envTestHarness";
 
 const hoisted = vi.hoisted(() => ({
   verifySessionToken: vi.fn(),
@@ -10,18 +11,13 @@ vi.mock("./src/lib/auth/session", () => ({
 }));
 
 describe("proxy auth/rbac", () => {
-  const originalEnv = { ...process.env };
+  const { setEnv, unsetEnv } = useEnvTestHarness();
 
   beforeEach(() => {
-    process.env = { ...originalEnv };
-    process.env.AUTH_COOKIE_NAME = "vanguard_session";
-    delete process.env.AUTH_E2E_BYPASS;
+    setEnv({ AUTH_COOKIE_NAME: "vanguard_session" });
+    unsetEnv("AUTH_E2E_BYPASS");
     vi.resetModules();
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    process.env = { ...originalEnv };
   });
 
   async function loadProxy() {

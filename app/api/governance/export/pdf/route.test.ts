@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
+import { makeTestRequest } from "@/tests/utils/httpTestRequest";
 import { buildGovernanceViewModelFromData } from "@/app/governance/lib/buildGovernanceViewModel";
 
 const hoisted = vi.hoisted(() => ({
@@ -22,9 +22,9 @@ describe("GET /api/governance/export/pdf", () => {
   it("returns 401 without x-actor-id", async () => {
     const { GET } = await import("./route");
     const res = await GET(
-      new Request(
-        "http://localhost/api/governance/export/pdf?thread_id=vanguard-thread-pdf",
-      ),
+      makeTestRequest("/api/governance/export/pdf", {
+        query: { thread_id: "vanguard-thread-pdf" },
+      }),
     );
     expect(res.status).toBe(401);
   });
@@ -32,7 +32,7 @@ describe("GET /api/governance/export/pdf", () => {
   it("returns 400 when thread_id is missing", async () => {
     const { GET } = await import("./route");
     const res = await GET(
-      new Request("http://localhost/api/governance/export/pdf", {
+      makeTestRequest("/api/governance/export/pdf", {
         headers: { "x-actor-id": "analyst-1" },
       }),
     );
@@ -50,12 +50,10 @@ describe("GET /api/governance/export/pdf", () => {
 
     const { GET } = await import("./route");
     const res = await GET(
-      new Request(
-        "http://localhost/api/governance/export/pdf?thread_id=vanguard-thread-pdf",
-        {
-          headers: { "x-actor-id": "analyst-1" },
-        },
-      ),
+      makeTestRequest("/api/governance/export/pdf", {
+        query: { thread_id: "vanguard-thread-pdf" },
+        headers: { "x-actor-id": "analyst-1" },
+      }),
     );
 
     expect(res.status).toBe(200);
@@ -73,12 +71,10 @@ describe("GET /api/governance/export/pdf", () => {
 
     const { GET } = await import("./route");
     const res = await GET(
-      new Request(
-        "http://localhost/api/governance/export/pdf?thread_id=bad-prefix",
-        {
-          headers: { "x-actor-id": "analyst-1" },
-        },
-      ),
+      makeTestRequest("/api/governance/export/pdf", {
+        query: { thread_id: "bad-prefix" },
+        headers: { "x-actor-id": "analyst-1" },
+      }),
     );
 
     expect(res.status).toBe(400);
@@ -93,12 +89,10 @@ describe("GET /api/governance/export/pdf", () => {
 
     const { GET } = await import("./route");
     const res = await GET(
-      new Request(
-        "http://localhost/api/governance/export/pdf?thread_id=vanguard-thread-missing",
-        {
-          headers: { "x-actor-id": "analyst-1" },
-        },
-      ),
+      makeTestRequest("/api/governance/export/pdf", {
+        query: { thread_id: "vanguard-thread-missing" },
+        headers: { "x-actor-id": "analyst-1" },
+      }),
     );
 
     expect(res.status).toBe(404);

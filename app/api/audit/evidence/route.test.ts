@@ -1,4 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useEnvTestHarness } from "@/tests/utils/envTestHarness";
+import { makeTestRequest } from "@/tests/utils/httpTestRequest";
 
 const hoisted = vi.hoisted(() => ({
   fetchRuns: vi.fn(),
@@ -9,28 +11,23 @@ vi.mock("../../../../src/lib/audit/langsmith", () => ({
 }));
 
 describe("GET /api/audit/evidence", () => {
-  const originalEnv = { ...process.env };
+  const { setEnv, unsetEnv } = useEnvTestHarness();
 
   beforeEach(() => {
-    process.env = { ...originalEnv };
     hoisted.fetchRuns.mockReset();
     hoisted.fetchRuns.mockResolvedValue([]);
-  });
-
-  afterEach(() => {
-    process.env = { ...originalEnv };
     vi.clearAllMocks();
   });
 
   it("returns degraded evidence status when LangSmith config is missing in production", async () => {
-    process.env.NODE_ENV = "production";
-    delete process.env.LANGSMITH_API_KEY;
-    delete process.env.LANGSMITH_PROJECT;
+    setEnv({ NODE_ENV: "production" });
+    unsetEnv("LANGSMITH_API_KEY", "LANGSMITH_PROJECT");
 
     const { GET } = await import("./route");
     const res = await GET(
-      new Request("http://localhost/api/audit/evidence?thread_id=t-1"),
+      makeTestRequest("/api/audit/evidence", { query: { thread_id: "t-1" } }),
     );
+
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       evidence_status: string;
@@ -43,14 +40,14 @@ describe("GET /api/audit/evidence", () => {
   });
 
   it("returns complete evidence status in development without LangSmith config", async () => {
-    process.env.NODE_ENV = "development";
-    delete process.env.LANGSMITH_API_KEY;
-    delete process.env.LANGSMITH_PROJECT;
+    setEnv({ NODE_ENV: "development" });
+    unsetEnv("LANGSMITH_API_KEY", "LANGSMITH_PROJECT");
 
     const { GET } = await import("./route");
     const res = await GET(
-      new Request("http://localhost/api/audit/evidence?thread_id=t-2"),
+      makeTestRequest("/api/audit/evidence", { query: { thread_id: "t-2" } }),
     );
+
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       evidence_status: string;
