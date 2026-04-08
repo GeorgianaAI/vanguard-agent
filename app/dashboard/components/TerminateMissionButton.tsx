@@ -18,7 +18,7 @@ export function TerminateMissionButton({
       disabled={disabled}
       title={pending ? "Terminating mission..." : "Terminate Mission"}
       subtitle="Log Out"
-      className="hover:border-rose-900/50 hover:bg-rose-950/20 hover:text-rose-400"
+      variant="rose"
       leftIcon={
         <Power className="h-3.5 w-3.5 shrink-0 opacity-40 transition-all group-hover:opacity-100 group-hover:text-rose-500" />
       }

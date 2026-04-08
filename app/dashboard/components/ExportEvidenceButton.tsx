@@ -11,7 +11,7 @@ export function ExportEvidenceButton({ onExport }: ExportEvidenceButtonProps) {
       onClick={onExport}
       title="Export Evidence"
       subtitle="JSON Package"
-      className="hover:border-amber-500/50 hover:bg-amber-900/20 hover:text-amber-400"
+      variant="amber"
       leftIcon={
         <FileJson className="h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-amber-500" />
       }
