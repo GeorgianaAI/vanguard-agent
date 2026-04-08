@@ -1,3 +1,5 @@
+import { RUNTIME_ENV_KEYS } from "./envKeys";
+
 type EnvSource = Record<string, string | undefined>;
 
 function readBool(value: string | undefined): boolean {
@@ -7,23 +9,31 @@ function readBool(value: string | undefined): boolean {
 }
 
 export function isRedTeamMode(env: EnvSource = process.env): boolean {
-  return readBool(env.REDTEAM_MODE) || readBool(env.NEXT_PUBLIC_REDTEAM_MODE);
+  return (
+    readBool(env[RUNTIME_ENV_KEYS.redteamMode]) ||
+    readBool(env[RUNTIME_ENV_KEYS.redteamModePublic])
+  );
 }
 
 export function isProductionEnv(env: EnvSource = process.env): boolean {
   return env.NODE_ENV === "production";
 }
 
-export function getLangSmithProject(env: EnvSource = process.env): string | undefined {
+export function getLangSmithProject(
+  env: EnvSource = process.env,
+): string | undefined {
   if (isRedTeamMode(env)) {
-    return env.RED_TEAM_LANGSMITH_PROJECT ?? env.LANGSMITH_PROJECT;
+    return (
+      env[RUNTIME_ENV_KEYS.redTeamLangsmithProject] ??
+      env[RUNTIME_ENV_KEYS.langsmithProject]
+    );
   }
-  return env.LANGSMITH_PROJECT;
+  return env[RUNTIME_ENV_KEYS.langsmithProject];
 }
 
 export function getThreadPrefix(env: EnvSource = process.env): string {
   if (!isRedTeamMode(env)) return "vanguard";
-  return env.RED_TEAM_THREAD_PREFIX ?? "redteam-ci";
+  return env[RUNTIME_ENV_KEYS.redTeamThreadPrefix] ?? "redteam-ci";
 }
 
 export function resolveRedisEnv(env: EnvSource = process.env): {
@@ -33,15 +43,19 @@ export function resolveRedisEnv(env: EnvSource = process.env): {
 } {
   if (isRedTeamMode(env)) {
     return {
-      url: env.RED_TEAM_UPSTASH_REDIS_REST_URL ?? env.UPSTASH_REDIS_REST_URL,
+      url:
+        env[RUNTIME_ENV_KEYS.redTeamUpstashRedisUrl] ??
+        env[RUNTIME_ENV_KEYS.upstashRedisUrl],
       token:
-        env.RED_TEAM_UPSTASH_REDIS_REST_TOKEN ?? env.UPSTASH_REDIS_REST_TOKEN,
-      keyPrefix: env.RED_TEAM_REDIS_KEY_PREFIX ?? "vanguard:redteam",
+        env[RUNTIME_ENV_KEYS.redTeamUpstashRedisToken] ??
+        env[RUNTIME_ENV_KEYS.upstashRedisToken],
+      keyPrefix:
+        env[RUNTIME_ENV_KEYS.redTeamRedisKeyPrefix] ?? "vanguard:redteam",
     };
   }
   return {
-    url: env.UPSTASH_REDIS_REST_URL,
-    token: env.UPSTASH_REDIS_REST_TOKEN,
+    url: env[RUNTIME_ENV_KEYS.upstashRedisUrl],
+    token: env[RUNTIME_ENV_KEYS.upstashRedisToken],
     keyPrefix: "vanguard",
   };
 }
@@ -53,18 +67,21 @@ export function resolveVectorEnv(env: EnvSource = process.env): {
 } {
   if (isRedTeamMode(env)) {
     return {
-      url: env.RED_TEAM_UPSTASH_VECTOR_REST_URL ?? env.UPSTASH_VECTOR_REST_URL,
+      url:
+        env[RUNTIME_ENV_KEYS.redTeamUpstashVectorUrl] ??
+        env[RUNTIME_ENV_KEYS.upstashVectorUrl],
       token:
-        env.RED_TEAM_UPSTASH_VECTOR_REST_TOKEN ??
-        env.UPSTASH_VECTOR_REST_TOKEN,
+        env[RUNTIME_ENV_KEYS.redTeamUpstashVectorToken] ??
+        env[RUNTIME_ENV_KEYS.upstashVectorToken],
       namespace:
-        env.RED_TEAM_VECTOR_NAMESPACE ??
+        env[RUNTIME_ENV_KEYS.redTeamVectorNamespace] ??
         (env.CI ? "redteam-ci-0000000001" : "redteam-local-00000001"),
     };
   }
   return {
-    url: env.UPSTASH_VECTOR_REST_URL,
-    token: env.UPSTASH_VECTOR_REST_TOKEN,
-    namespace: env.UPSTASH_VECTOR_NAMESPACE ?? "vanguard-default",
+    url: env[RUNTIME_ENV_KEYS.upstashVectorUrl],
+    token: env[RUNTIME_ENV_KEYS.upstashVectorToken],
+    namespace:
+      env[RUNTIME_ENV_KEYS.upstashVectorNamespace] ?? "vanguard-default",
   };
 }
