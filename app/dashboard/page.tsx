@@ -11,17 +11,14 @@ import { TimelineSidebar } from "./components/TimelineSidebar";
 import { ExportEvidenceButton } from "./components/ExportEvidenceButton";
 import { useVanguardChat } from "./hooks/useVanguardChat";
 import { buildMissionTimelineEvents } from "./lib/timeline";
-import type { MissionTimelineEvent } from "./lib/types";
 import { hasOpenApproval } from "./lib/missionState";
 import { downloadBlob } from "@/src/lib/browser/downloadBlob";
+import { useTimelineNavigation } from "./hooks/useTimelineNavigation";
 
 export default function VanguardDashboard() {
   const [target, setTarget] = useState<string>("");
   const [input, setInput] = useState<string>("");
   const [logoutPending, setLogoutPending] = useState<boolean>(false);
-  const [activeTimelineMessageId, setActiveTimelineMessageId] = useState<
-    string | null
-  >(null);
 
   async function handleLogout() {
     setLogoutPending(true);
@@ -57,40 +54,32 @@ export default function VanguardDashboard() {
   const reconLedActive =
     surfaceMode === "live" && (loading || awaitingAuthorizationLive);
 
+  const timelineEvents = useMemo(
+    () => buildMissionTimelineEvents(messages, null),
+    [messages],
+  );
+
+  const {
+    activeTimelineMessageId,
+    seekToTimelineIndex,
+    handleSelectTimelineEvent,
+    resetTimelineSelection,
+  } = useTimelineNavigation({ timelineEvents });
+
+  const timelineEventsWithSelection = useMemo(
+    () => buildMissionTimelineEvents(messages, activeTimelineMessageId),
+    [messages, activeTimelineMessageId],
+  );
+
   function handleResetMission() {
-    setActiveTimelineMessageId(null);
+    resetTimelineSelection();
     setTarget("");
     setInput("");
     startNewMission();
   }
 
-  const timelineEvents = useMemo(
-    () => buildMissionTimelineEvents(messages, activeTimelineMessageId),
-    [messages, activeTimelineMessageId],
-  );
-
   const currentStep =
-    timelineEvents.findIndex((e) => e.status === "active") + 1;
-
-  function seekToTimelineIndex(index: number) {
-    const event = timelineEvents[index];
-    if (!event) return;
-    setActiveTimelineMessageId(event.messageId);
-    requestAnimationFrame(() => {
-      document
-        .getElementById(`message-${event.messageId}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-  }
-
-  function handleSelectTimelineEvent(event: MissionTimelineEvent) {
-    setActiveTimelineMessageId(event.messageId);
-
-    const el = document.getElementById(`message-${event.messageId}`);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }
+    timelineEventsWithSelection.findIndex((e) => e.status === "active") + 1;
 
   const hasCompletedAssistantResponse = useMemo(() => {
     return messages.some((message) => {
@@ -123,7 +112,7 @@ export default function VanguardDashboard() {
       thread_id: threadId,
       target: targetValidation.normalized || target,
       surface_mode: surfaceMode,
-      timeline_events: timelineEvents,
+      timeline_events: timelineEventsWithSelection,
       messages,
     };
 
@@ -137,6 +126,7 @@ export default function VanguardDashboard() {
       filename: `vanguard-evidence-${safeThread}-${Date.now()}.json`,
     });
   }
+
   return (
     <div className="isolate min-h-screen w-full overflow-x-hidden bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-[1200px] px-4 pb-24 pt-32 sm:px-6 md:p-8">
@@ -160,12 +150,14 @@ export default function VanguardDashboard() {
             <section className="min-w-0 w-full flex-1 lg:min-h-0">
               <MissionReplayHeader
                 mode={surfaceMode}
-                totalSteps={timelineEvents.length}
+                totalSteps={timelineEventsWithSelection.length}
                 currentStep={Math.max(currentStep, 0)}
                 seekDisabled={loading}
                 onSeekStart={() => seekToTimelineIndex(0)}
                 onSeekEnd={() =>
-                  seekToTimelineIndex(Math.max(timelineEvents.length - 1, 0))
+                  seekToTimelineIndex(
+                    Math.max(timelineEventsWithSelection.length - 1, 0),
+                  )
                 }
               />
 
@@ -225,7 +217,7 @@ export default function VanguardDashboard() {
             </section>
 
             <TimelineSidebar
-              events={timelineEvents}
+              events={timelineEventsWithSelection}
               onSelectEvent={handleSelectTimelineEvent}
             />
           </div>
