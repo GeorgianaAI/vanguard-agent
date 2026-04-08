@@ -25,6 +25,17 @@ describe("proxy auth/rbac", () => {
     return mod.proxy;
   }
 
+  it("bypasses auth when AUTH_E2E_BYPASS is true", async () => {
+    setEnv({ AUTH_E2E_BYPASS: "true" });
+
+    const proxyFn = await loadProxy();
+    const req = new NextRequest("http://localhost/dashboard");
+    const res = await proxyFn(req);
+
+    expect(res.status).toBe(200);
+    expect(hoisted.verifySessionToken).not.toHaveBeenCalled();
+  });
+
   it("redirects unauthenticated user from /dashboard to /login", async () => {
     const proxyFn = await loadProxy();
     const req = new NextRequest("http://localhost/dashboard");
@@ -34,9 +45,23 @@ describe("proxy auth/rbac", () => {
     expect(res.headers.get("location")).toContain("/login");
   });
 
-  it("redirects unauthenticated user from /governance to /login", async () => {
+  it("returns 401 json for unauthenticated API route", async () => {
     const proxyFn = await loadProxy();
-    const req = new NextRequest("http://localhost/governance");
+    const req = new NextRequest("http://localhost/api/chat");
+    const res = await proxyFn(req);
+
+    expect(res.status).toBe(401);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe("Unauthorized");
+  });
+
+  it("returns 401 when session token is invalid", async () => {
+    hoisted.verifySessionToken.mockResolvedValue(null);
+
+    const proxyFn = await loadProxy();
+    const req = new NextRequest("http://localhost/dashboard", {
+      headers: { cookie: "vanguard_session=bad-token" },
+    });
     const res = await proxyFn(req);
 
     expect(res.status).toBe(307);
@@ -128,5 +153,22 @@ describe("proxy auth/rbac", () => {
 
     const res = await proxyFn(req);
     expect(res.status).toBe(403);
+  });
+
+  it("passes through route with no mapped permission when authenticated", async () => {
+    hoisted.verifySessionToken.mockResolvedValue({
+      sub: "viewer1",
+      role: "viewer",
+      iat: 1,
+      exp: 9999999999,
+    });
+
+    const proxyFn = await loadProxy();
+    const req = new NextRequest("http://localhost/login", {
+      headers: { cookie: "vanguard_session=fake-token" },
+    });
+
+    const res = await proxyFn(req);
+    expect(res.status).toBe(200);
   });
 });
