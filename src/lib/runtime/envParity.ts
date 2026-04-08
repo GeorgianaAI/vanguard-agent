@@ -1,3 +1,9 @@
+import {
+  RUNTIME_ENV_KEYS,
+  UPSTASH_PARITY_PAIRS,
+  formatEitherLabel,
+} from "./envKeys";
+
 type EnvMap = Record<string, string | undefined>;
 
 export type ParityTarget = "production" | "non-production";
@@ -21,21 +27,23 @@ export function checkEnvParity(
 ): ParityResult {
   const missing: string[] = [];
 
-  if (!hasEither(env, "UPSTASH_REDIS_REST_URL", "RED_TEAM_UPSTASH_REDIS_REST_URL")) {
-    missing.push("UPSTASH_REDIS_REST_URL (or RED_TEAM_UPSTASH_REDIS_REST_URL)");
-  }
-  if (!hasEither(env, "UPSTASH_REDIS_REST_TOKEN", "RED_TEAM_UPSTASH_REDIS_REST_TOKEN")) {
-    missing.push("UPSTASH_REDIS_REST_TOKEN (or RED_TEAM_UPSTASH_REDIS_REST_TOKEN)");
-  }
-  if (!hasEither(env, "UPSTASH_VECTOR_REST_URL", "RED_TEAM_UPSTASH_VECTOR_REST_URL")) {
-    missing.push("UPSTASH_VECTOR_REST_URL (or RED_TEAM_UPSTASH_VECTOR_REST_URL)");
-  }
-  if (!hasEither(env, "UPSTASH_VECTOR_REST_TOKEN", "RED_TEAM_UPSTASH_VECTOR_REST_TOKEN")) {
-    missing.push("UPSTASH_VECTOR_REST_TOKEN (or RED_TEAM_UPSTASH_VECTOR_REST_TOKEN)");
+  for (const pair of UPSTASH_PARITY_PAIRS) {
+    if (!hasEither(env, pair.primary, pair.redTeam)) {
+      missing.push(formatEitherLabel(pair.primary, pair.redTeam));
+    }
   }
 
-  if (target === "production" && !hasValue(env.VERCEL_URL) && !hasValue(env.APP_BASE_URL)) {
-    missing.push("APP_BASE_URL (or VERCEL_URL)");
+  if (
+    target === "production" &&
+    !hasValue(env[RUNTIME_ENV_KEYS.vercelUrl]) &&
+    !hasValue(env[RUNTIME_ENV_KEYS.appBaseUrl])
+  ) {
+    missing.push(
+      formatEitherLabel(
+        RUNTIME_ENV_KEYS.appBaseUrl,
+        RUNTIME_ENV_KEYS.vercelUrl,
+      ),
+    );
   }
 
   return { ok: missing.length === 0, missing };
