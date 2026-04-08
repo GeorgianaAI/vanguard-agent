@@ -2,6 +2,7 @@ import { vanguardGraph } from "@/src/lib/agent/graph";
 import { checkpointMessagesToDashboardMessages } from "@/src/lib/chat/checkpointToUIMessages";
 import { reviveLangchainMessages } from "@/src/lib/langchain/reviveLangchainMessages";
 import { getThreadPrefix } from "@/src/lib/runtime/redteam";
+import { requireActorId, requireThreadId } from "../../_shared/requestGuards";
 
 export const runtime = "edge";
 
@@ -16,13 +17,19 @@ function messagesFromStateValues(values: unknown): unknown[] | null {
 }
 
 function vulnerabilitiesFromStateValues(values: unknown): unknown {
-  if (values != null && typeof values === "object" && "vulnerabilities" in values) {
+  if (
+    values != null &&
+    typeof values === "object" &&
+    "vulnerabilities" in values
+  ) {
     return (values as { vulnerabilities: unknown }).vulnerabilities;
   }
   return undefined;
 }
 
-function advisoryWarningsFromStateValues(values: unknown): string[] | undefined {
+function advisoryWarningsFromStateValues(
+  values: unknown,
+): string[] | undefined {
   if (
     values != null &&
     typeof values === "object" &&
@@ -40,17 +47,14 @@ function advisoryWarningsFromStateValues(values: unknown): string[] | undefined 
  * Requires authenticated session with `mission:run` (proxy).
  */
 export async function GET(req: Request) {
-  const actorId = req.headers.get("x-actor-id");
+  const actorId = requireActorId(req);
   if (!actorId) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const url = new URL(req.url);
-  const threadId = url.searchParams.get("thread_id")?.trim();
+  const threadId = requireThreadId(req);
   if (!threadId) {
     return Response.json({ error: "Missing thread_id" }, { status: 400 });
   }
-
   if (!threadId.startsWith(getThreadPrefix())) {
     return Response.json({ error: "Invalid thread_id" }, { status: 400 });
   }

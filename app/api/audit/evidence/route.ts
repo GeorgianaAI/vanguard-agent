@@ -1,17 +1,15 @@
 import { buildEvidencePackageForThread } from "../../../../src/lib/audit/buildEvidencePackageForThread";
 import { newRequestId, withRequestIdHeaders } from "../../chat/telemetry";
+import { readActorContext, requireThreadId } from "../../_shared/requestGuards";
 
 export const runtime = "edge";
 
 export async function GET(req: Request) {
   const reqId = newRequestId(req);
-  const actorId = req.headers.get("x-actor-id");
-  const actorRole = req.headers.get("x-actor-role");
-
+  const { actorId, actorRole } = readActorContext(req);
   const url = new URL(req.url);
-  const threadId = url.searchParams.get("thread_id")?.trim();
+  const threadId = requireThreadId(url.searchParams);
   const missionId = url.searchParams.get("mission_id")?.trim() || threadId;
-
   if (!threadId) {
     return withRequestIdHeaders(
       new Response("Missing thread_id", { status: 400 }),
