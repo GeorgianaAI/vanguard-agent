@@ -11,7 +11,8 @@ export function ResetMissionButton({ onReset }: ResetMissionButtonProps) {
       onClick={onReset}
       title="Reset Mission"
       subtitle="Wipe History & Restart"
-      className="hover:border-emerald-500/50 hover:bg-slate-900 hover:text-emerald-400 active:scale-95"
+      variant="emerald"
+      className="active:scale-95"
       leftIcon={
         <RefreshCw className="h-3.5 w-3.5 shrink-0 opacity-40 transition-transform duration-700 group-hover:rotate-180 group-hover:opacity-100" />
       }

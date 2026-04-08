@@ -57,7 +57,7 @@ export function GovernancePdfExportButton() {
         onClick={() => void onExport()}
         title={busy ? "Generating..." : "Generate NIST Audit Report"}
         subtitle="NIST-aligned PDF (ISO 27001)"
-        className="hover:border-blue-500/50 hover:bg-slate-900 hover:text-blue-400"
+        variant="blue"
         leftIcon={
           <FileText className="h-3.5 w-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-blue-500" />
         }
