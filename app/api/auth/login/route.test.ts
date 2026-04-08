@@ -1,4 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { useEnvTestHarness } from "@/tests/utils/envTestHarness";
+import { makeTestRequest } from "@/tests/utils/httpTestRequest";
 
 const hoisted = vi.hoisted(() => ({
   validateCredentials: vi.fn(),
@@ -19,18 +21,13 @@ vi.mock("../../../../src/lib/auth/cookies", () => ({
 }));
 
 describe("POST /api/auth/login", () => {
-  const originalEnv = { ...process.env };
+  useEnvTestHarness();
 
   beforeEach(() => {
-    process.env = { ...originalEnv };
     vi.resetModules();
     vi.clearAllMocks();
     hoisted.createSessionToken.mockResolvedValue("jwt-token");
     hoisted.setSessionCookie.mockResolvedValue(undefined);
-  });
-
-  afterEach(() => {
-    process.env = { ...originalEnv };
   });
 
   async function loadPost() {
@@ -41,10 +38,8 @@ describe("POST /api/auth/login", () => {
   it("returns 400 for invalid body", async () => {
     const POST = await loadPost();
     const res = await POST(
-      new Request("http://localhost/api/auth/login", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ username: "ab" }), // invalid body
+      makeTestRequest("/api/auth/login", {
+        body: { username: "ab" }, // invalid body
       }),
     );
     expect(res.status).toBe(400);
@@ -55,13 +50,11 @@ describe("POST /api/auth/login", () => {
     const POST = await loadPost();
 
     const res = await POST(
-      new Request("http://localhost/api/auth/login", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
+      makeTestRequest("/api/auth/login", {
+        body: {
           username: "admin",
           password: "WrongPass123",
-        }),
+        },
       }),
     );
 
@@ -75,13 +68,11 @@ describe("POST /api/auth/login", () => {
     const POST = await loadPost();
 
     const res = await POST(
-      new Request("http://localhost/api/auth/login", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
+      makeTestRequest("/api/auth/login", {
+        body: {
           username: "admin",
           password: "ChangeMe!123",
-        }),
+        },
       }),
     );
 

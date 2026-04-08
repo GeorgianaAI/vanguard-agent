@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useEnvTestHarness } from "@/tests/utils/envTestHarness";
 
 const hoisted = vi.hoisted(() => ({
   clearSessionCookie: vi.fn(),
@@ -9,17 +10,12 @@ vi.mock("../../../../src/lib/auth/cookies", () => ({
 }));
 
 describe("POST /api/auth/logout", () => {
-  const originalEnv = { ...process.env };
+  useEnvTestHarness();
 
   beforeEach(() => {
-    process.env = { ...originalEnv };
     vi.resetModules();
     vi.clearAllMocks();
     hoisted.clearSessionCookie.mockResolvedValue(undefined);
-  });
-
-  afterEach(() => {
-    process.env = { ...originalEnv };
   });
 
   it("returns 200 and clears session cookie", async () => {

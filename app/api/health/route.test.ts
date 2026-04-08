@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useEnvTestHarness } from "@/tests/utils/envTestHarness";
+import { makeTestRequest } from "@/tests/utils/httpTestRequest";
 
 vi.mock("../../../src/lib/runtime/healthProbes", () => ({
   probeRedis: vi.fn(),
@@ -11,26 +13,28 @@ async function loadProbes() {
   return import("../../../src/lib/runtime/healthProbes");
 }
 
-const originalEnv = { ...process.env };
-
 describe("GET /api/health", () => {
+  const { setEnv, unsetEnv } = useEnvTestHarness();
+
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
   });
 
   afterEach(() => {
-    process.env = { ...originalEnv };
+    vi.clearAllMocks();
   });
 
   it("returns 200 with ok dependencies on successful probes", async () => {
-    process.env.NODE_ENV = "test";
-    process.env.UPSTASH_REDIS_REST_URL = "https://redis";
-    process.env.UPSTASH_REDIS_REST_TOKEN = "token";
-    process.env.UPSTASH_VECTOR_REST_URL = "https://vector";
-    process.env.UPSTASH_VECTOR_REST_TOKEN = "token";
-    process.env.LANGSMITH_API_KEY = "ls-key";
-    process.env.LANGSMITH_PROJECT = "ls-project";
+    setEnv({
+      NODE_ENV: "test",
+      UPSTASH_REDIS_REST_URL: "https://redis",
+      UPSTASH_REDIS_REST_TOKEN: "token",
+      UPSTASH_VECTOR_REST_URL: "https://vector",
+      UPSTASH_VECTOR_REST_TOKEN: "token",
+      LANGSMITH_API_KEY: "ls-key",
+      LANGSMITH_PROJECT: "ls-project",
+    });
 
     const probes = await loadProbes();
     vi.mocked(probes.probeRedis).mockResolvedValue({ state: "ok" });
@@ -38,7 +42,7 @@ describe("GET /api/health", () => {
     vi.mocked(probes.probeLangSmith).mockResolvedValue({ state: "ok" });
 
     const { GET } = await import("./route");
-    const res = await GET(new Request("http://localhost/api/health"));
+    const res = await GET(makeTestRequest("/api/health"));
     expect(res.status).toBe(200);
     const body = (await res.json()) as Record<string, unknown>;
     const dependencies = body.dependencies as Record<string, string>;
@@ -49,20 +53,21 @@ describe("GET /api/health", () => {
   });
 
   it("returns 200 and degraded langsmith in non-production when missing config", async () => {
-    process.env.NODE_ENV = "test";
-    process.env.UPSTASH_REDIS_REST_URL = "https://redis";
-    process.env.UPSTASH_REDIS_REST_TOKEN = "token";
-    process.env.UPSTASH_VECTOR_REST_URL = "https://vector";
-    process.env.UPSTASH_VECTOR_REST_TOKEN = "token";
-    delete process.env.LANGSMITH_API_KEY;
-    delete process.env.LANGSMITH_PROJECT;
+    setEnv({
+      NODE_ENV: "test",
+      UPSTASH_REDIS_REST_URL: "https://redis",
+      UPSTASH_REDIS_REST_TOKEN: "token",
+      UPSTASH_VECTOR_REST_URL: "https://vector",
+      UPSTASH_VECTOR_REST_TOKEN: "token",
+    });
+    unsetEnv("LANGSMITH_API_KEY", "LANGSMITH_PROJECT");
 
     const probes = await loadProbes();
     vi.mocked(probes.probeRedis).mockResolvedValue({ state: "ok" });
     vi.mocked(probes.probeVector).mockResolvedValue({ state: "ok" });
 
     const { GET } = await import("./route");
-    const res = await GET(new Request("http://localhost/api/health"));
+    const res = await GET(makeTestRequest("/api/health"));
     expect(res.status).toBe(200);
     const body = (await res.json()) as Record<string, unknown>;
     const dependencies = body.dependencies as Record<string, string>;
@@ -72,13 +77,15 @@ describe("GET /api/health", () => {
   });
 
   it("returns 503 in production when critical probe fails", async () => {
-    process.env.NODE_ENV = "production";
-    process.env.UPSTASH_REDIS_REST_URL = "https://redis";
-    process.env.UPSTASH_REDIS_REST_TOKEN = "token";
-    process.env.UPSTASH_VECTOR_REST_URL = "https://vector";
-    process.env.UPSTASH_VECTOR_REST_TOKEN = "token";
-    process.env.LANGSMITH_API_KEY = "ls-key";
-    process.env.LANGSMITH_PROJECT = "project";
+    setEnv({
+      NODE_ENV: "production",
+      UPSTASH_REDIS_REST_URL: "https://redis",
+      UPSTASH_REDIS_REST_TOKEN: "token",
+      UPSTASH_VECTOR_REST_URL: "https://vector",
+      UPSTASH_VECTOR_REST_TOKEN: "token",
+      LANGSMITH_API_KEY: "ls-key",
+      LANGSMITH_PROJECT: "project",
+    });
 
     const probes = await loadProbes();
     vi.mocked(probes.probeRedis).mockResolvedValue({
@@ -89,7 +96,7 @@ describe("GET /api/health", () => {
     vi.mocked(probes.probeLangSmith).mockResolvedValue({ state: "ok" });
 
     const { GET } = await import("./route");
-    const res = await GET(new Request("http://localhost/api/health"));
+    const res = await GET(makeTestRequest("/api/health"));
     expect(res.status).toBe(503);
     const body = (await res.json()) as Record<string, unknown>;
     const dependencies = body.dependencies as Record<string, string>;
@@ -100,16 +107,20 @@ describe("GET /api/health", () => {
   });
 
   it("returns 503 in production when critical deps are missing", async () => {
-    process.env.NODE_ENV = "production";
-    delete process.env.UPSTASH_REDIS_REST_URL;
-    delete process.env.UPSTASH_REDIS_REST_TOKEN;
-    delete process.env.UPSTASH_VECTOR_REST_URL;
-    delete process.env.UPSTASH_VECTOR_REST_TOKEN;
-    process.env.LANGSMITH_API_KEY = "ls-key";
-    process.env.LANGSMITH_PROJECT = "project";
+    setEnv({
+      NODE_ENV: "production",
+      LANGSMITH_API_KEY: "ls-key",
+      LANGSMITH_PROJECT: "project",
+    });
+    unsetEnv(
+      "UPSTASH_REDIS_REST_URL",
+      "UPSTASH_REDIS_REST_TOKEN",
+      "UPSTASH_VECTOR_REST_URL",
+      "UPSTASH_VECTOR_REST_TOKEN",
+    );
 
     const { GET } = await import("./route");
-    const res = await GET(new Request("http://localhost/api/health"));
+    const res = await GET(makeTestRequest("/api/health"));
     expect(res.status).toBe(503);
     const body = (await res.json()) as Record<string, unknown>;
     const dependencies = body.dependencies as Record<string, string>;
@@ -118,13 +129,15 @@ describe("GET /api/health", () => {
   });
 
   it("does not leak secret values in health response", async () => {
-    process.env.NODE_ENV = "production";
-    process.env.UPSTASH_REDIS_REST_URL = "https://redis.example";
-    process.env.UPSTASH_REDIS_REST_TOKEN = "super-secret-redis-token";
-    process.env.UPSTASH_VECTOR_REST_URL = "https://vector.example";
-    process.env.UPSTASH_VECTOR_REST_TOKEN = "super-secret-vector-token";
-    process.env.LANGSMITH_API_KEY = "super-secret-langsmith-key";
-    process.env.LANGSMITH_PROJECT = "project";
+    setEnv({
+      NODE_ENV: "production",
+      UPSTASH_REDIS_REST_URL: "https://redis.example",
+      UPSTASH_REDIS_REST_TOKEN: "super-secret-redis-token",
+      UPSTASH_VECTOR_REST_URL: "https://vector.example",
+      UPSTASH_VECTOR_REST_TOKEN: "super-secret-vector-token",
+      LANGSMITH_API_KEY: "super-secret-langsmith-key",
+      LANGSMITH_PROJECT: "project",
+    });
 
     const probes = await loadProbes();
     vi.mocked(probes.probeRedis).mockResolvedValue({ state: "ok" });
@@ -135,7 +148,7 @@ describe("GET /api/health", () => {
     });
 
     const { GET } = await import("./route");
-    const res = await GET(new Request("http://localhost/api/health"));
+    const res = await GET(makeTestRequest("/api/health"));
     const text = await res.text();
     expect(text).not.toContain("super-secret-redis-token");
     expect(text).not.toContain("super-secret-vector-token");
@@ -143,19 +156,21 @@ describe("GET /api/health", () => {
   });
 
   it("resolves redis config with redteam mode enabled", async () => {
-    process.env.NODE_ENV = "test";
-    process.env.REDTEAM_MODE = "true";
-    process.env.RED_TEAM_UPSTASH_REDIS_REST_URL = "https://redis-red";
-    process.env.RED_TEAM_UPSTASH_REDIS_REST_TOKEN = "red-token";
-    process.env.RED_TEAM_UPSTASH_VECTOR_REST_URL = "https://vector-red";
-    process.env.RED_TEAM_UPSTASH_VECTOR_REST_TOKEN = "red-token";
+    setEnv({
+      NODE_ENV: "test",
+      REDTEAM_MODE: "true",
+      RED_TEAM_UPSTASH_REDIS_REST_URL: "https://redis-red",
+      RED_TEAM_UPSTASH_REDIS_REST_TOKEN: "red-token",
+      RED_TEAM_UPSTASH_VECTOR_REST_URL: "https://vector-red",
+      RED_TEAM_UPSTASH_VECTOR_REST_TOKEN: "red-token",
+    });
 
     const probes = await loadProbes();
     vi.mocked(probes.probeRedis).mockResolvedValue({ state: "ok" });
     vi.mocked(probes.probeVector).mockResolvedValue({ state: "ok" });
 
     const { GET } = await import("./route");
-    const res = await GET(new Request("http://localhost/api/health"));
+    const res = await GET(makeTestRequest("/api/health"));
     expect(res.status).toBe(200);
     expect(vi.mocked(probes.probeRedis)).toHaveBeenCalledWith(
       "https://redis-red",
@@ -168,19 +183,21 @@ describe("GET /api/health", () => {
   });
 
   it("resolves default redis config with redteam mode disabled", async () => {
-    process.env.NODE_ENV = "test";
-    process.env.REDTEAM_MODE = "false";
-    process.env.UPSTASH_REDIS_REST_URL = "https://redis-default";
-    process.env.UPSTASH_REDIS_REST_TOKEN = "default-token";
-    process.env.UPSTASH_VECTOR_REST_URL = "https://vector-default";
-    process.env.UPSTASH_VECTOR_REST_TOKEN = "default-token";
+    setEnv({
+      NODE_ENV: "test",
+      REDTEAM_MODE: "false",
+      UPSTASH_REDIS_REST_URL: "https://redis-default",
+      UPSTASH_REDIS_REST_TOKEN: "default-token",
+      UPSTASH_VECTOR_REST_URL: "https://vector-default",
+      UPSTASH_VECTOR_REST_TOKEN: "default-token",
+    });
 
     const probes = await loadProbes();
     vi.mocked(probes.probeRedis).mockResolvedValue({ state: "ok" });
     vi.mocked(probes.probeVector).mockResolvedValue({ state: "ok" });
 
     const { GET } = await import("./route");
-    await GET(new Request("http://localhost/api/health"));
+    await GET(makeTestRequest("/api/health"));
     expect(vi.mocked(probes.probeRedis)).toHaveBeenCalledWith(
       "https://redis-default",
       "default-token",
