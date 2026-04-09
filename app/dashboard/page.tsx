@@ -129,16 +129,16 @@ export default function VanguardDashboard() {
 
   return (
     <div className="isolate min-h-screen w-full overflow-x-hidden bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-[1200px] px-4 pb-24 pt-32 sm:px-6 md:p-8">
-        <DashboardHeader
-          loading={loading}
-          restored={surfaceMode === "restored"}
-          reconLedActive={reconLedActive}
-          onLogout={handleLogout}
-          logoutPending={logoutPending}
-          onResetMission={handleResetMission}
-        />
+      <DashboardHeader
+        loading={loading}
+        restored={surfaceMode === "restored"}
+        reconLedActive={reconLedActive}
+        onLogout={handleLogout}
+        logoutPending={logoutPending}
+        onResetMission={handleResetMission}
+      />
 
+      <div className="mx-auto max-w-[1200px] px-4 pb-24 pt-8 sm:px-6 md:p-8">
         <main className="mx-auto grid w-full min-w-0 max-w-[1200px] gap-6">
           <TargetInput
             target={target}

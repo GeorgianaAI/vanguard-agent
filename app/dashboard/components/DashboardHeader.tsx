@@ -33,22 +33,26 @@ export function DashboardHeader({
     : STATUS_SATELLITE_IDLE;
 
   return (
-    <header className="mb-12 w-full min-w-0 border-b border-slate-800 pb-8">
-      <div className="mb-12 flex items-center justify-between gap-3">
-        <ReturnToBaseButton />
+    <header className="mb-12 w-full pt-6">
+      {/* Row 1: Full-width divider row */}
+      <div className="mb-20 border-b border-slate-800/60 pb-4">
+        <div className="mx-auto flex max-w-[1500px] items-center justify-between px-12">
+          {/* Edge-synced navigation controls */}
+          <ReturnToBaseButton />
 
-        <GovernanceLedgerButton />
+          <GovernanceLedgerButton />
 
-        <ResetMissionButton onReset={onResetMission} />
+          <ResetMissionButton onReset={onResetMission} />
 
-        <TerminateMissionButton
-          disabled={logoutPending}
-          pending={logoutPending}
-          onClick={onLogout}
-        />
+          <TerminateMissionButton
+            disabled={logoutPending}
+            pending={logoutPending}
+            onClick={onLogout}
+          />
+        </div>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="mx-auto flex max-w-[1200px] items-center justify-between px-4 sm:px-6 md:px-8">
         <div className="flex items-start gap-5">
           <Satellite
             className={`h-12 w-12 text-cyan-500 mt-[-4px] ${loading && linkLive ? "animate-pulse" : ""}`}

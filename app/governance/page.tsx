@@ -10,7 +10,7 @@ import { GovernanceDataProvider } from "./hooks/useGovernanceData";
 export default function VanguardGovernancePage() {
   return (
     <div className="isolate min-h-screen w-full min-w-0 bg-slate-950 text-slate-100 selection:bg-cyan-500/30">
-      <div className="mx-auto w-full min-w-0 max-w-[min(100%,90rem)] overflow-x-clip px-4 pb-24 pt-32 sm:px-6 md:p-8">
+      <div className="mx-auto w-full min-w-0 max-w-[min(100%,90rem)] overflow-x-clip px-4 pb-24 pt-6 sm:px-6 md:p-8">
         <GovernanceBackToDashboardButton />
 
         <GovernanceDataProvider>
