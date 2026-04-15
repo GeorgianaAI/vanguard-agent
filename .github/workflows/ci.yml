@@ -2,9 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - "feat/**"
+      - "fix/**"
+      - "refactor/**"
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 # Run official JS actions (checkout, setup-node, upload-artifact) on Node 24 per
 # https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
@@ -16,7 +21,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality:
+  security-audit:
+    name: Security Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,16 +33,45 @@ jobs:
       - run: npm ci
       - name: npm audit (high/critical only; policy docs/dependency-audit-policy.md)
         run: npm audit --audit-level=high
-      - run: npm run lint
-      - run: npm run test
-      - run: npm run test:coverage
-      - uses: actions/upload-artifact@v4
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          name: coverage-report
-          path: coverage/
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
       - run: npm run build
 
   mcp-server:
+    name: MCP Server
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +88,25 @@ jobs:
       - run: npx tsc -p tsconfig.json
         working-directory: mcp-server
 
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run test
+      - run: npm run test:coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+
   e2e:
+    name: E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -67,3 +120,10 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
