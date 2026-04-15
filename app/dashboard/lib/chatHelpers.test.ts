@@ -10,17 +10,17 @@ describe("THREAD_STORAGE_KEY", () => {
 
 describe("getToolCallId", () => {
   it("returns toolCallId when non-empty", () => {
-    const part = { type: "tool-invocation", toolCallId: "tc-1" } as ToolPart;
+    const part = { type: "tool-invocation", toolCallId: "tc-1" } as unknown as ToolPart;
     expect(getToolCallId(part)).toBe("tc-1");
   });
 
   it("returns null for missing or empty toolCallId", () => {
-    expect(getToolCallId({} as ToolPart)).toBeNull();
+    expect(getToolCallId({} as unknown as ToolPart)).toBeNull();
     expect(
-      getToolCallId({ type: "tool-invocation", toolCallId: "" } as ToolPart),
+      getToolCallId({ type: "tool-invocation", toolCallId: "" } as unknown as ToolPart),
     ).toBeNull();
     expect(
-      getToolCallId({ type: "tool-invocation", toolCallId: "   " } as ToolPart),
+      getToolCallId({ type: "tool-invocation", toolCallId: "   " } as unknown as ToolPart),
     ).toBeNull();
   });
 });
