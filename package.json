@@ -35,7 +35,7 @@
     "clsx": "^2.1.1",
     "jose": "^6.2.2",
     "lucide-react": "^1.7.0",
-    "next": "16.2.1",
+    "next": "16.2.3",
     "pdf-lib": "^1.17.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -51,9 +51,13 @@
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.1.2",
     "eslint": "^9",
-    "eslint-config-next": "16.2.1",
+    "eslint-config-next": "16.2.3",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.2"
+  },
+  "overrides": {
+    "follow-redirects": "1.16.0",
+    "langsmith": "0.5.19"
   }
 }
