@@ -63,7 +63,7 @@ describe("hasOpenApproval", () => {
             toolCallId: "manual-authorization",
           },
         ],
-      } as DashboardMessage,
+      } as unknown as DashboardMessage,
     ];
     expect(hasOpenApproval(messages)).toBe(true);
   });
