@@ -225,6 +225,7 @@ Use the live demo credentials below to test the full Command Center flow:
 > [!TIP]
 > **Mission Strategy:** For deeper technical context, see [ARCHITECTURE_FLOWS.md](./docs/ARCHITECTURE_FLOWS.md) for runtime flow diagrams.
 > For adversarial test outcomes and evidence posture, see [SECURITY_ADVISORY.md](./SECURITY_ADVISORY.md).
+> For planned hardening work, intentional deferrals, and 7-skill maturity sequencing, see [HARDENING_ROADMAP.md](./docs/HARDENING_ROADMAP.md).
 
 ---
 
