@@ -1,3 +1,5 @@
+export const approvalLocks = new Map<string, number>();
+
 export function getClientIp(req: Request): string {
   const forwardedFor = req.headers.get("x-forwarded-for") ?? "";
   return forwardedFor.split(",")[0]?.trim() || "127.0.0.1";
