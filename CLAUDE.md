@@ -48,38 +48,38 @@ Vanguard is an autonomous multi-agent recon and governance platform. It orchestr
 
 ## 4. Code Layout & Architecture
 
-Maintain thin entrypoints. Logic must be extracted once a file exceeds approximately 150–200 lines.
+Maintain thin entrypoints. Logic must be extracted once a file exceeds approximately 200-300 lines, with the **exception** of long sequential functions that can go up to 400-500 lines.
 
 ### Directory Mapping
 
-| Area                          | Purpose                                                                                      |
-| :---------------------------- | :------------------------------------------------------------------------------------------- |
-| `app/`                        | **Routing Only:** `page.tsx`, `layout.tsx`, `loading.tsx`. Minimal logic.                    |
-| `app/api/`                    | **API Routes:** Thin request handlers — validate with Zod, call `src/lib/`, stream response. |
-| `app/dashboard/`              | **Mission UI:** Timeline, approval cards, tool invocation cards, command input.              |
-| `app/dashboard/hooks/`        | **Chat State:** `useVanguardChat.ts` — streaming, message management, approval flow.         |
-| `app/dashboard/components/`   | **Dashboard Features:** `ApprovalCard`, `ToolInvocationCard`, `TimelineItem`, `AgentBadge`.  |
+| Area                          | Purpose                                                                                                                              |
+| :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
+| `app/`                        | **Routing Only:** `page.tsx`, `layout.tsx`, `loading.tsx`. Minimal logic.                                                            |
+| `app/api/`                    | **API Routes:** Thin request handlers — validate with Zod, call `src/lib/`, stream response.                                         |
+| `app/dashboard/`              | **Mission UI:** Timeline, approval cards, tool invocation cards, command input.                                                      |
+| `app/dashboard/hooks/`        | **Chat State:** `useVanguardChat.ts` — streaming, message management, approval flow.                                                 |
+| `app/dashboard/components/`   | **Dashboard Features:** `ApprovalCard`, `ToolInvocationCard`, `TimelineItem`, `AgentBadge`.                                          |
 | `app/api/chat/`               | **Route Helpers:** `approvalGuards.ts`, `locks.ts`, `missionRequest.ts`, `streaming.ts`, `telemetry.ts` — extracted from `route.ts`. |
-| `app/governance/`             | **Governance Ledger:** NIST-aligned audit view, trust score display, PDF export.             |
-| `app/governance/lib/`         | **Governance Logic:** ViewModel builders, ledger row builders, trust score derivation, checkpoint parsing. |
-| `app/governance/hooks/`       | **Governance State:** `useGovernanceData.tsx` — data fetching hook.                          |
-| `app/components/ui/`          | **Primitives:** `MissionNavButton`, `MissionActionButton`.                                   |
-| `app/components/page-states/` | **Shell States:** `ErrorPage`, `LoadingPage`, `EmptyStatePage`, `NotFoundPage`.              |
-| `src/lib/agent/`              | **LangGraph Core:** `graph.ts` (state machine), `state.ts`, `tools.ts`, `checkpointer.ts`.   |
-| `src/lib/approval/`           | **Authorization Policy:** `policy.ts`, `hash.ts`, `types.ts`.                                |
-| `src/lib/auth/`               | **Session & RBAC:** `session.ts`, `rbac.ts`, `permissions.ts`, `csrf.ts`.                    |
-| `src/lib/governance/`         | **Server-Side Governance:** `loadGovernanceSnapshot.ts` (Redis read), `renderGovernancePdf.ts` (PDF generation). |
-| `src/lib/vulnerability/`      | **CVE Enrichment:** NVD/advisory fetching, finding deduplication.                            |
-| `src/lib/chat/`               | **Streaming Utilities:** Checkpoint-to-UI message conversion.                                |
-| `src/lib/langchain/`          | **LangChain Glue:** `reviveLangchainMessages.ts` — deserialize Redis JSON.                   |
-| `src/lib/runtime/`            | **Environment:** `redteam.ts`, `vectorClient.ts`, `healthProbes.ts`.                         |
-| `src/lib/audit/`              | **Evidence:** Mission evidence schema and serialization.                                     |
-| `src/lib/recon/`              | **Reconnaissance:** RDAP domain lookup.                                                      |
-| `src/lib/browser/`            | **Client Utilities:** `downloadBlob.ts` — file download handler.                             |
-| `mcp-server/`                 | **MCP Server:** Standalone Node.js server exposing `ping` and `domain_whois` tools.          |
-| `tests/`                      | **E2E Tests:** Playwright specs — dashboard, governance, red team.                           |
-| `scripts/`                    | **Ops Scripts:** `check-env-parity.mjs`, `verify-ready.mjs`. Pre-deploy tooling.             |
-| `docs/`                       | **Documentation:** Architecture flows, security advisory, hardening roadmap, runbook.        |
+| `app/governance/`             | **Governance Ledger:** NIST-aligned audit view, trust score display, PDF export.                                                     |
+| `app/governance/lib/`         | **Governance Logic:** ViewModel builders, ledger row builders, trust score derivation, checkpoint parsing.                           |
+| `app/governance/hooks/`       | **Governance State:** `useGovernanceData.tsx` — data fetching hook.                                                                  |
+| `app/components/ui/`          | **Primitives:** `MissionNavButton`, `MissionActionButton`.                                                                           |
+| `app/components/page-states/` | **Shell States:** `ErrorPage`, `LoadingPage`, `EmptyStatePage`, `NotFoundPage`.                                                      |
+| `src/lib/agent/`              | **LangGraph Core:** `graph.ts` (state machine), `state.ts`, `tools.ts`, `checkpointer.ts`.                                           |
+| `src/lib/approval/`           | **Authorization Policy:** `policy.ts`, `hash.ts`, `types.ts`.                                                                        |
+| `src/lib/auth/`               | **Session & RBAC:** `session.ts`, `rbac.ts`, `permissions.ts`, `csrf.ts`.                                                            |
+| `src/lib/governance/`         | **Server-Side Governance:** `loadGovernanceSnapshot.ts` (Redis read), `renderGovernancePdf.ts` (PDF generation).                     |
+| `src/lib/vulnerability/`      | **CVE Enrichment:** NVD/advisory fetching, finding deduplication.                                                                    |
+| `src/lib/chat/`               | **Streaming Utilities:** Checkpoint-to-UI message conversion.                                                                        |
+| `src/lib/langchain/`          | **LangChain Glue:** `reviveLangchainMessages.ts` — deserialize Redis JSON.                                                           |
+| `src/lib/runtime/`            | **Environment:** `redteam.ts`, `vectorClient.ts`, `healthProbes.ts`.                                                                 |
+| `src/lib/audit/`              | **Evidence:** Mission evidence schema and serialization.                                                                             |
+| `src/lib/recon/`              | **Reconnaissance:** RDAP domain lookup.                                                                                              |
+| `src/lib/browser/`            | **Client Utilities:** `downloadBlob.ts` — file download handler.                                                                     |
+| `mcp-server/`                 | **MCP Server:** Standalone Node.js server exposing `ping` and `domain_whois` tools.                                                  |
+| `tests/`                      | **E2E Tests:** Playwright specs — dashboard, governance, red team.                                                                   |
+| `scripts/`                    | **Ops Scripts:** `check-env-parity.mjs`, `verify-ready.mjs`. Pre-deploy tooling.                                                     |
+| `docs/`                       | **Documentation:** Architecture flows, security advisory, hardening roadmap, runbook.                                                |
 
 ### Naming Conventions & Hygiene
 
