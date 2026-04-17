@@ -250,9 +250,6 @@ Jobs run in parallel. Order in file: security-audit → lint → type-check → 
 | `LANGSMITH_API_KEY`          | LangSmith tracing/telemetry                              |
 | `VERIFY_TARGET_ENV`          | `production` vs non-production flag for health checks    |
 | `NEXT_PUBLIC_SENTRY_DSN`     | Sentry error reporting DSN (public, safe to expose)      |
-| `SENTRY_AUTH_TOKEN`          | Sentry source maps upload token (build-time only)        |
-| `SENTRY_ORG`                 | Sentry organization slug (for source maps upload)        |
-| `SENTRY_PROJECT`             | Sentry project slug (for source maps upload)             |
 
 Run `npm run verify:env` to validate all required vars before deploying.
 

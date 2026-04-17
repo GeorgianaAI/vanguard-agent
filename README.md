@@ -258,7 +258,7 @@ Use the live demo credentials below to test the full Command Center flow:
 - **Mission Persistence:** Upstash Redis (HTTP-based State Checkpointing)
 - **Intelligence Vault:** Upstash Vector (CVE & Recon Knowledge Storage)
 - **Reconnaissance Uplink:** Tavily AI (Agentic Web Search)
-- **Observability:** LangSmith (Telemetry & Trace Partitioning)
+- **Observability:** LangSmith (Telemetry & Trace Partitioning) · Sentry (Error Monitoring — client, server, Edge Runtime)
 - **Validation:** Zod 4 (Strict Data Contracts)
 - **Runtime:** Vercel Edge Functions (Distributed Compute)
 - **Testing:** **Vitest** (unit tests: Zod request contracts, mission/approval state, dashboard message utilities) · **Playwright** (dashboard e2e smoke: shell UI, empty state, mocked chat errors)
@@ -311,6 +311,7 @@ This project uses a **narrow, documented** defensive posture — not generic pro
 - [x] **Dependency & audit hygiene:** `npm audit --audit-level=high` on **root** and **`mcp-server/`** in CI; policy in [`docs/dependency-audit-policy.md`](./docs/dependency-audit-policy.md); one-line register [`docs/dependency-risk-register.md`](./docs/dependency-risk-register.md).
 - [x] **Defensive CVE / advisory correlation (v1 documented):** Narrow scope — CVE IDs from **mission artifacts** → **NVD** correlation with existing budgets, checkpointing, governance UI + PDF; **not** standalone keyword/CPE enrichment without a CVE string, **not** multi-provider primary fetch beyond NVD, **not** full SCA (see section above).
 - [x] **Error Boundaries:** Integrated "Circuit Breakers" to prevent app-wide crashes and allow one-click recovery in order to maintain operational telemetry during runtime exceptions.
+- [x] **Error Monitoring (Sentry):** `@sentry/nextjs` wired across client, server, and Edge Runtime. Unhandled exceptions are captured and reported automatically; a `global-error` root boundary surfaces reset UI while reporting to Sentry.
 - [ ] **Auth: evaluate / migrate to Clerk (optional):** Replace custom session flow with Clerk if product direction confirms; preserve roles, `/dashboard` access, root `proxy` (auth/RBAC), and Playwright e2e bypass or Clerk test mode.
 
 ---
@@ -397,6 +398,12 @@ LANGSMITH_PROJECT=vanguard-agent-recon
 # Ensures the trace completes before Next.js Edge function termination
 
 LANGCHAIN_CALLBACKS_BACKGROUND=false
+
+# 🚨 Error Monitoring (Sentry)
+
+# Captures unhandled exceptions across client, server, and Edge Runtime.
+
+NEXT_PUBLIC_SENTRY_DSN=https://xxxx@xxxx.ingest.sentry.io/xxxx
 
 ```
 
