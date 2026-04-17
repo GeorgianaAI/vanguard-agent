@@ -6,10 +6,7 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-
-  // Upload source maps to Sentry at build time (requires SENTRY_AUTH_TOKEN)
+  // Upload source maps to Sentry at build time (requires SENTRY_AUTH_TOKEN, SENTRY_ORG, SENTRY_PROJECT)
   silent: !process.env.CI,
 
   // Automatically tree-shake Sentry logger in production builds

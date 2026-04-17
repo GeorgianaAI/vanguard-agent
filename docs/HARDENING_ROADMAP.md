@@ -58,7 +58,7 @@ Legend used in this file:
 ### 6) Evaluation and Observability
 
 - **Status:** Implemented (Strong foundation), Planned (SLO-linked telemetry)
-- **Evidence today:** LangSmith traces, governance ledger/evidence trail, export-ready audit artifacts, test and CI validation.
+- **Evidence today:** LangSmith traces, Sentry error monitoring (client/server/Edge), governance ledger/evidence trail, export-ready audit artifacts, test and CI validation.
 
 ### 7) Product Thinking
 
@@ -99,6 +99,8 @@ Legend used in this file:
    - Ensure request/mission IDs are consistently visible across logs/traces/governance artifacts.
 3. **Post-incident telemetry review loop**
    - Add a lightweight monthly reliability telemetry review ritual.
+4. **Sentry source maps** *(optional near-term)*
+   - Add `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` to surface real TypeScript line numbers in Sentry stack traces instead of minified output.
 
 ---
 
