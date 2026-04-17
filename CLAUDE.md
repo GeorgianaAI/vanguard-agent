@@ -21,6 +21,7 @@ Vanguard is an autonomous multi-agent recon and governance platform. It orchestr
 - **Streaming:** Vercel AI SDK (`ai`) — `createUIMessageStreamResponse()`
 - **Document Export:** `pdf-lib` — governance PDF generation
 - **MCP Server:** `@modelcontextprotocol/sdk` — standalone MCP server (`mcp-server/`)
+- **Error Monitoring:** Sentry (`@sentry/nextjs`) — client, server, and Edge Runtime error capture with source maps
 - **Testing:** Vitest (unit/integration) + Playwright (E2E)
 
 ## 2.1 Version Governance & Stability Lock
@@ -248,6 +249,10 @@ Jobs run in parallel. Order in file: security-audit → lint → type-check → 
 | `RED_TEAM_UPSTASH_*`         | Separate Upstash creds for red team isolation            |
 | `LANGSMITH_API_KEY`          | LangSmith tracing/telemetry                              |
 | `VERIFY_TARGET_ENV`          | `production` vs non-production flag for health checks    |
+| `NEXT_PUBLIC_SENTRY_DSN`     | Sentry error reporting DSN (public, safe to expose)      |
+| `SENTRY_AUTH_TOKEN`          | Sentry source maps upload token (build-time only)        |
+| `SENTRY_ORG`                 | Sentry organization slug (for source maps upload)        |
+| `SENTRY_PROJECT`             | Sentry project slug (for source maps upload)             |
 
 Run `npm run verify:env` to validate all required vars before deploying.
 
