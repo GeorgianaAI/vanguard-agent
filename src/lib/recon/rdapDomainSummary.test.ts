@@ -15,9 +15,7 @@ describe("lookupDomainRdapJson", () => {
           ldhName: "example.com",
           status: ["active"],
           entities: [],
-          events: [
-            { eventAction: "registration", eventDate: "2020-01-01T00:00:00Z" },
-          ],
+          events: [{ eventAction: "registration", eventDate: "2020-01-01T00:00:00Z" }],
         }),
       })) as unknown as typeof fetch,
     );
@@ -38,8 +36,6 @@ describe("lookupDomainRdapJson", () => {
       })) as unknown as typeof fetch,
     );
 
-    await expect(lookupDomainRdapJson("bad.test")).rejects.toThrow(
-      "RDAP request failed (404)",
-    );
+    await expect(lookupDomainRdapJson("bad.test")).rejects.toThrow("RDAP request failed (404)");
   });
 });

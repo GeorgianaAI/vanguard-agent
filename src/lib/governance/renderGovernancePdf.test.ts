@@ -18,9 +18,7 @@ function minimalModel(over: Partial<GovernanceViewModel> = {}): GovernanceViewMo
     ],
     advisorySignals: [],
     advisoryOverflowCount: 0,
-    evidenceTrail: [
-      { label: "L", desc: "D", id: "GOV-1" },
-    ],
+    evidenceTrail: [{ label: "L", desc: "D", id: "GOV-1" }],
     nistMeasure: {
       mode: "M",
       label: "L",

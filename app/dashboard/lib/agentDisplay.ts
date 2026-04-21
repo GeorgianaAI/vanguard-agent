@@ -1,10 +1,7 @@
 import type { DashboardMessage } from "./types";
 import type { AgentType } from "../components/AgentBadge";
 
-
-function mapMetadataNode(
-  raw: unknown,
-): AgentType | null {
+function mapMetadataNode(raw: unknown): AgentType | null {
   if (raw === "supervisor") return "SUPERVISOR";
   if (raw === "scout") return "SCOUT";
   if (raw === "auditor") return "AUDITOR";

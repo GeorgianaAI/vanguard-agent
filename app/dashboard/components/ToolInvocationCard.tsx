@@ -10,11 +10,7 @@ type ToolInvocationCardProps = {
   onAbort: ToolActionHandler;
 };
 
-export function ToolInvocationCard({
-  part,
-  onAuthorize,
-  onAbort,
-}: ToolInvocationCardProps) {
+export function ToolInvocationCard({ part, onAuthorize, onAbort }: ToolInvocationCardProps) {
   const toolName = getToolName(part);
   const query = getToolQuery(part);
 
@@ -40,9 +36,7 @@ export function ToolInvocationCard({
             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-cyan-500/80">
               {reconTool ? "📡 RECONNAISSANCE" : "⚙️ SYSTEM TOOL"}
             </span>
-            <span className="text-[11px] font-bold text-slate-400 tracking-tight">
-              {toolName}
-            </span>
+            <span className="text-[11px] font-bold text-slate-400 tracking-tight">{toolName}</span>
           </div>
         </div>
 
@@ -88,9 +82,7 @@ export function ToolInvocationCard({
             Raw Intelligence Log
           </div>
           <pre className="custom-scrollbar max-h-64 overflow-auto rounded-xl border border-slate-800 bg-slate-950/80 p-5 text-[11px] leading-relaxed text-slate-400 font-mono shadow-inner border-t-4 border-t-cyan-950/50">
-            {typeof part.output === "string"
-              ? part.output
-              : JSON.stringify(part.output, null, 2)}
+            {typeof part.output === "string" ? part.output : JSON.stringify(part.output, null, 2)}
           </pre>
         </div>
       )}
@@ -105,11 +97,7 @@ export function ToolInvocationCard({
       {/* ⚖️ GOVERNANCE: Red Button Overlay */}
       {needsApproval && (
         <div className="pt-2 animate-in fade-in zoom-in-95 duration-300">
-          <ApprovalCard
-            part={part}
-            onAuthorize={onAuthorize}
-            onAbort={onAbort}
-          />
+          <ApprovalCard part={part} onAuthorize={onAuthorize} onAbort={onAbort} />
         </div>
       )}
     </div>

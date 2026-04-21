@@ -1,9 +1,7 @@
 type ThreadInput = Request | URLSearchParams;
 
 function toSearchParams(input: ThreadInput): URLSearchParams {
-  return input instanceof URLSearchParams
-    ? input
-    : new URL(input.url).searchParams;
+  return input instanceof URLSearchParams ? input : new URL(input.url).searchParams;
 }
 
 export function requireActorId(req: Request): string | null {

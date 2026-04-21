@@ -10,8 +10,7 @@ function readBool(value: string | undefined): boolean {
 
 export function isRedTeamMode(env: EnvSource = process.env): boolean {
   return (
-    readBool(env[RUNTIME_ENV_KEYS.redteamMode]) ||
-    readBool(env[RUNTIME_ENV_KEYS.redteamModePublic])
+    readBool(env[RUNTIME_ENV_KEYS.redteamMode]) || readBool(env[RUNTIME_ENV_KEYS.redteamModePublic])
   );
 }
 
@@ -19,14 +18,9 @@ export function isProductionEnv(env: EnvSource = process.env): boolean {
   return env.NODE_ENV === "production";
 }
 
-export function getLangSmithProject(
-  env: EnvSource = process.env,
-): string | undefined {
+export function getLangSmithProject(env: EnvSource = process.env): string | undefined {
   if (isRedTeamMode(env)) {
-    return (
-      env[RUNTIME_ENV_KEYS.redTeamLangsmithProject] ??
-      env[RUNTIME_ENV_KEYS.langsmithProject]
-    );
+    return env[RUNTIME_ENV_KEYS.redTeamLangsmithProject] ?? env[RUNTIME_ENV_KEYS.langsmithProject];
   }
   return env[RUNTIME_ENV_KEYS.langsmithProject];
 }
@@ -43,14 +37,10 @@ export function resolveRedisEnv(env: EnvSource = process.env): {
 } {
   if (isRedTeamMode(env)) {
     return {
-      url:
-        env[RUNTIME_ENV_KEYS.redTeamUpstashRedisUrl] ??
-        env[RUNTIME_ENV_KEYS.upstashRedisUrl],
+      url: env[RUNTIME_ENV_KEYS.redTeamUpstashRedisUrl] ?? env[RUNTIME_ENV_KEYS.upstashRedisUrl],
       token:
-        env[RUNTIME_ENV_KEYS.redTeamUpstashRedisToken] ??
-        env[RUNTIME_ENV_KEYS.upstashRedisToken],
-      keyPrefix:
-        env[RUNTIME_ENV_KEYS.redTeamRedisKeyPrefix] ?? "vanguard:redteam",
+        env[RUNTIME_ENV_KEYS.redTeamUpstashRedisToken] ?? env[RUNTIME_ENV_KEYS.upstashRedisToken],
+      keyPrefix: env[RUNTIME_ENV_KEYS.redTeamRedisKeyPrefix] ?? "vanguard:redteam",
     };
   }
   return {
@@ -67,12 +57,9 @@ export function resolveVectorEnv(env: EnvSource = process.env): {
 } {
   if (isRedTeamMode(env)) {
     return {
-      url:
-        env[RUNTIME_ENV_KEYS.redTeamUpstashVectorUrl] ??
-        env[RUNTIME_ENV_KEYS.upstashVectorUrl],
+      url: env[RUNTIME_ENV_KEYS.redTeamUpstashVectorUrl] ?? env[RUNTIME_ENV_KEYS.upstashVectorUrl],
       token:
-        env[RUNTIME_ENV_KEYS.redTeamUpstashVectorToken] ??
-        env[RUNTIME_ENV_KEYS.upstashVectorToken],
+        env[RUNTIME_ENV_KEYS.redTeamUpstashVectorToken] ?? env[RUNTIME_ENV_KEYS.upstashVectorToken],
       namespace:
         env[RUNTIME_ENV_KEYS.redTeamVectorNamespace] ??
         (env.CI ? "redteam-ci-0000000001" : "redteam-local-00000001"),
@@ -81,7 +68,6 @@ export function resolveVectorEnv(env: EnvSource = process.env): {
   return {
     url: env[RUNTIME_ENV_KEYS.upstashVectorUrl],
     token: env[RUNTIME_ENV_KEYS.upstashVectorToken],
-    namespace:
-      env[RUNTIME_ENV_KEYS.upstashVectorNamespace] ?? "vanguard-default",
+    namespace: env[RUNTIME_ENV_KEYS.upstashVectorNamespace] ?? "vanguard-default",
   };
 }

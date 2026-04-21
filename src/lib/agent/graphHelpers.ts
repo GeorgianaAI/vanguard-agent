@@ -12,10 +12,7 @@ import type { VanguardStateType } from "./state";
 export const APPROVAL_TTL_MS = 1000 * 60 * 10;
 export const APPROVAL_SIGNAL_PREFIX = "AUTHORIZATION_REQUIRED:";
 
-export function ensureEndsWithUser(
-  messages: VanguardStateType["messages"],
-  fallback: string,
-) {
+export function ensureEndsWithUser(messages: VanguardStateType["messages"], fallback: string) {
   const prepared = [...messages];
   const last = prepared[prepared.length - 1];
   if (!last || !HumanMessage.isInstance(last)) {
@@ -58,9 +55,7 @@ export async function runTargetPreflight(domain: string): Promise<{
       return {
         ok: false,
         reason:
-          error instanceof Error
-            ? error.message
-            : "Target appears unresolvable in RDAP preflight.",
+          error instanceof Error ? error.message : "Target appears unresolvable in RDAP preflight.",
       };
     }
     // Non-resolution failures (timeouts/network/provider) should not hard-stop mission.
@@ -68,9 +63,7 @@ export async function runTargetPreflight(domain: string): Promise<{
   }
 }
 
-export function hasTargetUnresolvableSignal(
-  state: VanguardStateType,
-): boolean {
+export function hasTargetUnresolvableSignal(state: VanguardStateType): boolean {
   return state.messages.some(
     (m) =>
       AIMessage.isInstance(m) &&
@@ -92,8 +85,7 @@ export function diffSinceLastApproval(
   if (previous.tool_arg_hash !== current.toolArgHash) {
     changes.push("Tool arguments changed from prior approval.");
   }
-  const previousTarget =
-    state.pendingApprovalContext?.constraints.target_lock ?? "";
+  const previousTarget = state.pendingApprovalContext?.constraints.target_lock ?? "";
   if (previousTarget && previousTarget !== current.target) {
     changes.push(`Target changed: ${previousTarget} -> ${current.target}`);
   }
@@ -122,8 +114,7 @@ export async function buildApprovalContext(
     requested_at: requestedAt,
     expires_at: expiresAt,
     requested_by_node: "scout",
-    summary:
-      "Need registrar and registration event data before deeper corroboration.",
+    summary: "Need registrar and registration event data before deeper corroboration.",
     reasoning_excerpt:
       "WHOIS/RDAP data anchors identity and registration timeline before broader web corroboration.",
     risk_level: getApprovalRisk(toolName),

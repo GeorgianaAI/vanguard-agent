@@ -29,8 +29,8 @@ export function GovernanceStatusBrief() {
       </div>
 
       <p className="mx-auto max-w-md text-[12px] font-black uppercase tracking-[0.2em] leading-relaxed text-slate-600">
-        Initialize an authorized Vanguard Scout mission from the Command Center
-        to synchronize telemetry and compute an active trust score
+        Initialize an authorized Vanguard Scout mission from the Command Center to synchronize
+        telemetry and compute an active trust score
       </p>
     </div>
   );

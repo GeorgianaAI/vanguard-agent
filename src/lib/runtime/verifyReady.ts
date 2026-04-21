@@ -15,9 +15,7 @@ export function isHealthAcceptable(
 ): boolean {
   if (targetEnv === "production") {
     return (
-      body.status === "ok" &&
-      body.dependencies.redis === "ok" &&
-      body.dependencies.vector === "ok"
+      body.status === "ok" && body.dependencies.redis === "ok" && body.dependencies.vector === "ok"
     );
   }
 

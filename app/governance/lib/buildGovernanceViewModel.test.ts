@@ -5,10 +5,7 @@ import { VulnerabilityFindingSchema } from "@/src/lib/vulnerability/vulnerabilit
 
 import { buildGovernanceViewModelFromData } from "./buildGovernanceViewModel";
 
-function assistant(
-  text: string,
-  metadata?: DashboardMessage["metadata"],
-): DashboardMessage {
+function assistant(text: string, metadata?: DashboardMessage["metadata"]): DashboardMessage {
   return {
     id: "a",
     role: "assistant",
@@ -113,10 +110,7 @@ describe("buildGovernanceViewModelFromData", () => {
       user("Mission authorized"),
       assistant("Final auditor summary.", { agent_node: "auditor" }),
     ];
-    const vm = buildGovernanceViewModelFromData(
-      messages,
-      evidencePackage("complete", 2),
-    );
+    const vm = buildGovernanceViewModelFromData(messages, evidencePackage("complete", 2));
 
     expect(vm.source).toBe("derived");
     expect(vm.ledgerRows[1]?.status).toBe("Policy Match");
@@ -143,9 +137,9 @@ describe("buildGovernanceViewModelFromData", () => {
 
     expect(vm.source).toBe("derived");
     expect(vm.ledgerRows[1]?.status).toBe("Policy Mismatch");
-    expect(
-      vm.evidenceTrail.find((e) => e.id === "GOV-HITL")?.desc.toLowerCase(),
-    ).toContain("aborted");
+    expect(vm.evidenceTrail.find((e) => e.id === "GOV-HITL")?.desc.toLowerCase()).toContain(
+      "aborted",
+    );
     expect(vm.nistManage.value).toBe("ABORTED");
     expect(vm.nistMeasure.mode).toBe("TEVV-DEGRADED");
     expect(vm.nistMeasure.percent).toBeGreaterThanOrEqual(0);
@@ -167,9 +161,7 @@ describe("buildGovernanceViewModelFromData", () => {
       evidencePackage("complete", 2, ["w1", "w2"]),
     );
 
-    expect(withWarnings.nistMeasure.percent).toBeLessThan(
-      withoutWarnings.nistMeasure.percent,
-    );
+    expect(withWarnings.nistMeasure.percent).toBeLessThan(withoutWarnings.nistMeasure.percent);
   });
 
   it("uses checkpoint vulnerabilities for advisory cards and GOV-CVE evidence", () => {
@@ -227,9 +219,6 @@ describe("buildGovernanceViewModelFromData", () => {
       evidencePackage("complete", 0, []),
     );
 
-    expect(withoutTraces.nistMeasure.percent).toBeLessThan(
-      withTraces.nistMeasure.percent,
-    );
+    expect(withoutTraces.nistMeasure.percent).toBeLessThan(withTraces.nistMeasure.percent);
   });
 });
-

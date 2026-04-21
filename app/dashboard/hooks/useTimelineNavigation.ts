@@ -7,12 +7,8 @@ type UseTimelineNavigationArgs = {
   timelineEvents: MissionTimelineEvent[];
 };
 
-export function useTimelineNavigation({
-  timelineEvents,
-}: UseTimelineNavigationArgs) {
-  const [activeTimelineMessageId, setActiveTimelineMessageId] = useState<
-    string | null
-  >(null);
+export function useTimelineNavigation({ timelineEvents }: UseTimelineNavigationArgs) {
+  const [activeTimelineMessageId, setActiveTimelineMessageId] = useState<string | null>(null);
 
   const seekToTimelineIndex = useCallback(
     (index: number) => {
@@ -29,15 +25,12 @@ export function useTimelineNavigation({
     [timelineEvents],
   );
 
-  const handleSelectTimelineEvent = useCallback(
-    (event: MissionTimelineEvent) => {
-      setActiveTimelineMessageId(event.messageId);
-      document
-        .getElementById(`message-${event.messageId}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    },
-    [],
-  );
+  const handleSelectTimelineEvent = useCallback((event: MissionTimelineEvent) => {
+    setActiveTimelineMessageId(event.messageId);
+    document
+      .getElementById(`message-${event.messageId}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, []);
 
   const resetTimelineSelection = useCallback(() => {
     setActiveTimelineMessageId(null);

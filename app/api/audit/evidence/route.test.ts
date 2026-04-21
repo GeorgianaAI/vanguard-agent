@@ -24,9 +24,7 @@ describe("GET /api/audit/evidence", () => {
     unsetEnv("LANGSMITH_API_KEY", "LANGSMITH_PROJECT");
 
     const { GET } = await import("./route");
-    const res = await GET(
-      makeTestRequest("/api/audit/evidence", { query: { thread_id: "t-1" } }),
-    );
+    const res = await GET(makeTestRequest("/api/audit/evidence", { query: { thread_id: "t-1" } }));
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -44,9 +42,7 @@ describe("GET /api/audit/evidence", () => {
     unsetEnv("LANGSMITH_API_KEY", "LANGSMITH_PROJECT");
 
     const { GET } = await import("./route");
-    const res = await GET(
-      makeTestRequest("/api/audit/evidence", { query: { thread_id: "t-2" } }),
-    );
+    const res = await GET(makeTestRequest("/api/audit/evidence", { query: { thread_id: "t-2" } }));
 
     expect(res.status).toBe(200);
     const body = (await res.json()) as {

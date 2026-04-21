@@ -1,8 +1,5 @@
 import type { DashboardMessage } from "@/app/dashboard/lib/types";
-import {
-  extractRenderableText,
-  getApprovalContextFromMessage,
-} from "@/app/dashboard/lib/utils";
+import { extractRenderableText, getApprovalContextFromMessage } from "@/app/dashboard/lib/utils";
 import type { EvidencePackage } from "@/src/lib/audit/evidence";
 import type { VulnerabilityFinding } from "@/src/lib/vulnerability/vulnerabilityFinding";
 import { LEDGER_MOCK, EVIDENCE_TRAIL } from "../governance-mock-data";
@@ -44,16 +41,10 @@ function detectDecision(messages: DashboardMessage[]): "authorized" | "aborted" 
     const m = messages[i];
     if (m.role !== "user") continue;
     const text = extractRenderableText(m).toLowerCase();
-    if (
-      text.includes("authorization granted by operator") ||
-      text.includes("mission authorized")
-    ) {
+    if (text.includes("authorization granted by operator") || text.includes("mission authorized")) {
       return "authorized";
     }
-    if (
-      text.includes("authorization denied by operator") ||
-      text.includes("mission aborted")
-    ) {
+    if (text.includes("authorization denied by operator") || text.includes("mission aborted")) {
       return "aborted";
     }
   }
@@ -94,13 +85,11 @@ function buildEvidenceTrailDerived(
     id: "GOV-TRIAGE",
   };
 
-  const cveEvents: GovernanceEvidenceItem[] = vulnerabilities
-    .slice(0, 3)
-    .map((v, i) => ({
-      label: "Public Advisory Correlation",
-      desc: `${v.cveId} — ${v.severity} (CVSS ${v.cvssScore.toFixed(1)}). ${v.confidence.rationale.slice(0, 120)}${v.confidence.rationale.length > 120 ? "…" : ""}`,
-      id: `GOV-CVE-${String(i + 1).padStart(2, "0")}`,
-    }));
+  const cveEvents: GovernanceEvidenceItem[] = vulnerabilities.slice(0, 3).map((v, i) => ({
+    label: "Public Advisory Correlation",
+    desc: `${v.cveId} — ${v.severity} (CVSS ${v.cvssScore.toFixed(1)}). ${v.confidence.rationale.slice(0, 120)}${v.confidence.rationale.length > 120 ? "…" : ""}`,
+    id: `GOV-CVE-${String(i + 1).padStart(2, "0")}`,
+  }));
 
   const advisoryPipe: GovernanceEvidenceItem[] =
     advisoryEnrichmentWarnings.length > 0
@@ -143,9 +132,7 @@ export function buildGovernanceViewModelFromData(
   extras?: GovernanceCheckpointExtras,
   opts?: GovernanceBuildOptions,
 ): GovernanceViewModel {
-  const checkpointFindings = parseCheckpointVulnerabilities(
-    extras?.vulnerabilities,
-  );
+  const checkpointFindings = parseCheckpointVulnerabilities(extras?.vulnerabilities);
   const advisoryWarn = extras?.advisoryWarnings ?? [];
 
   if (messages.length === 0) {
@@ -209,11 +196,7 @@ export function buildGovernanceViewModelFromData(
       checkpointFindings,
       advisoryWarn,
     ),
-    nistMeasure: buildNistMeasureCard(
-      auditorPresent,
-      evidence,
-      checkpointFindings,
-    ),
+    nistMeasure: buildNistMeasureCard(auditorPresent, evidence, checkpointFindings),
     nistManage: buildNistManageCard(decision, manageCtx),
     threadId: opts?.threadId,
     missionId: evidence?.mission_id,

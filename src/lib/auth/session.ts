@@ -6,10 +6,7 @@ function key(): Uint8Array {
   return new TextEncoder().encode(getAuthSecret());
 }
 
-export async function createSessionToken(
-  username: string,
-  role: OperatorRole,
-): Promise<string> {
+export async function createSessionToken(username: string, role: OperatorRole): Promise<string> {
   const ttl = getAuthTtlSeconds();
   const now = Math.floor(Date.now() / 1000);
 
@@ -21,19 +18,15 @@ export async function createSessionToken(
     .sign(key());
 }
 
-export async function verifySessionToken(
-  token: string,
-): Promise<SessionClaims | null> {
+export async function verifySessionToken(token: string): Promise<SessionClaims | null> {
   try {
     const { payload } = await jwtVerify(token, key(), {
       algorithms: ["HS256"],
     });
     if (typeof payload.sub !== "string") return null;
     const role = payload.role;
-    if (role !== "admin" && role !== "analyst" && role !== "viewer")
-      return null;
-    if (typeof payload.iat !== "number" || typeof payload.exp !== "number")
-      return null;
+    if (role !== "admin" && role !== "analyst" && role !== "viewer") return null;
+    if (typeof payload.iat !== "number" || typeof payload.exp !== "number") return null;
 
     return {
       sub: payload.sub,

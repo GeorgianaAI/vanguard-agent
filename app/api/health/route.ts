@@ -22,8 +22,7 @@ export async function GET(req: Request) {
 
   const details: Record<string, string> = {};
 
-  let redisState: HealthState =
-    redis.url && redis.token ? "ok" : "missing";
+  let redisState: HealthState = redis.url && redis.token ? "ok" : "missing";
   if (redisState === "ok") {
     const result = await probeRedis(redis.url!, redis.token!);
     if (result.state === "error") {
@@ -32,8 +31,7 @@ export async function GET(req: Request) {
     }
   }
 
-  let vectorState: HealthState =
-    vector.url && vector.token ? "ok" : "missing";
+  let vectorState: HealthState = vector.url && vector.token ? "ok" : "missing";
   if (vectorState === "ok") {
     const result = await probeVector(vector.url!, vector.token!);
     if (result.state === "error") {
@@ -44,8 +42,7 @@ export async function GET(req: Request) {
 
   let langsmithState: HealthState = "degraded";
   if (langsmithApiKey && langsmithProject) {
-    const endpoint =
-      process.env.LANGSMITH_ENDPOINT ?? "https://api.smith.langchain.com";
+    const endpoint = process.env.LANGSMITH_ENDPOINT ?? "https://api.smith.langchain.com";
     const result = await probeLangSmith(endpoint, langsmithApiKey);
     if (result.state === "ok") {
       langsmithState = "ok";
@@ -57,8 +54,7 @@ export async function GET(req: Request) {
     langsmithState = "missing";
   }
 
-  const prodCriticalMissing =
-    isProductionEnv() && (redisState !== "ok" || vectorState !== "ok");
+  const prodCriticalMissing = isProductionEnv() && (redisState !== "ok" || vectorState !== "ok");
   const status = prodCriticalMissing ? 503 : 200;
 
   if (status !== 200) {

@@ -48,9 +48,7 @@ export function GovernancePageHeader() {
               ···
             </p>
           ) : trust.mode === "derived" ? (
-            <p className="text-2xl font-black tabular-nums text-emerald-400">
-              {trust.formatted}
-            </p>
+            <p className="text-2xl font-black tabular-nums text-emerald-400">{trust.formatted}</p>
           ) : (
             <p
               data-testid="governance-trust-score-standby"

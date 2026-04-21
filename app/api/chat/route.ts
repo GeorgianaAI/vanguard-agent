@@ -1,13 +1,6 @@
 import { approvalMissingContextBinding, MissionRequestSchema } from "./missionRequest";
-import {
-  newRequestId,
-  vanguardChatLog,
-  withRequestIdHeaders,
-} from "./telemetry";
-import {
-  getThreadPrefix,
-  isRedTeamMode,
-} from "../../../src/lib/runtime/redteam";
+import { newRequestId, vanguardChatLog, withRequestIdHeaders } from "./telemetry";
+import { getThreadPrefix, isRedTeamMode } from "../../../src/lib/runtime/redteam";
 import { getVectorRuntimeConfig } from "../../../src/lib/runtime/vectorClient";
 import { computeApprovalContextHash } from "../../../src/lib/approval/hash";
 import type { ApprovalContextV1 } from "../../../src/lib/approval/types";
@@ -37,10 +30,7 @@ export async function POST(req: Request) {
         actorId,
         actorRole,
       });
-      return withRequestIdHeaders(
-        new Response("Invalid mission payload", { status: 400 }),
-        reqId,
-      );
+      return withRequestIdHeaders(new Response("Invalid mission payload", { status: 400 }), reqId);
     }
 
     const {
@@ -113,11 +103,7 @@ export async function POST(req: Request) {
     const missionId = threadId;
 
     // Fast-fail tampered approval payloads before touching external dependencies.
-    if (
-      isApproval &&
-      approval_context &&
-      typeof approval_context === "object"
-    ) {
+    if (isApproval && approval_context && typeof approval_context === "object") {
       try {
         const bodyContext = approval_context as ApprovalContextV1;
         const computedBodyHash = await computeApprovalContextHash(bodyContext);
@@ -145,8 +131,7 @@ export async function POST(req: Request) {
           phase: "approval",
           status: 409,
           threadId,
-          message:
-            "Approval context hash computation failed (early body check)",
+          message: "Approval context hash computation failed (early body check)",
           isApproval: true,
           actorId,
           actorRole,

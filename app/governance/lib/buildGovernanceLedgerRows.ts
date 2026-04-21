@@ -1,8 +1,5 @@
 import type { DashboardMessage } from "@/app/dashboard/lib/types";
-import {
-  extractRenderableText,
-  getApprovalContextFromMessage,
-} from "@/app/dashboard/lib/utils";
+import { extractRenderableText, getApprovalContextFromMessage } from "@/app/dashboard/lib/utils";
 
 import { LEDGER_MOCK } from "../governance-mock-data";
 
@@ -21,9 +18,7 @@ const RISK_MAP: Record<string, GovernanceLedgerRow["risk"]> = {
 };
 
 /** Ledger B: ordered unique tool labels from executed tool invocations. */
-export function collectOrderedToolLabelsFromMessages(
-  messages: DashboardMessage[],
-): string[] {
+export function collectOrderedToolLabelsFromMessages(messages: DashboardMessage[]): string[] {
   const labels: string[] = [];
   const seen = new Set<string>();
   for (const m of messages) {
@@ -70,17 +65,11 @@ function getAuthorizedDecision(messages: DashboardMessage[]): boolean | null {
 
     const t = extractRenderableText(m).toLowerCase();
 
-    if (
-      t.includes("authorization granted by operator") ||
-      t.includes("mission authorized")
-    ) {
+    if (t.includes("authorization granted by operator") || t.includes("mission authorized")) {
       return true;
     }
 
-    if (
-      t.includes("authorization denied by operator") ||
-      t.includes("mission aborted")
-    ) {
+    if (t.includes("authorization denied by operator") || t.includes("mission aborted")) {
       return false;
     }
   }
@@ -88,9 +77,7 @@ function getAuthorizedDecision(messages: DashboardMessage[]): boolean | null {
   return null;
 }
 
-function findApprovalContext(
-  messages: DashboardMessage[],
-) {
+function findApprovalContext(messages: DashboardMessage[]) {
   for (const m of messages) {
     const ctx = getApprovalContextFromMessage(m);
     if (ctx) return ctx;
@@ -146,4 +133,3 @@ export function buildGovernanceLedgerRowsFromMessages(
     },
   ] as unknown as GovernanceLedgerRow[];
 }
-

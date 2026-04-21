@@ -9,9 +9,7 @@ export function stableStringify(value: unknown): string {
   }
   const record = value as Record<string, unknown>;
   const keys = Object.keys(record).sort();
-  return `{${keys
-    .map((k) => `${JSON.stringify(k)}:${stableStringify(record[k])}`)
-    .join(",")}}`;
+  return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(record[k])}`).join(",")}}`;
 }
 
 async function sha256Hex(input: string): Promise<string> {
@@ -22,15 +20,11 @@ async function sha256Hex(input: string): Promise<string> {
     .join("");
 }
 
-export async function computeArgHash(
-  args: Record<string, unknown>,
-): Promise<string> {
+export async function computeArgHash(args: Record<string, unknown>): Promise<string> {
   return `sha256:${await sha256Hex(stableStringify(args))}`;
 }
 
-export async function computeApprovalContextHash(
-  ctx: ApprovalContextV1,
-): Promise<string> {
+export async function computeApprovalContextHash(ctx: ApprovalContextV1): Promise<string> {
   const bind = {
     version: ctx.version,
     approval_id: ctx.approval_id,

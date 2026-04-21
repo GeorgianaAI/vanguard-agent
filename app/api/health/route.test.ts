@@ -172,14 +172,8 @@ describe("GET /api/health", () => {
     const { GET } = await import("./route");
     const res = await GET(makeTestRequest("/api/health"));
     expect(res.status).toBe(200);
-    expect(vi.mocked(probes.probeRedis)).toHaveBeenCalledWith(
-      "https://redis-red",
-      "red-token",
-    );
-    expect(vi.mocked(probes.probeVector)).toHaveBeenCalledWith(
-      "https://vector-red",
-      "red-token",
-    );
+    expect(vi.mocked(probes.probeRedis)).toHaveBeenCalledWith("https://redis-red", "red-token");
+    expect(vi.mocked(probes.probeVector)).toHaveBeenCalledWith("https://vector-red", "red-token");
   });
 
   it("resolves default redis config with redteam mode disabled", async () => {

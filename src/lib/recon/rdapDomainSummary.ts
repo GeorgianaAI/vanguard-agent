@@ -7,15 +7,12 @@ const RDAP_API_BASE = "https://rdap.org/domain";
 export async function lookupDomainRdapJson(domain: string): Promise<string> {
   const normalizedDomain = domain.trim().toLowerCase();
 
-  const response = await fetch(
-    `${RDAP_API_BASE}/${encodeURIComponent(normalizedDomain)}`,
-    {
-      method: "GET",
-      headers: {
-        accept: "application/json",
-      },
+  const response = await fetch(`${RDAP_API_BASE}/${encodeURIComponent(normalizedDomain)}`, {
+    method: "GET",
+    headers: {
+      accept: "application/json",
     },
-  );
+  });
 
   if (!response.ok) {
     const text = await response.text();
@@ -35,16 +32,14 @@ export async function lookupDomainRdapJson(domain: string): Promise<string> {
     }>;
   };
 
-  const registrarEntity = (rdap.entities ?? []).find((e) =>
-    (e.roles ?? []).includes("registrar"),
-  );
+  const registrarEntity = (rdap.entities ?? []).find((e) => (e.roles ?? []).includes("registrar"));
 
   let registrar = "unknown";
   const vcard = registrarEntity?.vcardArray;
   if (Array.isArray(vcard) && Array.isArray(vcard[1])) {
-    const fnRow = (vcard[1] as unknown[]).find(
-      (row) => Array.isArray(row) && row[0] === "fn",
-    ) as unknown[] | undefined;
+    const fnRow = (vcard[1] as unknown[]).find((row) => Array.isArray(row) && row[0] === "fn") as
+      | unknown[]
+      | undefined;
     if (fnRow && typeof fnRow[3] === "string") {
       registrar = fnRow[3];
     }
@@ -52,9 +47,7 @@ export async function lookupDomainRdapJson(domain: string): Promise<string> {
 
   const keyEvents = (rdap.events ?? [])
     .filter((e) =>
-      ["registration", "expiration", "last changed"].includes(
-        (e.eventAction ?? "").toLowerCase(),
-      ),
+      ["registration", "expiration", "last changed"].includes((e.eventAction ?? "").toLowerCase()),
     )
     .map((e) => ({
       action: e.eventAction ?? "unknown",

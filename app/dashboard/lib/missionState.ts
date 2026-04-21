@@ -14,9 +14,7 @@ export function hasOpenApproval(messages: DashboardMessage[]): boolean {
     const hasApprovalSignal = text.includes("authorization_required:");
     const hasApprovalPart = message.parts.some(
       (part) =>
-        part.type === "tool-invocation" &&
-        "state" in part &&
-        part.state === "approval-requested",
+        part.type === "tool-invocation" && "state" in part && part.state === "approval-requested",
     );
     return hasApprovalSignal || hasApprovalPart;
   });
@@ -26,9 +24,7 @@ export function hasOpenApproval(messages: DashboardMessage[]): boolean {
   return !messages.slice(latestApprovalIndex + 1).some((message) => {
     if (message.role !== "user") return false;
     const text = extractMissionMessageText(message);
-    return (
-      text.includes("mission authorized") || text.includes("mission aborted")
-    );
+    return text.includes("mission authorized") || text.includes("mission aborted");
   });
 }
 

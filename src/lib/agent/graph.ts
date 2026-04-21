@@ -1,9 +1,4 @@
-import {
-  AIMessage,
-  HumanMessage,
-  SystemMessage,
-  ToolMessage,
-} from "@langchain/core/messages";
+import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
 import { END, StateGraph } from "@langchain/langgraph";
 import { getCheckpointer } from "./checkpointer";
 import { VanguardStateAnnotation, VanguardStateType } from "./state";
@@ -73,10 +68,7 @@ async function scoutNode(state: VanguardStateType) {
     const { context, contextHash } = await buildApprovalContext(state);
     const serializedContext = JSON.stringify(context);
     const approvalPayload = `${APPROVAL_SIGNAL_PREFIX}${serializedContext}`;
-    const approvalMessage = attachAgentNode(
-      new AIMessage(approvalPayload),
-      "scout",
-    );
+    const approvalMessage = attachAgentNode(new AIMessage(approvalPayload), "scout");
 
     return {
       isPendingApproval: true,
@@ -123,10 +115,7 @@ async function scoutNode(state: VanguardStateType) {
 
 async function advisoryEnrichmentNode(state: VanguardStateType) {
   const messages = reviveLangchainMessages(state.messages as unknown[]);
-  const { findings, warnings } = await runAdvisoryEnrichment(
-    messages,
-    state.target,
-  );
+  const { findings, warnings } = await runAdvisoryEnrichment(messages, state.target);
   return {
     vulnerabilities: findings,
     advisoryEnrichmentWarnings: warnings,
@@ -214,9 +203,7 @@ async function auditorNode(state: VanguardStateType) {
  * - If scout already ran: skip to auditor.
  * - Default: go through supervisor (initial mission start).
  */
-function routeFromStart(
-  state: VanguardStateType,
-): "supervisor" | "scout" | "auditor" {
+function routeFromStart(state: VanguardStateType): "supervisor" | "scout" | "auditor" {
   if (state.missionAborted) return "auditor";
   if (state.scoutHasRun) return "auditor";
   if (state.isAuthorized) return "scout";
@@ -231,11 +218,7 @@ function routeFromScout(state: VanguardStateType) {
   if (state.isPendingApproval) return END;
 
   const last = state.messages[state.messages.length - 1];
-  if (
-    last &&
-    AIMessage.isInstance(last) &&
-    (last.tool_calls?.length ?? 0) > 0
-  ) {
+  if (last && AIMessage.isInstance(last) && (last.tool_calls?.length ?? 0) > 0) {
     return "tools";
   }
 

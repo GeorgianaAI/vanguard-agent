@@ -6,10 +6,7 @@ export type VanguardMessageMetadata = {
 
 export type DashboardMessage = UIMessage<VanguardMessageMetadata>;
 
-export type ToolPart = Extract<
-  UIMessage["parts"][number],
-  { state: string; toolCallId: string }
->;
+export type ToolPart = Extract<UIMessage["parts"][number], { state: string; toolCallId: string }>;
 
 export type ToolActionHandler = (part: ToolPart) => Promise<void>;
 

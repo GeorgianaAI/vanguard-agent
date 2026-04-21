@@ -32,10 +32,7 @@ export function buildNistMeasureCard(
 
   return {
     mode: degraded ? "TEVV-DEGRADED" : "TEVV-ACTIVE",
-    label:
-      critical + high > 0
-        ? "Trace + Advisory Exposure"
-        : "Trace Completeness",
+    label: critical + high > 0 ? "Trace + Advisory Exposure" : "Trace Completeness",
     value: `${percent.toFixed(1)}%`,
     percent,
   };

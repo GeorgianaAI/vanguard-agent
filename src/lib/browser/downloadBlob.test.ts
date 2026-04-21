@@ -24,10 +24,8 @@ describe("downloadBlob", () => {
 
     const createObjectURLMock = vi.fn(() => objectUrl);
     const revokeObjectURLMock = vi.fn();
-    URL.createObjectURL =
-      createObjectURLMock as unknown as typeof URL.createObjectURL;
-    URL.revokeObjectURL =
-      revokeObjectURLMock as unknown as typeof URL.revokeObjectURL;
+    URL.createObjectURL = createObjectURLMock as unknown as typeof URL.createObjectURL;
+    URL.revokeObjectURL = revokeObjectURLMock as unknown as typeof URL.revokeObjectURL;
 
     const clickMock = vi.fn();
     const removeMock = vi.fn();
@@ -66,10 +64,8 @@ describe("downloadBlob", () => {
 
     const createObjectURLMock = vi.fn(() => objectUrl);
     const revokeObjectURLMock = vi.fn();
-    URL.createObjectURL =
-      createObjectURLMock as unknown as typeof URL.createObjectURL;
-    URL.revokeObjectURL =
-      revokeObjectURLMock as unknown as typeof URL.revokeObjectURL;
+    URL.createObjectURL = createObjectURLMock as unknown as typeof URL.createObjectURL;
+    URL.revokeObjectURL = revokeObjectURLMock as unknown as typeof URL.revokeObjectURL;
 
     const anchor = {
       href: "",
@@ -86,9 +82,7 @@ describe("downloadBlob", () => {
       body: { appendChild: vi.fn() },
     };
 
-    expect(() => downloadBlob({ blob, filename: "broken.json" })).toThrow(
-      "click-failed",
-    );
+    expect(() => downloadBlob({ blob, filename: "broken.json" })).toThrow("click-failed");
     expect(revokeObjectURLMock).toHaveBeenCalledWith(objectUrl);
   });
 });

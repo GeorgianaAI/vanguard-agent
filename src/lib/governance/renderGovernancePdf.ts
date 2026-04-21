@@ -102,10 +102,7 @@ export async function renderGovernanceCompliancePdf(
 
   addHeading("Decision integrity ledger (summary)");
   for (const row of model.ledgerRows) {
-    addLine(
-      `${row.agent} | ${row.action} | ${row.status} | Risk: ${row.risk} | ${row.time}`,
-      9,
-    );
+    addLine(`${row.agent} | ${row.action} | ${row.status} | Risk: ${row.risk} | ${row.time}`, 9);
   }
 
   addHeading("Advisory signals");
@@ -113,11 +110,7 @@ export async function renderGovernanceCompliancePdf(
     addLine("None listed.");
   } else {
     for (const a of model.advisorySignals) {
-      addLine(
-        `${a.id} — ${a.severity} (CVSS ${a.cvss}) — ${a.stack}`,
-        9,
-        true,
-      );
+      addLine(`${a.id} — ${a.severity} (CVSS ${a.cvss}) — ${a.stack}`, 9, true);
       addLine(a.note, 8);
       addLine(`Remediation: ${a.remediationHint}`, 8, false, rgb(0.35, 0.35, 0.4));
       y -= 4;

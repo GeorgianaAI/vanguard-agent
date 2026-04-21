@@ -32,17 +32,14 @@ export function AdvisorySignals() {
               data-testid="governance-advisory-overflow"
               className="text-[9px] font-bold text-amber-400/90"
             >
-              +{model.advisoryOverflowCount} additional (above top{" "}
-              {GOVERNANCE_ADVISORY_TOP_N})
+              +{model.advisoryOverflowCount} additional (above top {GOVERNANCE_ADVISORY_TOP_N})
             </span>
           ) : null}
         </div>
       </div>
 
       <div className="grid min-w-0 gap-4">
-        {loadPhase === "ready" && advisories.length === 0 ? (
-          <EmptyStatePage />
-        ) : null}
+        {loadPhase === "ready" && advisories.length === 0 ? <EmptyStatePage /> : null}
         {advisories.map((cve) => (
           <div
             key={cve.id}
@@ -51,9 +48,7 @@ export function AdvisorySignals() {
           >
             <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex min-w-0 flex-wrap items-center gap-3">
-                <span className="font-mono text-xs font-black text-amber-500">
-                  {cve.id}
-                </span>
+                <span className="font-mono text-xs font-black text-amber-500">{cve.id}</span>
                 <span className="border-l border-slate-700 pl-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   {cve.stack}
                 </span>
@@ -73,9 +68,7 @@ export function AdvisorySignals() {
               </div>
             </div>
             <div className="flex min-w-0 flex-col gap-2 text-[10px] text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-              <p className="min-w-0 break-words italic">
-                {cve.remediationHint}
-              </p>
+              <p className="min-w-0 break-words italic">{cve.remediationHint}</p>
               <button
                 type="button"
                 data-testid="governance-audit-evidence-placeholder"
@@ -86,9 +79,7 @@ export function AdvisorySignals() {
                 Audit Evidence <ExternalLink className="h-2.5 w-2.5 shrink-0" />
               </button>
             </div>
-            <p className="min-w-0 break-words text-[10px] text-slate-400">
-              {cve.note}
-            </p>
+            <p className="min-w-0 break-words text-[10px] text-slate-400">{cve.note}</p>
           </div>
         ))}
       </div>

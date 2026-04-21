@@ -14,9 +14,7 @@ type GovernanceTrustStandby = {
   display: "--.-%";
 };
 
-export type GovernanceTrustDisplay =
-  | GovernanceTrustDerived
-  | GovernanceTrustStandby;
+export type GovernanceTrustDisplay = GovernanceTrustDerived | GovernanceTrustStandby;
 
 function clampPercent(value: number): number {
   if (!Number.isFinite(value)) return 0;
@@ -33,9 +31,7 @@ function clampPercent(value: number): number {
  *   evidence warnings, advisory enrichment noise, and advisory overflow.
  * - `standby`: insufficient mission-linked data (`model.source !== "derived"`).
  */
-export function deriveGovernanceTrustScore(
-  model: GovernanceViewModel,
-): GovernanceTrustDisplay {
+export function deriveGovernanceTrustScore(model: GovernanceViewModel): GovernanceTrustDisplay {
   if (model.source !== "derived") {
     return {
       mode: "standby",
@@ -43,8 +39,7 @@ export function deriveGovernanceTrustScore(
     };
   }
 
-  let blended =
-    0.62 * model.nistMeasure.percent + 0.38 * model.nistManage.percent;
+  let blended = 0.62 * model.nistMeasure.percent + 0.38 * model.nistManage.percent;
 
   if (model.evidenceStatus === "degraded") {
     blended -= 8;

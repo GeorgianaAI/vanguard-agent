@@ -9,9 +9,7 @@ export function isVanguardAgentNode(v: unknown): v is VanguardAgentNode {
   return v === "supervisor" || v === "scout" || v === "auditor";
 }
 
-export function readAgentNodeFromLangchainMessage(
-  msg: BaseMessage,
-): VanguardAgentNode | undefined {
+export function readAgentNodeFromLangchainMessage(msg: BaseMessage): VanguardAgentNode | undefined {
   if (!AIMessage.isInstance(msg)) return undefined;
   const raw = (msg.additional_kwargs as Record<string, unknown> | undefined)?.[
     VANGUARD_AGENT_NODE_KW

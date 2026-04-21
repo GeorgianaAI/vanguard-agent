@@ -17,14 +17,9 @@ export function CommandInput({
   onSubmit,
   submitBlockedOverride = false,
 }: CommandInputProps) {
-  const submitBlocked =
-    loading || awaitingAuthorization || restored || submitBlockedOverride;
+  const submitBlocked = loading || awaitingAuthorization || restored || submitBlockedOverride;
 
-  const label = loading
-    ? "EXECUTING..."
-    : awaitingAuthorization
-      ? "PENDING DECISION..."
-      : "DEPLOY";
+  const label = loading ? "EXECUTING..." : awaitingAuthorization ? "PENDING DECISION..." : "DEPLOY";
 
   return (
     <form onSubmit={onSubmit} className="relative group">

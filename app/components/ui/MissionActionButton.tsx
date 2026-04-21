@@ -26,8 +26,7 @@ const variantClassMap: Record<MissionActionVariant, string> = {
   blue: "hover:border-blue-500/50 hover:bg-slate-900 hover:text-blue-400",
   rose: "hover:border-rose-900/50 hover:bg-rose-950/20 hover:text-rose-400",
   amber: "hover:border-amber-500/50 hover:bg-amber-900/20 hover:text-amber-400",
-  emerald:
-    "hover:border-emerald-500/50 hover:bg-slate-900 hover:text-emerald-400",
+  emerald: "hover:border-emerald-500/50 hover:bg-slate-900 hover:text-emerald-400",
 };
 
 export function MissionActionButton({
@@ -47,9 +46,7 @@ export function MissionActionButton({
     <>
       {leftIcon}
       <div className="flex min-w-0 flex-col items-start gap-1 leading-none">
-        <span className="text-[10px] font-black uppercase tracking-widest">
-          {title}
-        </span>
+        <span className="text-[10px] font-black uppercase tracking-widest">{title}</span>
         {subtitle ? (
           <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500">
             {subtitle}

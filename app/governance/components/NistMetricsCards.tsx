@@ -7,8 +7,7 @@ export function NistMetricsCards() {
   const { model, loadPhase } = useGovernanceData();
   const measure = model.nistMeasure;
   const manage = model.nistManage;
-  const standby =
-    loadPhase !== "ready" || model.source !== "derived";
+  const standby = loadPhase !== "ready" || model.source !== "derived";
 
   return (
     <div
@@ -43,10 +42,7 @@ export function NistMetricsCards() {
           </div>
           <div className="h-1.5 w-full min-w-0 overflow-hidden rounded-full bg-slate-800 shadow-inner">
             {!standby ? (
-              <div
-                className="h-full bg-emerald-500"
-                style={{ width: `${measure.percent}%` }}
-              />
+              <div className="h-full bg-emerald-500" style={{ width: `${measure.percent}%` }} />
             ) : null}
           </div>
         </div>
@@ -80,10 +76,7 @@ export function NistMetricsCards() {
           </div>
           <div className="h-1.5 w-full min-w-0 overflow-hidden rounded-full bg-slate-800 shadow-inner">
             {!standby ? (
-              <div
-                className="h-full bg-cyan-500"
-                style={{ width: `${manage.percent}%` }}
-              />
+              <div className="h-full bg-cyan-500" style={{ width: `${manage.percent}%` }} />
             ) : null}
           </div>
         </div>

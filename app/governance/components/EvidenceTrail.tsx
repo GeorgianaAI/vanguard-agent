@@ -9,16 +9,11 @@ export function EvidenceTrail() {
   const evidenceTrail = model.evidenceTrail;
 
   return (
-    <aside
-      data-testid="governance-evidence-trail"
-      className="w-full min-w-0 max-w-full"
-    >
+    <aside data-testid="governance-evidence-trail" className="w-full min-w-0 max-w-full">
       <div className="box-border flex h-fit w-full min-w-0 max-w-full flex-col overflow-x-hidden rounded-2xl border border-slate-800 bg-slate-900/40 p-6 text-left backdrop-blur-xl md:p-8 lg:sticky lg:top-8">
         <div className="mb-8 flex shrink-0 items-center gap-3">
           <History className="h-5 w-5 shrink-0 text-indigo-400" />
-          <h2 className="min-w-0 text-sm font-black tracking-widest uppercase">
-            Evidence Trail
-          </h2>
+          <h2 className="min-w-0 text-sm font-black tracking-widest uppercase">Evidence Trail</h2>
         </div>
 
         <div className="relative flex min-w-0 max-w-full flex-col gap-8 overflow-x-hidden">

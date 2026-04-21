@@ -17,26 +17,15 @@ function messagesFromStateValues(values: unknown): unknown[] | null {
 }
 
 function vulnerabilitiesFromStateValues(values: unknown): unknown {
-  if (
-    values != null &&
-    typeof values === "object" &&
-    "vulnerabilities" in values
-  ) {
+  if (values != null && typeof values === "object" && "vulnerabilities" in values) {
     return (values as { vulnerabilities: unknown }).vulnerabilities;
   }
   return undefined;
 }
 
-function advisoryWarningsFromStateValues(
-  values: unknown,
-): string[] | undefined {
-  if (
-    values != null &&
-    typeof values === "object" &&
-    "advisoryEnrichmentWarnings" in values
-  ) {
-    const w = (values as { advisoryEnrichmentWarnings: unknown })
-      .advisoryEnrichmentWarnings;
+function advisoryWarningsFromStateValues(values: unknown): string[] | undefined {
+  if (values != null && typeof values === "object" && "advisoryEnrichmentWarnings" in values) {
+    const w = (values as { advisoryEnrichmentWarnings: unknown }).advisoryEnrichmentWarnings;
     return Array.isArray(w) ? (w as string[]) : undefined;
   }
   return undefined;

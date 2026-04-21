@@ -1,9 +1,6 @@
 import { BaseMessage } from "@langchain/core/messages";
 import { Annotation } from "@langchain/langgraph";
-import type {
-  ApprovalContextV1,
-  ApprovalDecision,
-} from "../approval/types";
+import type { ApprovalContextV1, ApprovalDecision } from "../approval/types";
 import { mergeVulnerabilityLists } from "../vulnerability/mergeFindings";
 import type { VulnerabilityFinding } from "../vulnerability/vulnerabilityFinding";
 
@@ -74,8 +71,7 @@ export const VanguardStateAnnotation = Annotation.Root({
 
   /** Normalized CVE/advisory findings (checkpointed for replay determinism). */
   vulnerabilities: Annotation<VulnerabilityFinding[]>({
-    reducer: (left, right) =>
-      mergeVulnerabilityLists(left ?? [], right ?? []),
+    reducer: (left, right) => mergeVulnerabilityLists(left ?? [], right ?? []),
     default: () => [],
   }),
 

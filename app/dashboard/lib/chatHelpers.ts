@@ -35,12 +35,9 @@ export function getApprovalPayloadFromPart(part: ToolPart): ApprovalPayloadFromP
     };
   }
   const input = part.input as Record<string, unknown>;
-  const approvalId =
-    typeof input.approval_id === "string" ? input.approval_id : null;
+  const approvalId = typeof input.approval_id === "string" ? input.approval_id : null;
   const approvalContextHash =
-    typeof input.approval_context_hash === "string"
-      ? input.approval_context_hash
-      : null;
+    typeof input.approval_context_hash === "string" ? input.approval_context_hash : null;
   const approvalContext =
     input.approval_context &&
     typeof input.approval_context === "object" &&

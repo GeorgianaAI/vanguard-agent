@@ -5,10 +5,7 @@ import { deriveGovernanceTrustScore } from "./deriveGovernanceTrustScore";
 import type { DashboardMessage } from "@/app/dashboard/lib/types";
 import type { EvidencePackage } from "@/src/lib/audit/evidence";
 
-function assistant(
-  text: string,
-  metadata?: DashboardMessage["metadata"],
-): DashboardMessage {
+function assistant(text: string, metadata?: DashboardMessage["metadata"]): DashboardMessage {
   return {
     id: "a",
     role: "assistant",
@@ -55,10 +52,7 @@ function approvalPayload(toolName: string): string {
   return `AUTHORIZATION_REQUIRED: ${JSON.stringify(payload)}`;
 }
 
-function evidence(
-  status: "complete" | "degraded",
-  warnings: string[] = [],
-): EvidencePackage {
+function evidence(status: "complete" | "degraded", warnings: string[] = []): EvidencePackage {
   return {
     version: 1,
     evidence_status: status,

@@ -1,8 +1,7 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import { vanguardTools } from "./tools";
 
-const SUPERVISOR_MODEL =
-  process.env.ANTHROPIC_SUPERVISOR_MODEL ?? "claude-sonnet-4-6";
+const SUPERVISOR_MODEL = process.env.ANTHROPIC_SUPERVISOR_MODEL ?? "claude-sonnet-4-6";
 const SCOUT_MODEL = process.env.ANTHROPIC_SCOUT_MODEL ?? "claude-sonnet-4-6";
 
 export function getSupervisorModel() {

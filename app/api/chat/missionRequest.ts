@@ -24,9 +24,7 @@ export const MissionRequestSchema = z.object({
 
 export type MissionRequestInput = z.infer<typeof MissionRequestSchema>;
 
-export function extractTextFromMessage(
-  message: z.infer<typeof IncomingMessageSchema>,
-): string {
+export function extractTextFromMessage(message: z.infer<typeof IncomingMessageSchema>): string {
   if (typeof message.content === "string") return message.content.trim();
 
   if (Array.isArray(message.content)) {
@@ -96,10 +94,7 @@ export function approvalMissingContextBinding(data: MissionRequestInput): boolea
 }
 
 /** Redis + in-process approval lock key (must match route.ts usage). */
-export function formatApprovalLockKey(
-  threadId: string,
-  toolCallId: string | undefined,
-): string {
+export function formatApprovalLockKey(threadId: string, toolCallId: string | undefined): string {
   const approvalId = toolCallId?.trim() || "manual-authorization";
   return `vanguard:approval:${threadId}:${approvalId}`;
 }

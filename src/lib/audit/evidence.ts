@@ -44,9 +44,7 @@ export type EvidencePackage = {
   warnings: string[];
 };
 
-export function buildEvidencePackage(
-  input: EvidencePackageInput,
-): EvidencePackage {
+export function buildEvidencePackage(input: EvidencePackageInput): EvidencePackage {
   const traces = input.runs.map((run) => ({
     run_id: run.id,
     name: run.name ?? "unknown",

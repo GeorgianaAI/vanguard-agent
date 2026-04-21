@@ -26,9 +26,7 @@ describe("parseStoredCheckpointPayload", () => {
     };
     const parsed = parseStoredCheckpointPayload(payload);
     expect(parsed?.checkpoint?.id).toBe("cp-2");
-    expect(
-      Array.isArray(parsed?.checkpoint?.channel_values?.messages),
-    ).toBe(true);
+    expect(Array.isArray(parsed?.checkpoint?.channel_values?.messages)).toBe(true);
   });
 
   it("returns undefined for invalid input", () => {

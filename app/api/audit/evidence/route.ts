@@ -11,10 +11,7 @@ export async function GET(req: Request) {
   const threadId = requireThreadId(url.searchParams);
   const missionId = url.searchParams.get("mission_id")?.trim() || threadId;
   if (!threadId) {
-    return withRequestIdHeaders(
-      new Response("Missing thread_id", { status: 400 }),
-      reqId,
-    );
+    return withRequestIdHeaders(new Response("Missing thread_id", { status: 400 }), reqId);
   }
 
   const pkg = await buildEvidencePackageForThread({

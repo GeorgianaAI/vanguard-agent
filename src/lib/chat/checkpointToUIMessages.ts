@@ -1,9 +1,4 @@
-import {
-  AIMessage,
-  HumanMessage,
-  ToolMessage,
-  type BaseMessage,
-} from "@langchain/core/messages";
+import { AIMessage, HumanMessage, ToolMessage, type BaseMessage } from "@langchain/core/messages";
 import type { DashboardMessage } from "@/app/dashboard/lib/types";
 import { readAgentNodeFromLangchainMessage } from "@/src/lib/agent/agentNode";
 
@@ -57,9 +52,7 @@ function aiStringContent(m: AIMessage): string {
  * Best-effort LangGraph checkpoint messages → AI SDK UI messages for rehydration.
  * Tool results are merged into the assistant bubble that issued `tool_calls`.
  */
-export function checkpointMessagesToDashboardMessages(
-  messages: BaseMessage[],
-): DashboardMessage[] {
+export function checkpointMessagesToDashboardMessages(messages: BaseMessage[]): DashboardMessage[] {
   const out: DashboardMessage[] = [];
   let i = 0;
 
@@ -110,8 +103,7 @@ export function checkpointMessagesToDashboardMessages(
       for (const tc of toolCalls) {
         const id = typeof tc.id === "string" ? tc.id : `tc-${i}-${parts.length}`;
         const name = typeof tc.name === "string" ? tc.name : "unknown";
-        const args =
-          tc.args && typeof tc.args === "object" ? tc.args : {};
+        const args = tc.args && typeof tc.args === "object" ? tc.args : {};
         const row = toolRowById.get(id);
         const output = row?.content;
 
@@ -122,11 +114,7 @@ export function checkpointMessagesToDashboardMessages(
           state: "output-available",
           input: args,
           output:
-            typeof output === "string"
-              ? output
-              : output != null
-                ? JSON.stringify(output)
-                : null,
+            typeof output === "string" ? output : output != null ? JSON.stringify(output) : null,
         });
       }
 

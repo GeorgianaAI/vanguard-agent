@@ -25,14 +25,11 @@ export async function buildEvidencePackageForThread(params: {
   let runs: LangSmithRun[] = [];
   let evidenceStatus: "complete" | "degraded" = "complete";
 
-  const missingLangSmithConfig =
-    !process.env.LANGSMITH_API_KEY || !process.env.LANGSMITH_PROJECT;
+  const missingLangSmithConfig = !process.env.LANGSMITH_API_KEY || !process.env.LANGSMITH_PROJECT;
 
   if (shouldRequireLangSmithConfig() && missingLangSmithConfig) {
     evidenceStatus = "degraded";
-    warnings.push(
-      "LangSmith is not configured in this non-development environment.",
-    );
+    warnings.push("LangSmith is not configured in this non-development environment.");
   }
 
   try {
@@ -42,9 +39,7 @@ export async function buildEvidencePackageForThread(params: {
     }
   } catch (err) {
     evidenceStatus = "degraded";
-    warnings.push(
-      err instanceof Error ? err.message : "LangSmith trace query failed.",
-    );
+    warnings.push(err instanceof Error ? err.message : "LangSmith trace query failed.");
   }
 
   return buildEvidencePackage({
