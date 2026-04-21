@@ -3,10 +3,7 @@ import type { DashboardMessage } from "@/app/dashboard/lib/types";
 
 import { buildGovernanceLedgerRowsFromMessages } from "./buildGovernanceLedgerRows";
 
-function assistant(
-  text: string,
-  metadata?: DashboardMessage["metadata"],
-): DashboardMessage {
+function assistant(text: string, metadata?: DashboardMessage["metadata"]): DashboardMessage {
   return {
     id: "a",
     role: "assistant",
@@ -88,9 +85,7 @@ describe("buildGovernanceLedgerRowsFromMessages (A) approval events + risk first
 
   it('maps aborted transcript (medium risk) to SUPERVISOR "Policy Mismatch"', () => {
     const messages: DashboardMessage[] = [
-      assistant(
-        approvalPayload({ riskLevel: "medium", toolName: "tavily_search" }),
-      ),
+      assistant(approvalPayload({ riskLevel: "medium", toolName: "tavily_search" })),
       user("Mission aborted"),
       assistant("Aborted: no tool results.", { agent_node: "auditor" }),
     ];
@@ -143,4 +138,3 @@ describe("buildGovernanceLedgerRowsFromMessages (A) approval events + risk first
     expect(rows[0].action).toBe("WHOIS Lookup · Tavily Search");
   });
 });
-

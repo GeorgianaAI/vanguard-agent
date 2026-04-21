@@ -17,8 +17,7 @@ const baseContext: ApprovalContextV1 = {
     name: "domain_whois",
     args: { domain: "openai.com" },
     args_display: { domain: "openai.com" },
-    arg_hash:
-      "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    arg_hash: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   },
   expected_output: ["registrar"],
   constraints: {

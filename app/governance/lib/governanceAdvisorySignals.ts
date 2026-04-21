@@ -53,9 +53,7 @@ export function deriveAdvisorySignals(
   overflow: number;
 } {
   if (checkpointFindings.length > 0) {
-    const sorted = [...checkpointFindings].sort(
-      (a, b) => b.cvssScore - a.cvssScore,
-    );
+    const sorted = [...checkpointFindings].sort((a, b) => b.cvssScore - a.cvssScore);
     const top = sorted.slice(0, GOVERNANCE_ADVISORY_TOP_N).map(mapFindingToAdvisoryCard);
     return {
       signals: top,
@@ -63,14 +61,11 @@ export function deriveAdvisorySignals(
     };
   }
 
-  const textBlob = messages
-    .map((m) => extractRenderableText(m).toLowerCase())
-    .join("\n");
+  const textBlob = messages.map((m) => extractRenderableText(m).toLowerCase()).join("\n");
   const tools = collectToolNames(messages);
   const advisories: GovernanceViewModel["advisorySignals"] = [];
 
-  const hasTavily =
-    tools.some((t) => t.includes("tavily")) || textBlob.includes("tavily");
+  const hasTavily = tools.some((t) => t.includes("tavily")) || textBlob.includes("tavily");
   const hasWhois =
     tools.some((t) => t.includes("whois") || t.includes("rdap")) ||
     textBlob.includes("whois") ||
@@ -83,8 +78,7 @@ export function deriveAdvisorySignals(
       severity: "MEDIUM",
       cvss: toCvssSeverity("MEDIUM"),
       note: "WHOIS/RDAP metadata indicates externally visible ownership and lifecycle exposure signals.",
-      remediationHint:
-        "Validate registrar exposure against organizational domain policy.",
+      remediationHint: "Validate registrar exposure against organizational domain policy.",
     });
   }
 

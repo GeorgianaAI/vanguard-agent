@@ -65,12 +65,8 @@ export function DecisionIntegrityLedger() {
               className="flex min-w-0 flex-col gap-3 rounded-lg border border-slate-800/50 bg-slate-950/50 p-4 transition-colors hover:bg-slate-900/50 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
-                <span className="font-mono text-[10px] text-slate-600">
-                  {log.time}
-                </span>
-                <span className="text-[10px] font-black text-cyan-500/70">
-                  [{log.agent}]
-                </span>
+                <span className="font-mono text-[10px] text-slate-600">{log.time}</span>
+                <span className="text-[10px] font-black text-cyan-500/70">[{log.agent}]</span>
                 <span className="min-w-0 break-words text-xs font-bold text-slate-300">
                   {log.action}
                 </span>
@@ -94,10 +90,7 @@ export function DecisionIntegrityLedger() {
           <div className="mb-2 flex items-center gap-2">
             <div className="relative flex items-center justify-center">
               <div className="absolute h-full w-full rounded-full bg-blue-500/20 blur-md animate-pulse" />
-              <ShieldAlert
-                className="relative h-6 w-6 text-blue-400"
-                aria-hidden
-              />
+              <ShieldAlert className="relative h-6 w-6 text-blue-400" aria-hidden />
             </div>
             <span className="text-[12px] font-black leading-relaxed uppercase tracking-[0.3em] text-slate-600">
               No Mission Telemetry Detected

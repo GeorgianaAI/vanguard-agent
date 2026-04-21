@@ -6,10 +6,7 @@ import {
   type CheckpointListOptions,
   type CheckpointTuple,
 } from "@langchain/langgraph-checkpoint";
-import type {
-  CheckpointMetadata,
-  PendingWrite,
-} from "@langchain/langgraph-checkpoint";
+import type { CheckpointMetadata, PendingWrite } from "@langchain/langgraph-checkpoint";
 import { Redis } from "@upstash/redis";
 import { isProductionEnv, resolveRedisEnv } from "../runtime/redteam";
 
@@ -33,11 +30,7 @@ function getCheckpointIdFromConfig(config: RunnableConfig): string | undefined {
   return typeof checkpointId === "string" ? checkpointId : undefined;
 }
 
-function checkpointKey(
-  keyPrefix: string,
-  threadId: string,
-  checkpointId: string,
-): string {
+function checkpointKey(keyPrefix: string, threadId: string, checkpointId: string): string {
   return `${keyPrefix}:checkpoint:${threadId}:${checkpointId}`;
 }
 
@@ -50,9 +43,7 @@ function latestPointerKey(keyPrefix: string, threadId: string): string {
  * often already a plain object. We previously only accepted strings; that made
  * getTuple() fail and getState() return empty values (empty mission history).
  */
-export function parseStoredCheckpointPayload(
-  raw: unknown,
-): StoredCheckpoint | undefined {
+export function parseStoredCheckpointPayload(raw: unknown): StoredCheckpoint | undefined {
   let parsed: unknown;
   if (typeof raw === "string") {
     try {
@@ -149,9 +140,7 @@ export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
 
     const checkpointId =
       requestedCheckpointId ??
-      (await this.client.get<string>(
-        latestPointerKey(this.keyPrefix, threadId),
-      ));
+      (await this.client.get<string>(latestPointerKey(this.keyPrefix, threadId)));
 
     if (!checkpointId) return undefined;
 
@@ -192,9 +181,7 @@ export class UpstashRestCheckpointer extends BaseCheckpointSaver<number> {
    * Delete all checkpoints for a thread.
    */
   async deleteThread(threadId: string): Promise<void> {
-    const keys = await this.client.keys(
-      `${this.keyPrefix}:checkpoint:${threadId}:*`,
-    );
+    const keys = await this.client.keys(`${this.keyPrefix}:checkpoint:${threadId}:*`);
     if (keys.length > 0) {
       await this.client.del(...keys);
     }
@@ -206,8 +193,7 @@ export function getCheckpointer() {
   try {
     return new UpstashRestCheckpointer();
   } catch (error) {
-    const isProductionBuildPhase =
-      process.env.NEXT_PHASE === "phase-production-build";
+    const isProductionBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
     const isCiRuntime = process.env.CI === "true";
     if (isProductionEnv() && !isProductionBuildPhase && !isCiRuntime) {
       console.error(
@@ -215,8 +201,7 @@ export function getCheckpointer() {
           component: "vanguard.agent.checkpointer",
           level: "error",
           event: "production_checkpointer_init_failed",
-          detail:
-            error instanceof Error ? error.message.slice(0, 120) : "unknown",
+          detail: error instanceof Error ? error.message.slice(0, 120) : "unknown",
         }),
       );
       throw error;
@@ -230,8 +215,7 @@ export function getCheckpointer() {
           : isCiRuntime
             ? "ci_runtime_checkpointer_deferred"
             : "degraded_checkpointer_disabled",
-        detail:
-          error instanceof Error ? error.message.slice(0, 120) : "unknown",
+        detail: error instanceof Error ? error.message.slice(0, 120) : "unknown",
       }),
     );
     return undefined;

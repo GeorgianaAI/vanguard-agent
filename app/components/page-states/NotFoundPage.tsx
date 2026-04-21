@@ -9,12 +9,9 @@ export default function NotFoundPage() {
       className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-6 text-center"
     >
       <Radar className="mb-6 h-12 w-12 text-rose-500 opacity-50" />
-      <h1 className="text-sm font-black uppercase tracking-[0.3em] text-white">
-        Page Not Found
-      </h1>
+      <h1 className="text-sm font-black uppercase tracking-[0.3em] text-white">Page Not Found</h1>
       <p className="mt-2 max-w-xs text-[10px] font-bold uppercase tracking-widest text-slate-500">
-        The requested coordinate does not exist within the Vanguard Command
-        architecture.
+        The requested coordinate does not exist within the Vanguard Command architecture.
       </p>
       <Link
         href="/dashboard"

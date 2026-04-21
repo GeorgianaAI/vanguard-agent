@@ -23,8 +23,7 @@ export function validateTargetInput(raw: string): {
   if (!DOMAIN_RE.test(normalized)) {
     return {
       normalized,
-      error:
-        "Enter a valid domain (letters/numbers/hyphens + dot), e.g. openai.com",
+      error: "Enter a valid domain (letters/numbers/hyphens + dot), e.g. openai.com",
     };
   }
 

@@ -1,10 +1,6 @@
 import { isToolUIPart } from "ai";
 import { NON_TEXT_EVENT_TEXT } from "../lib/constants";
-import type {
-  DashboardMessage,
-  ToolActionHandler,
-  ToolPart,
-} from "../lib/types";
+import type { DashboardMessage, ToolActionHandler, ToolPart } from "../lib/types";
 import {
   getApprovalContextFromMessage,
   messageHasApprovalSignal,
@@ -38,17 +34,14 @@ export function MessageBubble({
   const isUser = message.role === "user";
   const approvalContext = getApprovalContextFromMessage(message);
 
-  const hasToolApprovalPart = toolParts.some(
-    (part) => part.state === "approval-requested",
-  );
+  const hasToolApprovalPart = toolParts.some((part) => part.state === "approval-requested");
 
   // Keep fallback deterministic: only the explicit approval signal can trigger
   // fallback rendering if adapter tool state is unavailable.
   const hasStateApprovalSignal =
     !isUser && !hasToolApprovalPart && messageHasApprovalSignal(message);
 
-  const showApprovalCard =
-    !resolved && (hasToolApprovalPart || hasStateApprovalSignal);
+  const showApprovalCard = !resolved && (hasToolApprovalPart || hasStateApprovalSignal);
 
   const fallbackApprovalPart = {
     type: "tool-invocation",
@@ -78,9 +71,7 @@ export function MessageBubble({
 
       <div className="text-[13px] text-slate-300 font-medium leading-relaxed pl-4 border-l-2 border-slate-800 transition-colors group-hover:border-slate-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
         {text || (
-          <span className="italic text-slate-600 tracking-tight">
-            {NON_TEXT_EVENT_TEXT}
-          </span>
+          <span className="italic text-slate-600 tracking-tight">{NON_TEXT_EVENT_TEXT}</span>
         )}
       </div>
 

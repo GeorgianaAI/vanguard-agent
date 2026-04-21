@@ -45,13 +45,8 @@ export function getOperators(): OperatorRecord[] {
     }
     seen.add(op.username);
 
-    if (
-      process.env.NODE_ENV === "production" &&
-      op.password === "ChangeMe!123"
-    ) {
-      throw new Error(
-        `Weak default password not allowed in production: ${op.username}`,
-      );
+    if (process.env.NODE_ENV === "production" && op.password === "ChangeMe!123") {
+      throw new Error(`Weak default password not allowed in production: ${op.username}`);
     }
   }
 

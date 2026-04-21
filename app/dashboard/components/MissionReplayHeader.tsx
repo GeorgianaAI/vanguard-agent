@@ -18,8 +18,7 @@ export function MissionReplayHeader({
   onSeekEnd,
   seekDisabled,
 }: MissionReplayHeaderProps) {
-  const progressPercent =
-    totalSteps > 0 ? Math.min((currentStep / totalSteps) * 100, 100) : 0;
+  const progressPercent = totalSteps > 0 ? Math.min((currentStep / totalSteps) * 100, 100) : 0;
 
   return (
     <div className="sticky top-0 z-20 mb-3 flex w-full min-w-0 flex-col gap-3 rounded-lg border border-slate-800/80 bg-slate-950 px-3 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4">
@@ -51,9 +50,7 @@ export function MissionReplayHeader({
             </span>
 
             <span className="mt-1 text-[8px] font-bold uppercase tracking-widest text-slate-500">
-              {mode === "restored"
-                ? "Read-Only Transcript"
-                : "Interactive Protocol Enabled"}
+              {mode === "restored" ? "Read-Only Transcript" : "Interactive Protocol Enabled"}
             </span>
           </div>
         </div>

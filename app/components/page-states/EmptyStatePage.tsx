@@ -10,8 +10,7 @@ export function EmptyStatePage() {
           No Data Available
         </h1>
         <p className="mt-2 max-w-[280px] text-[9px] font-bold uppercase tracking-widest leading-relaxed text-slate-600">
-          No active findings detected. Initialize a Vanguard Scout mission to
-          populate findings.
+          No active findings detected. Initialize a Vanguard Scout mission to populate findings.
         </p>
       </div>
     </div>

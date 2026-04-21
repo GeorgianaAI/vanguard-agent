@@ -41,9 +41,7 @@ describe("checkpointMessagesToDashboardMessages", () => {
   });
 
   it("maps human messages", () => {
-    const ui = checkpointMessagesToDashboardMessages([
-      new HumanMessage("scan example.com"),
-    ]);
+    const ui = checkpointMessagesToDashboardMessages([new HumanMessage("scan example.com")]);
     expect(ui[0].role).toBe("user");
     expect(ui[0].parts[0]).toMatchObject({ type: "text", text: "scan example.com" });
   });

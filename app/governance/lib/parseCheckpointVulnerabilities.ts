@@ -2,9 +2,7 @@ import type { VulnerabilityFinding } from "@/src/lib/vulnerability/vulnerability
 import { VulnerabilityFindingSchema } from "@/src/lib/vulnerability/vulnerabilityFinding";
 
 /** Parse checkpoint JSON into validated findings (drops invalid rows). */
-export function parseCheckpointVulnerabilities(
-  raw: unknown,
-): VulnerabilityFinding[] {
+export function parseCheckpointVulnerabilities(raw: unknown): VulnerabilityFinding[] {
   if (!Array.isArray(raw)) return [];
   const out: VulnerabilityFinding[] = [];
   for (const item of raw) {

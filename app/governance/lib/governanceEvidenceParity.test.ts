@@ -33,10 +33,7 @@ function approvalPayload(toolName: string): string {
   return `AUTHORIZATION_REQUIRED: ${JSON.stringify(payload)}`;
 }
 
-function evidencePkg(
-  status: "complete" | "degraded",
-  warnings: string[],
-): EvidencePackage {
+function evidencePkg(status: "complete" | "degraded", warnings: string[]): EvidencePackage {
   return {
     version: 1,
     evidence_status: status,
@@ -104,10 +101,7 @@ describe("governance ↔ evidence parity", () => {
       } as DashboardMessage,
     ];
 
-    const clean = buildGovernanceViewModelFromData(
-      messages,
-      evidencePkg("complete", []),
-    );
+    const clean = buildGovernanceViewModelFromData(messages, evidencePkg("complete", []));
     const noisy = buildGovernanceViewModelFromData(
       messages,
       evidencePkg("complete", ["a", "b", "c"]),

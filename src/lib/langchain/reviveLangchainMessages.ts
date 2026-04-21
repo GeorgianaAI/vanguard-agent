@@ -13,14 +13,9 @@ export function reviveLangchainMessages(raw: unknown[]): BaseMessage[] {
   if (!Array.isArray(raw) || raw.length === 0) return [];
 
   const first = raw[0];
-  if (
-    typeof first === "object" &&
-    first !== null &&
-    isBaseMessage(first)
-  ) {
+  if (typeof first === "object" && first !== null && isBaseMessage(first)) {
     return raw.filter(
-      (m): m is BaseMessage =>
-        typeof m === "object" && m !== null && isBaseMessage(m),
+      (m): m is BaseMessage => typeof m === "object" && m !== null && isBaseMessage(m),
     );
   }
 

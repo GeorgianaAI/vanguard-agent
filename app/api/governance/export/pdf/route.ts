@@ -1,10 +1,7 @@
 import { newRequestId } from "@/app/api/chat/telemetry";
 import { loadGovernanceSnapshotForThread } from "@/src/lib/governance/loadGovernanceSnapshot";
 import { renderGovernanceCompliancePdf } from "@/src/lib/governance/renderGovernancePdf";
-import {
-  requireActorId,
-  requireThreadId,
-} from "../../../_shared/requestGuards";
+import { requireActorId, requireThreadId } from "../../../_shared/requestGuards";
 
 /** pdf-lib + checkpoint graph: Node runtime. */
 export const runtime = "nodejs";
@@ -23,9 +20,7 @@ export async function GET(req: Request) {
   if (!loaded.ok) {
     const status = loaded.reason === "invalid_thread" ? 400 : 404;
     const text =
-      loaded.reason === "invalid_thread"
-        ? "Invalid thread_id"
-        : "No checkpoint for this thread";
+      loaded.reason === "invalid_thread" ? "Invalid thread_id" : "No checkpoint for this thread";
     return new Response(text, { status });
   }
 

@@ -85,9 +85,7 @@ describe("formatApprovalLockKey", () => {
   });
 
   it("trims tool call id", () => {
-    expect(formatApprovalLockKey("v-1", "  tool-a  ")).toBe(
-      "vanguard:approval:v-1:tool-a",
-    );
+    expect(formatApprovalLockKey("v-1", "  tool-a  ")).toBe("vanguard:approval:v-1:tool-a");
   });
 });
 

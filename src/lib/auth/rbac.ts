@@ -6,9 +6,6 @@ const roleRank: Record<OperatorRole, number> = {
   admin: 3,
 };
 
-export function hasMinRole(
-  current: OperatorRole,
-  required: OperatorRole,
-): boolean {
+export function hasMinRole(current: OperatorRole, required: OperatorRole): boolean {
   return roleRank[current] >= roleRank[required];
 }

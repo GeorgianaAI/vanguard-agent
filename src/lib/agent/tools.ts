@@ -67,9 +67,7 @@ const toolNodeInner = new ToolNode(vanguardTools);
  * LangGraph's ToolNode rejects `state.messages` when Redis/checkpoint left plain
  * JSON objects (no `_getType`). Revive to BaseMessage instances before invoke.
  */
-export const toolNode = RunnableLambda.from(
-  async (state: VanguardStateType) => {
-    const messages = reviveLangchainMessages(state.messages as unknown[]);
-    return toolNodeInner.invoke({ messages });
-  },
-).withConfig({ runName: "tools" });
+export const toolNode = RunnableLambda.from(async (state: VanguardStateType) => {
+  const messages = reviveLangchainMessages(state.messages as unknown[]);
+  return toolNodeInner.invoke({ messages });
+}).withConfig({ runName: "tools" });

@@ -24,11 +24,7 @@ export function MissionNavButton({
   className = "",
 }: MissionNavButtonProps) {
   return (
-    <Link
-      href={href}
-      data-testid={dataTestId}
-      className={`${baseClassName} ${className}`.trim()}
-    >
+    <Link href={href} data-testid={dataTestId} className={`${baseClassName} ${className}`.trim()}>
       {leftIcon}
       <span className="flex flex-col items-start gap-1 leading-none">
         <span className="flex items-center gap-1.5">

@@ -3,9 +3,7 @@ import type { ApprovalContextV1 } from "@/src/lib/approval/types";
 
 const APPROVAL_SIGNAL_PREFIX = "AUTHORIZATION_REQUIRED:";
 
-export function parseApprovalContextText(
-  rawText: string,
-): ApprovalContextV1 | null {
+export function parseApprovalContextText(rawText: string): ApprovalContextV1 | null {
   const trimmed = rawText.trim();
   if (!trimmed.startsWith(APPROVAL_SIGNAL_PREFIX)) return null;
   const payload = trimmed.slice(APPROVAL_SIGNAL_PREFIX.length).trim();
@@ -87,15 +85,10 @@ export function getMessageSignature(message: DashboardMessage): string {
 
 export function messageHasApprovalSignal(message: DashboardMessage): boolean {
   const rawText = extractRenderableText(message);
-  return (
-    rawText.startsWith(APPROVAL_SIGNAL_PREFIX) ||
-    parseApprovalContextText(rawText) !== null
-  );
+  return rawText.startsWith(APPROVAL_SIGNAL_PREFIX) || parseApprovalContextText(rawText) !== null;
 }
 
-export function getApprovalContextFromMessage(
-  message: DashboardMessage,
-): ApprovalContextV1 | null {
+export function getApprovalContextFromMessage(message: DashboardMessage): ApprovalContextV1 | null {
   return parseApprovalContextText(extractRenderableText(message));
 }
 

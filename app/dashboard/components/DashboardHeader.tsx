@@ -1,8 +1,5 @@
 import { Activity, Satellite } from "lucide-react";
-import {
-  STATUS_RECON_IN_PROGRESS,
-  STATUS_SATELLITE_IDLE,
-} from "../lib/constants";
+import { STATUS_RECON_IN_PROGRESS, STATUS_SATELLITE_IDLE } from "../lib/constants";
 import { GovernanceLedgerButton } from "./GovernanceLedgerButton";
 import { ResetMissionButton } from "./ResetMissionButton";
 import { ReturnToBaseButton } from "./ReturnToBaseButton";
@@ -28,9 +25,7 @@ export function DashboardHeader({
   onResetMission,
 }: DashboardHeaderProps) {
   const linkLive = !restored;
-  const statusLabel = reconLedActive
-    ? STATUS_RECON_IN_PROGRESS
-    : STATUS_SATELLITE_IDLE;
+  const statusLabel = reconLedActive ? STATUS_RECON_IN_PROGRESS : STATUS_SATELLITE_IDLE;
 
   return (
     <header className="mb-12 w-full pt-6">
@@ -62,8 +57,7 @@ export function DashboardHeader({
               VANGUARD COMMAND CENTER <span className="text-cyan-500">🛰️</span>
             </h1>
             <div className="flex items-center gap-2 text-[12px] text-cyan-400 font-bold tracking-[0.25em] uppercase opacity-90">
-              <Activity className="w-3.5 h-3.5" /> Autonomous Reconnaissance
-              Terminal
+              <Activity className="w-3.5 h-3.5" /> Autonomous Reconnaissance Terminal
             </div>
           </div>
         </div>

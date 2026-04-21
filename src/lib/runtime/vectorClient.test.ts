@@ -31,10 +31,7 @@ describe("vector runtime config wiring", () => {
         }
         store.set(ns, nsMap);
       },
-      async query(
-        params: Record<string, unknown>,
-        opts?: { namespace?: string },
-      ) {
+      async query(params: Record<string, unknown>, opts?: { namespace?: string }) {
         const ns = opts?.namespace ?? "default";
         const nsMap = store.get(ns) ?? new Map<string, string>();
         const data = String(params.data ?? "");
@@ -71,10 +68,7 @@ describe("vector runtime config wiring", () => {
         }
         store.set(ns, nsMap);
       },
-      async query(
-        params: Record<string, unknown>,
-        opts?: { namespace?: string },
-      ) {
+      async query(params: Record<string, unknown>, opts?: { namespace?: string }) {
         const ns = opts?.namespace ?? "default";
         const nsMap = store.get(ns) ?? new Map<string, string>();
         const data = String(params.data ?? "");

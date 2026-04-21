@@ -1,8 +1,4 @@
-import type {
-  DashboardMessage,
-  MissionTimelineEvent,
-  TimelineNode,
-} from "./types";
+import type { DashboardMessage, MissionTimelineEvent, TimelineNode } from "./types";
 import { getApprovalContextFromMessage } from "./utils";
 import { isToolUIPart } from "ai";
 
@@ -28,11 +24,7 @@ function nodeFromMetadata(message: DashboardMessage): TimelineNode | null {
 }
 
 function fallbackNodeFromHeuristics(text: string, hasToolParts: boolean): TimelineNode {
-  if (
-    text.includes("final") ||
-    text.includes("summary") ||
-    text.includes("findings")
-  ) {
+  if (text.includes("final") || text.includes("summary") || text.includes("findings")) {
     return "AUDITOR";
   }
   if (hasToolParts) return "SCOUT";

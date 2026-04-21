@@ -1,8 +1,4 @@
-import {
-  RUNTIME_ENV_KEYS,
-  UPSTASH_PARITY_PAIRS,
-  formatEitherLabel,
-} from "./envKeys";
+import { RUNTIME_ENV_KEYS, UPSTASH_PARITY_PAIRS, formatEitherLabel } from "./envKeys";
 
 type EnvMap = Record<string, string | undefined>;
 
@@ -21,10 +17,7 @@ function hasEither(env: EnvMap, first: string, second: string): boolean {
   return hasValue(env[first]) || hasValue(env[second]);
 }
 
-export function checkEnvParity(
-  env: EnvMap = process.env,
-  target: ParityTarget,
-): ParityResult {
+export function checkEnvParity(env: EnvMap = process.env, target: ParityTarget): ParityResult {
   const missing: string[] = [];
 
   for (const pair of UPSTASH_PARITY_PAIRS) {
@@ -38,12 +31,7 @@ export function checkEnvParity(
     !hasValue(env[RUNTIME_ENV_KEYS.vercelUrl]) &&
     !hasValue(env[RUNTIME_ENV_KEYS.appBaseUrl])
   ) {
-    missing.push(
-      formatEitherLabel(
-        RUNTIME_ENV_KEYS.appBaseUrl,
-        RUNTIME_ENV_KEYS.vercelUrl,
-      ),
-    );
+    missing.push(formatEitherLabel(RUNTIME_ENV_KEYS.appBaseUrl, RUNTIME_ENV_KEYS.vercelUrl));
   }
 
   return { ok: missing.length === 0, missing };

@@ -51,13 +51,9 @@ export default function VanguardDashboard() {
     [messages, surfaceMode],
   );
 
-  const reconLedActive =
-    surfaceMode === "live" && (loading || awaitingAuthorizationLive);
+  const reconLedActive = surfaceMode === "live" && (loading || awaitingAuthorizationLive);
 
-  const timelineEvents = useMemo(
-    () => buildMissionTimelineEvents(messages, null),
-    [messages],
-  );
+  const timelineEvents = useMemo(() => buildMissionTimelineEvents(messages, null), [messages]);
 
   const {
     activeTimelineMessageId,
@@ -78,8 +74,7 @@ export default function VanguardDashboard() {
     startNewMission();
   }
 
-  const currentStep =
-    timelineEventsWithSelection.findIndex((e) => e.status === "active") + 1;
+  const currentStep = timelineEventsWithSelection.findIndex((e) => e.status === "active") + 1;
 
   const hasCompletedAssistantResponse = useMemo(() => {
     return messages.some((message) => {
@@ -103,8 +98,7 @@ export default function VanguardDashboard() {
     !awaitingAuthorizationLive &&
     hasCompletedAssistantResponse;
 
-  const hintLedClass =
-    surfaceMode === "restored" ? "bg-emerald-500" : "bg-amber-500";
+  const hintLedClass = surfaceMode === "restored" ? "bg-emerald-500" : "bg-amber-500";
 
   function handleExportEvidenceJson() {
     const payload = {
@@ -140,11 +134,7 @@ export default function VanguardDashboard() {
 
       <div className="mx-auto max-w-[1200px] px-4 pb-24 pt-8 sm:px-6 md:p-8">
         <main className="mx-auto grid w-full min-w-0 max-w-[1200px] gap-6">
-          <TargetInput
-            target={target}
-            setTarget={setTarget}
-            error={target ? targetError : null}
-          />
+          <TargetInput target={target} setTarget={setTarget} error={target ? targetError : null} />
 
           <div className="flex w-full min-w-0 flex-col gap-6 lg:flex-row lg:items-start">
             <section className="min-w-0 w-full flex-1 lg:min-h-0">
@@ -155,9 +145,7 @@ export default function VanguardDashboard() {
                 seekDisabled={loading}
                 onSeekStart={() => seekToTimelineIndex(0)}
                 onSeekEnd={() =>
-                  seekToTimelineIndex(
-                    Math.max(timelineEventsWithSelection.length - 1, 0),
-                  )
+                  seekToTimelineIndex(Math.max(timelineEventsWithSelection.length - 1, 0))
                 }
               />
 
@@ -175,16 +163,12 @@ export default function VanguardDashboard() {
                   {showMissionCompleteExportBar ? (
                     <div className="flex items-center justify-between border-t border-slate-900 pt-4">
                       <div className="flex items-center gap-2">
-                        <div
-                          className={`h-1.5 w-1.5 rounded-full animate-pulse ${hintLedClass}`}
-                        />
+                        <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${hintLedClass}`} />
                         {surfaceMode === "restored" ? (
                           <p className="text-[10px] font-bold tracking-wider text-slate-500 uppercase italic">
                             Transcript is read-only.{" "}
-                            <span className="font-black text-slate-400">
-                              Reset Mission
-                            </span>{" "}
-                            to start a new mission, then deploy.
+                            <span className="font-black text-slate-400">Reset Mission</span> to
+                            start a new mission, then deploy.
                           </p>
                         ) : (
                           <p className="text-[10px] font-bold tracking-wider text-slate-500 uppercase italic">
@@ -197,9 +181,7 @@ export default function VanguardDashboard() {
                         )}
                       </div>
 
-                      <ExportEvidenceButton
-                        onExport={handleExportEvidenceJson}
-                      />
+                      <ExportEvidenceButton onExport={handleExportEvidenceJson} />
                     </div>
                   ) : null}
 

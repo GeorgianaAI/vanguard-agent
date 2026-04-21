@@ -17,4 +17,3 @@ export function acquireLocalApprovalLock(
   locks.set(key, now + ttlMs);
   return true;
 }
-

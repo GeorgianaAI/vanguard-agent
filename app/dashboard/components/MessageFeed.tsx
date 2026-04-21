@@ -1,8 +1,5 @@
 import type { DashboardMessage, ToolActionHandler } from "../lib/types";
-import {
-  getApprovalContextFromMessage,
-  getMessageSignature,
-} from "../lib/utils";
+import { getApprovalContextFromMessage, getMessageSignature } from "../lib/utils";
 import { EmptyState } from "./EmptyState";
 import { MessageBubble } from "./MessageBubble";
 
@@ -42,16 +39,11 @@ export function MessageFeed({
       {dedupedMessages.length === 0 && <EmptyState />}
 
       {dedupedMessages.map((message, index) => {
-        const hasResolutionAfter = dedupedMessages
-          .slice(index + 1)
-          .some((m) => {
-            if (m.role !== "user") return false;
-            const txt = extractMessageText(m);
-            return (
-              txt.includes("mission authorized") ||
-              txt.includes("mission aborted")
-            );
-          });
+        const hasResolutionAfter = dedupedMessages.slice(index + 1).some((m) => {
+          if (m.role !== "user") return false;
+          const txt = extractMessageText(m);
+          return txt.includes("mission authorized") || txt.includes("mission aborted");
+        });
 
         const previousApprovalContext = [...dedupedMessages]
           .slice(0, index)

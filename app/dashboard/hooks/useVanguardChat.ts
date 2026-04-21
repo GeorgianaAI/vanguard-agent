@@ -42,9 +42,7 @@ function formatChatTransportError(err: Error): string {
   if (/409|Approval already processed|no pending authorization/i.test(msg)) {
     return "This authorization step is no longer valid (already completed or expired). Try refreshing or starting a new mission.";
   }
-  if (
-    /400|Invalid mission|Missing thread_id|Missing approved boolean/i.test(msg)
-  ) {
+  if (/400|Invalid mission|Missing thread_id|Missing approved boolean/i.test(msg)) {
     return `Request rejected: ${msg}`;
   }
   if (/Missing approval context binding/i.test(msg)) {
@@ -56,11 +54,7 @@ function formatChatTransportError(err: Error): string {
   return msg || "Mission uplink error.";
 }
 
-export function useVanguardChat({
-  target,
-  input,
-  setInput,
-}: UseVanguardChatArgs) {
+export function useVanguardChat({ target, input, setInput }: UseVanguardChatArgs) {
   /** null only until client init runs; avoids passing id: undefined into useChat (recreates Chat every render). */
   const [threadId, setThreadId] = useState<string | null>(null);
   const [operatorNotice, setOperatorNotice] = useState<string | null>(null);
@@ -89,15 +83,14 @@ export function useVanguardChat({
     [],
   );
 
-  const { messages, sendMessage, status, error, setMessages } =
-    useChat<DashboardMessage>({
-      transport,
-      ...(threadId != null ? { id: threadId } : {}),
-      resume: false,
-      onError: (err) => {
-        setOperatorNotice(formatChatTransportError(err));
-      },
-    });
+  const { messages, sendMessage, status, error, setMessages } = useChat<DashboardMessage>({
+    transport,
+    ...(threadId != null ? { id: threadId } : {}),
+    resume: false,
+    onError: (err) => {
+      setOperatorNotice(formatChatTransportError(err));
+    },
+  });
 
   const loading = isLoadingStatus(status);
 
@@ -109,10 +102,9 @@ export function useVanguardChat({
 
     void (async () => {
       try {
-        const res = await fetch(
-          `/api/chat/history?thread_id=${encodeURIComponent(threadId)}`,
-          { signal: ac.signal },
-        );
+        const res = await fetch(`/api/chat/history?thread_id=${encodeURIComponent(threadId)}`, {
+          signal: ac.signal,
+        });
         if (ac.signal.aborted) return;
 
         if (!res.ok) {
@@ -174,9 +166,7 @@ export function useVanguardChat({
     // Mission is considered "terminal" once there are messages and no open approval.
     const shouldAutoStartNewMission = shouldStartFreshMission(messages);
 
-    const activeThreadId = shouldAutoStartNewMission
-      ? createThreadId()
-      : ensureThreadId();
+    const activeThreadId = shouldAutoStartNewMission ? createThreadId() : ensureThreadId();
 
     if (shouldAutoStartNewMission) {
       // Start fresh thread automatically so Deploy always works post-mission.
@@ -236,8 +226,7 @@ export function useVanguardChat({
         },
       );
     } catch (error) {
-      const err =
-        error instanceof Error ? error : new Error(String(error ?? ""));
+      const err = error instanceof Error ? error : new Error(String(error ?? ""));
       setOperatorNotice(formatChatTransportError(err));
     } finally {
       approvalInFlight.current = false;

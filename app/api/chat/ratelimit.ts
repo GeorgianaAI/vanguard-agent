@@ -1,9 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import {
-  isProductionEnv,
-  resolveRedisEnv,
-} from "../../../src/lib/runtime/redteam";
+import { isProductionEnv, resolveRedisEnv } from "../../../src/lib/runtime/redteam";
 
 const MISSION_RATE_LIMIT_WINDOW = "60 s";
 const MISSION_RATE_LIMIT_REQUESTS = 5;
@@ -25,17 +22,12 @@ if (redisConfigMissing) {
 }
 
 export const redis =
-  redisEnv.url && redisEnv.token
-    ? new Redis({ url: redisEnv.url, token: redisEnv.token })
-    : null;
+  redisEnv.url && redisEnv.token ? new Redis({ url: redisEnv.url, token: redisEnv.token }) : null;
 
 export const missionRatelimit = redis
   ? new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(
-        MISSION_RATE_LIMIT_REQUESTS,
-        MISSION_RATE_LIMIT_WINDOW,
-      ),
+      limiter: Ratelimit.slidingWindow(MISSION_RATE_LIMIT_REQUESTS, MISSION_RATE_LIMIT_WINDOW),
       analytics: true,
       prefix: `@${redisEnv.keyPrefix}/ratelimit/mission`,
     })
@@ -56,10 +48,7 @@ export const missionHourlyRatelimit = redis
 export const approvalRatelimit = redis
   ? new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(
-        APPROVAL_RATE_LIMIT_REQUESTS,
-        APPROVAL_RATE_LIMIT_WINDOW,
-      ),
+      limiter: Ratelimit.slidingWindow(APPROVAL_RATE_LIMIT_REQUESTS, APPROVAL_RATE_LIMIT_WINDOW),
       analytics: true,
       prefix: `@${redisEnv.keyPrefix}/ratelimit/approval`,
     })

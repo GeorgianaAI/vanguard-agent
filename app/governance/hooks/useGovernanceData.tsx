@@ -29,15 +29,11 @@ type GovernanceDataContextValue = {
   loadPhase: GovernanceLoadPhase;
 };
 
-const GovernanceDataContext = createContext<GovernanceDataContextValue | null>(
-  null,
-);
+const GovernanceDataContext = createContext<GovernanceDataContextValue | null>(null);
 
 export type StorageReader = Pick<Storage, "getItem">;
 
-export function getThreadIdFromStorage(
-  storage: StorageReader | null | undefined,
-): string | null {
+export function getThreadIdFromStorage(storage: StorageReader | null | undefined): string | null {
   if (!storage) return null;
   const threadId = storage.getItem(THREAD_STORAGE_KEY);
   if (!threadId || threadId.trim().length === 0) return null;

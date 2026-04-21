@@ -7,10 +7,7 @@ type TimelineSidebarProps = {
   onSelectEvent: (event: MissionTimelineEvent) => void;
 };
 
-export function TimelineSidebar({
-  events,
-  onSelectEvent,
-}: TimelineSidebarProps) {
+export function TimelineSidebar({ events, onSelectEvent }: TimelineSidebarProps) {
   return (
     <aside className="w-full shrink-0 rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:w-72">
       <div className="mb-5 flex items-center gap-2">
@@ -22,16 +19,10 @@ export function TimelineSidebar({
 
       <nav className="max-h-[520px] overflow-y-auto pr-1">
         {events.length === 0 ? (
-          <p className="text-xs text-slate-500">
-            Timeline populates as mission events stream.
-          </p>
+          <p className="text-xs text-slate-500">Timeline populates as mission events stream.</p>
         ) : (
           events.map((event) => (
-            <TimelineItem
-              key={event.id}
-              event={event}
-              onSelect={onSelectEvent}
-            />
+            <TimelineItem key={event.id} event={event} onSelect={onSelectEvent} />
           ))
         )}
       </nav>

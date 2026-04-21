@@ -2,10 +2,7 @@ import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { createUIMessageStreamResponse } from "ai";
 import type { UIMessageChunk } from "ai";
 import { vanguardGraph } from "../../../src/lib/agent/graph";
-import {
-  extractTextFromMessage,
-  type MissionRequestInput,
-} from "./missionRequest";
+import { extractTextFromMessage, type MissionRequestInput } from "./missionRequest";
 import { vanguardChatLog, withRequestIdHeaders } from "./telemetry";
 import { getClientIp } from "./locks";
 import { missionRatelimit, missionHourlyRatelimit } from "./ratelimit";
@@ -37,20 +34,8 @@ export type MissionFlowOpts = {
   target: string | undefined;
 };
 
-export async function handleMissionRequest(
-  opts: MissionFlowOpts,
-): Promise<Response> {
-  const {
-    req,
-    reqId,
-    actorId,
-    actorRole,
-    threadId,
-    missionId,
-    config,
-    messages,
-    target,
-  } = opts;
+export async function handleMissionRequest(opts: MissionFlowOpts): Promise<Response> {
+  const { req, reqId, actorId, actorRole, threadId, missionId, config, messages, target } = opts;
 
   if (!missionRatelimit || !missionHourlyRatelimit) {
     vanguardChatLog({
@@ -72,9 +57,7 @@ export async function handleMissionRequest(
   }
 
   const clientIp = getClientIp(req);
-  const { success: minuteOk } = await missionRatelimit.limit(
-    `${clientIp}:mission`,
-  );
+  const { success: minuteOk } = await missionRatelimit.limit(`${clientIp}:mission`);
   if (!minuteOk) {
     vanguardChatLog({
       reqId,
@@ -92,9 +75,7 @@ export async function handleMissionRequest(
     );
   }
 
-  const { success: hourOk } = await missionHourlyRatelimit.limit(
-    `${clientIp}:mission:hour`,
-  );
+  const { success: hourOk } = await missionHourlyRatelimit.limit(`${clientIp}:mission:hour`);
   if (!hourOk) {
     vanguardChatLog({
       reqId,
@@ -181,8 +162,7 @@ export async function handleMissionRequest(
       { configurable: { thread_id: threadId } },
       {
         isPendingApproval: true,
-        pendingApprovalContext:
-          nextValues.pendingApprovalContext as ApprovalContextV1,
+        pendingApprovalContext: nextValues.pendingApprovalContext as ApprovalContextV1,
         pendingApprovalHash: nextValues.pendingApprovalHash as string,
         pendingApprovalId: nextValues.pendingApprovalId as string,
       },

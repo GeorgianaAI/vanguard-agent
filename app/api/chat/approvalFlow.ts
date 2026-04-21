@@ -5,18 +5,9 @@ import type { UIMessageChunk } from "ai";
 import { vanguardGraph } from "../../../src/lib/agent/graph";
 import { shouldRejectApprovalForGraphState } from "./approvalGuards";
 import { formatApprovalLockKey } from "./missionRequest";
-import {
-  computeApprovalContextHash,
-  isExpiredApproval,
-} from "../../../src/lib/approval/hash";
-import {
-  isAllowedApprovalTool,
-  validateApprovalToolArgs,
-} from "../../../src/lib/approval/policy";
-import type {
-  ApprovalDecision,
-  ApprovalContextV1,
-} from "../../../src/lib/approval/types";
+import { computeApprovalContextHash, isExpiredApproval } from "../../../src/lib/approval/hash";
+import { isAllowedApprovalTool, validateApprovalToolArgs } from "../../../src/lib/approval/policy";
+import type { ApprovalDecision, ApprovalContextV1 } from "../../../src/lib/approval/types";
 import { vanguardChatLog, withRequestIdHeaders } from "./telemetry";
 import { acquireLocalApprovalLock, approvalLocks, getClientIp } from "./locks";
 import { injectAgentNodeMetadataIntoStream } from "./streaming";
@@ -46,9 +37,7 @@ export type ApprovalFlowOpts = {
   target: string | undefined;
 };
 
-export async function handleApprovalRequest(
-  opts: ApprovalFlowOpts,
-): Promise<Response> {
+export async function handleApprovalRequest(opts: ApprovalFlowOpts): Promise<Response> {
   const {
     req,
     reqId,
@@ -71,12 +60,8 @@ export async function handleApprovalRequest(
   const values = (currentState?.values ?? {}) as Record<string, unknown>;
   const pendingApprovalContext = (values.pendingApprovalContext ??
     null) as ApprovalContextV1 | null;
-  const pendingApprovalHash = (values.pendingApprovalHash ?? null) as
-    | string
-    | null;
-  const pendingApprovalId = (values.pendingApprovalId ?? null) as
-    | string
-    | null;
+  const pendingApprovalHash = (values.pendingApprovalHash ?? null) as string | null;
+  const pendingApprovalId = (values.pendingApprovalId ?? null) as string | null;
   const approvalHistory = Array.isArray(values.approvalHistory)
     ? (values.approvalHistory as ApprovalDecision[])
     : [];
@@ -91,10 +76,7 @@ export async function handleApprovalRequest(
       isApproval: true,
     });
     return withRequestIdHeaders(
-      new Response(
-        "Approval already processed or no pending authorization step",
-        { status: 409 },
-      ),
+      new Response("Approval already processed or no pending authorization step", { status: 409 }),
       reqId,
     );
   }
@@ -118,9 +100,7 @@ export async function handleApprovalRequest(
     );
   }
 
-  const { success } = await approvalRatelimit.limit(
-    `${getClientIp(req)}:approval`,
-  );
+  const { success } = await approvalRatelimit.limit(`${getClientIp(req)}:approval`);
   if (!success) {
     vanguardChatLog({
       reqId,
@@ -152,10 +132,7 @@ export async function handleApprovalRequest(
       actorId,
       actorRole,
     });
-    return withRequestIdHeaders(
-      new Response("Approval already processed", { status: 409 }),
-      reqId,
-    );
+    return withRequestIdHeaders(new Response("Approval already processed", { status: 409 }), reqId);
   }
 
   const lockSet = await redis.set(approvalLockKey, "1", {
@@ -173,21 +150,14 @@ export async function handleApprovalRequest(
       actorId,
       actorRole,
     });
-    return withRequestIdHeaders(
-      new Response("Approval already processed", { status: 409 }),
-      reqId,
-    );
+    return withRequestIdHeaders(new Response("Approval already processed", { status: 409 }), reqId);
   }
 
   let effectivePendingContext = pendingApprovalContext;
   let effectivePendingHash = pendingApprovalHash;
   let effectivePendingId = pendingApprovalId;
 
-  if (
-    !effectivePendingContext ||
-    !effectivePendingHash ||
-    !effectivePendingId
-  ) {
+  if (!effectivePendingContext || !effectivePendingHash || !effectivePendingId) {
     const fromBody =
       approval_context && typeof approval_context === "object"
         ? (approval_context as ApprovalContextV1)
@@ -244,10 +214,7 @@ export async function handleApprovalRequest(
       actorRole,
     });
     return withRequestIdHeaders(
-      new Response(
-        "Approval expired — please request a fresh authorization",
-        { status: 409 },
-      ),
+      new Response("Approval expired — please request a fresh authorization", { status: 409 }),
       reqId,
     );
   }
@@ -264,10 +231,7 @@ export async function handleApprovalRequest(
       actorRole,
     });
     return withRequestIdHeaders(
-      new Response(
-        "Approval mismatch — plan id does not match pending step",
-        { status: 409 },
-      ),
+      new Response("Approval mismatch — plan id does not match pending step", { status: 409 }),
       reqId,
     );
   }
@@ -291,10 +255,7 @@ export async function handleApprovalRequest(
     );
   }
 
-  if (
-    tool_call_id &&
-    tool_call_id !== effectivePendingContext.approval_id
-  ) {
+  if (tool_call_id && tool_call_id !== effectivePendingContext.approval_id) {
     vanguardChatLog({
       reqId,
       phase: "approval",
@@ -384,9 +345,7 @@ export async function handleApprovalRequest(
       ...config,
       tags: [
         ...config.tags,
-        isAuthorized
-          ? "vanguard-agent-approval-authorized"
-          : "vanguard-agent-approval-aborted",
+        isAuthorized ? "vanguard-agent-approval-authorized" : "vanguard-agent-approval-aborted",
       ],
     },
   );
@@ -397,17 +356,13 @@ export async function handleApprovalRequest(
     status: 200,
     threadId,
     missionId,
-    message: isAuthorized
-      ? "approval_authorized_stream"
-      : "approval_aborted_stream",
+    message: isAuthorized ? "approval_authorized_stream" : "approval_aborted_stream",
     isApproval: true,
     actorId,
     actorRole,
   });
 
-  const approvalAgentNode: VanguardAgentNode = isAuthorized
-    ? "scout"
-    : "auditor";
+  const approvalAgentNode: VanguardAgentNode = isAuthorized ? "scout" : "auditor";
   const streamRes = createUIMessageStreamResponse({
     stream: injectAgentNodeMetadataIntoStream(
       toUIMessageStream(stream) as ReadableStream<UIMessageChunk>,

@@ -66,9 +66,7 @@ export async function runVectorNamespaceProbe(
   await index.delete(markerId, { namespace: cfg.namespace });
 
   const verified = Array.isArray(results)
-    ? results.some(
-        (item) => item.id === markerId || item.metadata?.thread_id === threadId,
-      )
+    ? results.some((item) => item.id === markerId || item.metadata?.thread_id === threadId)
     : false;
 
   return { namespace: cfg.namespace, verified, skipped: false };

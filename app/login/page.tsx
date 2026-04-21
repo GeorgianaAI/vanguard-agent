@@ -88,11 +88,7 @@ export default function LoginPage() {
                 aria-pressed={showPassword}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 hover:text-cyan-500 transition-colors"
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
 

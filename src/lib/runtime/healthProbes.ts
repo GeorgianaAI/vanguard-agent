@@ -51,10 +51,7 @@ export async function probeVector(url: string, token: string): Promise<ProbeResu
   }
 }
 
-export async function probeLangSmith(
-  endpoint: string,
-  apiKey: string,
-): Promise<ProbeResult> {
+export async function probeLangSmith(endpoint: string, apiKey: string): Promise<ProbeResult> {
   try {
     await withTimeout("langsmith_probe", async () => {
       const res = await fetch(`${endpoint.replace(/\/$/, "")}/projects?limit=1`, {

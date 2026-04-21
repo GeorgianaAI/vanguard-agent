@@ -15,9 +15,7 @@ type ApprovalCardProps = {
   previousApprovalContext?: ApprovalContextV1 | null;
 };
 
-function requestedNodeToAgentType(
-  node?: ApprovalContextV1["requested_by_node"],
-): AgentType {
+function requestedNodeToAgentType(node?: ApprovalContextV1["requested_by_node"]): AgentType {
   if (node === "supervisor") return "SUPERVISOR";
   if (node === "scout") return "SCOUT";
   return "AUDITOR";
@@ -35,18 +33,13 @@ export function ApprovalCard({
   const toolName = context?.tool.name ?? getToolName(part);
   const toolArgs = context?.tool.args_display ?? {};
   const policyLabel = getApprovalPolicyLabel(toolName);
-  const sideEffectsLabel = context?.side_effects
-    .replaceAll("_", " ")
-    .toUpperCase();
-  const normalizeBadgeLabel = (value: string) =>
-    value.replace(/[^A-Z0-9]/g, "");
+  const sideEffectsLabel = context?.side_effects.replaceAll("_", " ").toUpperCase();
+  const normalizeBadgeLabel = (value: string) => value.replace(/[^A-Z0-9]/g, "");
   const showSideEffectsBadge =
     !!sideEffectsLabel &&
     normalizeBadgeLabel(sideEffectsLabel) !== normalizeBadgeLabel(policyLabel);
 
-  const changeHints = context?.changes_since_last?.length
-    ? context.changes_since_last
-    : [];
+  const changeHints = context?.changes_since_last?.length ? context.changes_since_last : [];
   const priorApprovals = context?.prior_approvals_in_thread ?? 0;
 
   return (
@@ -56,16 +49,12 @@ export function ApprovalCard({
         <div className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-500">
           {APPROVAL_TITLE}
         </div>
-        {context && (
-          <AgentBadge
-            type={requestedNodeToAgentType(context.requested_by_node)}
-          />
-        )}
+        {context && <AgentBadge type={requestedNodeToAgentType(context.requested_by_node)} />}
       </div>
 
       <p className="mb-6 text-[11px] leading-relaxed tracking-tight text-slate-400 uppercase font-medium">
-        Vanguard is requesting external tool execution. Verify mission
-        parameters before manual authorization.
+        Vanguard is requesting external tool execution. Verify mission parameters before manual
+        authorization.
       </p>
 
       {context && (
@@ -106,14 +95,10 @@ export function ApprovalCard({
               <span className="text-[9px] font-black tracking-widest text-amber-300">
                 EXPECTED OUTPUT
               </span>
-              <p className="mt-1 text-slate-300">
-                {context.expected_output.join(", ")}
-              </p>
+              <p className="mt-1 text-slate-300">{context.expected_output.join(", ")}</p>
             </div>
             <div>
-              <span className="text-[9px] font-black tracking-widest text-amber-300">
-                EXPIRES
-              </span>
+              <span className="text-[9px] font-black tracking-widest text-amber-300">EXPIRES</span>
               <p data-testid="approval-expiry" className="mt-1 text-amber-200">
                 {new Date(context.expires_at).toLocaleString()}
               </p>

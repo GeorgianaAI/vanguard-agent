@@ -17,9 +17,9 @@ export default function LandingPage() {
         </h1>
 
         <p className="max-w-2xl mx-auto text-lg md:text-xl text-slate-400 leading-relaxed mb-10">
-          An autonomous <strong>Security Reconnaissance Scout</strong>{" "}
-          engineered for governed adversarial operations. Built with LangGraph,
-          Claude 4.6, and Human-in-the-Loop authorization.
+          An autonomous <strong>Security Reconnaissance Scout</strong> engineered for governed
+          adversarial operations. Built with LangGraph, Claude 4.6, and Human-in-the-Loop
+          authorization.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -45,24 +45,24 @@ export default function LandingPage() {
           <Lock className="w-8 h-8 text-cyan-500 mb-4" />
           <h3 className="font-bold text-lg mb-2">Governed Autonomy</h3>
           <p className="text-sm text-slate-500">
-            Implements a hard interrupt before tool execution. No reconnaissance
-            is performed without explicit operator authorization.
+            Implements a hard interrupt before tool execution. No reconnaissance is performed
+            without explicit operator authorization.
           </p>
         </div>
         <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
           <Activity className="w-8 h-8 text-cyan-500 mb-4" />
           <h3 className="font-bold text-lg mb-2">Real-Time Recon</h3>
           <p className="text-sm text-slate-500">
-            Utilizes Tavily AI and direct RDAP registry queries for deep-web
-            intelligence and domain reconnaissance.
+            Utilizes Tavily AI and direct RDAP registry queries for deep-web intelligence and domain
+            reconnaissance.
           </p>
         </div>
         <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
           <Shield className="w-8 h-8 text-cyan-500 mb-4" />
           <h3 className="font-bold text-lg mb-2">Mission Persistence</h3>
           <p className="text-sm text-slate-500">
-            Stateful memory via Upstash Redis allows complex missions to pause
-            and resume across sessions with full context retention.
+            Stateful memory via Upstash Redis allows complex missions to pause and resume across
+            sessions with full context retention.
           </p>
         </div>
       </section>

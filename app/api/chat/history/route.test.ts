@@ -49,10 +49,9 @@ describe("GET /api/chat/history", () => {
       },
     });
     const res = await GET(
-      new Request(
-        "http://localhost/api/chat/history?thread_id=vanguard-thread-abc",
-        { headers: { "x-actor-id": "alice" } },
-      ),
+      new Request("http://localhost/api/chat/history?thread_id=vanguard-thread-abc", {
+        headers: { "x-actor-id": "alice" },
+      }),
     );
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -61,10 +60,9 @@ describe("GET /api/chat/history", () => {
       advisory_enrichment_warnings?: string[];
     };
     expect(body.messages).toHaveLength(1);
-    expect(
-      (body.messages[0] as { metadata?: { agent_node?: string } }).metadata
-        ?.agent_node,
-    ).toBe("auditor");
+    expect((body.messages[0] as { metadata?: { agent_node?: string } }).metadata?.agent_node).toBe(
+      "auditor",
+    );
     expect(body.vulnerabilities).toBeUndefined();
     expect(body.advisory_enrichment_warnings).toBeUndefined();
   });
@@ -78,10 +76,9 @@ describe("GET /api/chat/history", () => {
       },
     });
     const res = await GET(
-      new Request(
-        "http://localhost/api/chat/history?thread_id=vanguard-thread-abc",
-        { headers: { "x-actor-id": "alice" } },
-      ),
+      new Request("http://localhost/api/chat/history?thread_id=vanguard-thread-abc", {
+        headers: { "x-actor-id": "alice" },
+      }),
     );
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
@@ -89,18 +86,15 @@ describe("GET /api/chat/history", () => {
       advisory_enrichment_warnings: string[];
     };
     expect(body.vulnerabilities).toHaveLength(1);
-    expect(body.advisory_enrichment_warnings).toEqual([
-      "ADVISORY_BUDGET_EXHAUSTED",
-    ]);
+    expect(body.advisory_enrichment_warnings).toEqual(["ADVISORY_BUDGET_EXHAUSTED"]);
   });
 
   it("returns empty array when getState throws", async () => {
     getState.mockRejectedValue(new Error("no checkpoint"));
     const res = await GET(
-      new Request(
-        "http://localhost/api/chat/history?thread_id=vanguard-thread-abc",
-        { headers: { "x-actor-id": "alice" } },
-      ),
+      new Request("http://localhost/api/chat/history?thread_id=vanguard-thread-abc", {
+        headers: { "x-actor-id": "alice" },
+      }),
     );
     expect(res.status).toBe(200);
     const body = (await res.json()) as { messages: unknown[] };

@@ -30,9 +30,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
         Please try again.
       </p>
       {error.digest ? (
-        <p className="mt-3 font-mono text-[9px] text-slate-600">
-          Ref: {error.digest}
-        </p>
+        <p className="mt-3 font-mono text-[9px] text-slate-600">Ref: {error.digest}</p>
       ) : null}
       <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
         <button

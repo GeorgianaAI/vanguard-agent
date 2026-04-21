@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  deriveGovernanceLoadPhase,
-  getThreadIdFromStorage,
-} from "./useGovernanceData";
+import { deriveGovernanceLoadPhase, getThreadIdFromStorage } from "./useGovernanceData";
 
 describe("getThreadIdFromStorage", () => {
   it("returns null when storage is missing", () => {
@@ -51,4 +48,3 @@ describe("deriveGovernanceLoadPhase", () => {
     expect(deriveGovernanceLoadPhase(true, "t-1", true)).toBe("ready");
   });
 });
-

@@ -61,9 +61,7 @@ export function GovernancePdfExportButton() {
           <Download className="h-2.5 w-2.5 shrink-0 translate-y-0.5 opacity-40 transition-all group-hover:translate-y-0 group-hover:opacity-100" />
         }
       />
-      {err ? (
-        <p className="max-w-[14rem] text-[10px] text-rose-400">{err}</p>
-      ) : null}
+      {err ? <p className="max-w-[14rem] text-[10px] text-rose-400">{err}</p> : null}
     </div>
   );
 }

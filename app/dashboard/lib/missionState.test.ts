@@ -36,18 +36,12 @@ describe("hasOpenApproval", () => {
   });
 
   it("is false after mission authorized user message", () => {
-    const messages = [
-      assistant("AUTHORIZATION_REQUIRED: Approve me"),
-      user("Mission authorized"),
-    ];
+    const messages = [assistant("AUTHORIZATION_REQUIRED: Approve me"), user("Mission authorized")];
     expect(hasOpenApproval(messages)).toBe(false);
   });
 
   it("is false after mission aborted user message", () => {
-    const messages = [
-      assistant("AUTHORIZATION_REQUIRED: Approve me"),
-      user("Mission aborted"),
-    ];
+    const messages = [assistant("AUTHORIZATION_REQUIRED: Approve me"), user("Mission aborted")];
     expect(hasOpenApproval(messages)).toBe(false);
   });
 
@@ -75,18 +69,11 @@ describe("shouldStartFreshMission", () => {
   });
 
   it("is false when approval is open", () => {
-    expect(
-      shouldStartFreshMission([assistant("AUTHORIZATION_REQUIRED: wait")]),
-    ).toBe(false);
+    expect(shouldStartFreshMission([assistant("AUTHORIZATION_REQUIRED: wait")])).toBe(false);
   });
 
   it("is true when messages exist and approval is closed", () => {
-    expect(
-      shouldStartFreshMission([
-        assistant("Done"),
-        user("Mission authorized"),
-      ]),
-    ).toBe(true);
+    expect(shouldStartFreshMission([assistant("Done"), user("Mission authorized")])).toBe(true);
   });
 
   it("is true when only user messages exist (no assistant approval signal)", () => {
@@ -96,10 +83,7 @@ describe("shouldStartFreshMission", () => {
 
 describe("hasOpenApproval ordering", () => {
   it("uses latest assistant with signal when multiple assistants", () => {
-    const messages = [
-      assistant("old"),
-      assistant("AUTHORIZATION_REQUIRED: second"),
-    ];
+    const messages = [assistant("old"), assistant("AUTHORIZATION_REQUIRED: second")];
     expect(hasOpenApproval(messages)).toBe(true);
   });
 });

@@ -53,9 +53,7 @@ export function TimelineItem({ event, onSelect }: TimelineItemProps) {
         </div>
         <p
           className={`text-[10px] font-bold tracking-tight uppercase transition-colors ${
-            event.status === "active"
-              ? "text-white"
-              : "text-slate-400 group-hover:text-slate-200"
+            event.status === "active" ? "text-white" : "text-slate-400 group-hover:text-slate-200"
           }`}
         >
           {event.label}

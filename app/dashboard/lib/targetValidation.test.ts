@@ -9,9 +9,7 @@ describe("target validation", () => {
   });
 
   it("normalizes scheme/path/trailing punctuation", () => {
-    expect(normalizeTargetInput(" https://stripe.com./abc ")).toBe(
-      "stripe.com",
-    );
+    expect(normalizeTargetInput(" https://stripe.com./abc ")).toBe("stripe.com");
   });
 
   it("rejects malformed target", () => {

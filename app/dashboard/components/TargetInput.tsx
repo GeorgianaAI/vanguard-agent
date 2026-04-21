@@ -7,12 +7,7 @@ type TargetInputProps = {
   onBlur?: () => void;
 };
 
-export function TargetInput({
-  target,
-  setTarget,
-  error = null,
-  onBlur,
-}: TargetInputProps) {
+export function TargetInput({ target, setTarget, error = null, onBlur }: TargetInputProps) {
   return (
     <div>
       <div
@@ -31,9 +26,7 @@ export function TargetInput({
           className="flex-1 border-none bg-transparent text-base font-medium text-slate-100 outline-none placeholder:text-slate-500"
         />
       </div>
-      {error ? (
-        <p className="mt-2 px-1 text-xs text-rose-400">{error}</p>
-      ) : null}
+      {error ? <p className="mt-2 px-1 text-xs text-rose-400">{error}</p> : null}
     </div>
   );
 }

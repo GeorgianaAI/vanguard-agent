@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  getApprovalPolicyLabel,
-  isAllowedApprovalTool,
-  validateApprovalToolArgs,
-} from "./policy";
+import { getApprovalPolicyLabel, isAllowedApprovalTool, validateApprovalToolArgs } from "./policy";
 
 describe("approval policy allowlist", () => {
   it("accepts known tools", () => {
@@ -15,21 +11,13 @@ describe("approval policy allowlist", () => {
 
 describe("validateApprovalToolArgs", () => {
   it("validates domain_whois args", () => {
-    expect(validateApprovalToolArgs("domain_whois", { domain: "openai.com" })).toBe(
-      true,
-    );
-    expect(validateApprovalToolArgs("domain_whois", { domain: "openai.com." })).toBe(
-      true,
-    );
-    expect(validateApprovalToolArgs("domain_whois", { domain: "bad domain" })).toBe(
-      false,
-    );
+    expect(validateApprovalToolArgs("domain_whois", { domain: "openai.com" })).toBe(true);
+    expect(validateApprovalToolArgs("domain_whois", { domain: "openai.com." })).toBe(true);
+    expect(validateApprovalToolArgs("domain_whois", { domain: "bad domain" })).toBe(false);
   });
 
   it("validates tavily_search args", () => {
-    expect(validateApprovalToolArgs("tavily_search", { query: "security exposure" })).toBe(
-      true,
-    );
+    expect(validateApprovalToolArgs("tavily_search", { query: "security exposure" })).toBe(true);
     expect(validateApprovalToolArgs("tavily_search", { query: "x" })).toBe(false);
   });
 });

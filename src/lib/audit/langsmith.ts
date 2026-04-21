@@ -18,8 +18,7 @@ export async function fetchLangSmithRunsForThread(
   limit = 50,
 ): Promise<LangSmithRun[]> {
   const apiKey = process.env.LANGSMITH_API_KEY;
-  const endpoint =
-    process.env.LANGSMITH_ENDPOINT ?? "https://api.smith.langchain.com";
+  const endpoint = process.env.LANGSMITH_ENDPOINT ?? "https://api.smith.langchain.com";
   const project = getLangSmithProject();
   if (!apiKey || !project) {
     return [];
@@ -42,8 +41,8 @@ export async function fetchLangSmithRunsForThread(
   }
   const json = (await res.json()) as RunsQueryResponse;
   return (json.runs ?? [])
-    .filter((run): run is Required<Pick<LangSmithRun, "id">> & LangSmithRun =>
-      typeof run.id === "string",
+    .filter(
+      (run): run is Required<Pick<LangSmithRun, "id">> & LangSmithRun => typeof run.id === "string",
     )
     .map((run) => ({
       id: run.id,
