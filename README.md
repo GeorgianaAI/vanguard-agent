@@ -27,20 +27,22 @@ Here is how Vanguard differs from a standard AI chat:
 
 ### Full product walkthrough: Command Center Protocol ➔ Scout Recon ➔ Governance Ledger Audit
 
-> [!IMPORTANT]
-> **Manual Download Protocol:** To view the high-resolution product demo directly, navigate to [vanguard-demo.mp4](https://github.com/GeorgiDS9/vanguard-agent/blob/main/public/vanguard-demo.mp4) and select **"View raw"** to initialize the local download.
+> [!TIP]
+> **Watch Vanguard Agent in Action:** Click the link below to view the high-resolution product demo directly.
+>
+> **[▶️ Spectra AI: Operational Demo Walkthrough](https://github.com/GeorgiDS9/vanguard-agent/releases/download/v0.1.0-demo/vanguard-demo.mp4)**
 
 ---
 
-## 🖼️ Product Snapshot
+## 🖼️ Vanguard Product Snapshot
 
-### Vanguard Mission Briefing - _Agentic AI: Phase 2 Operational Autonomy_
+### Mission Briefing - _Agentic AI: Phase 2 Operational Autonomy_
 
 > Vanguard Agent Landing Page
 
 ## ![Vanguard Agent Landing Page](./docs/assets/vanguard-home-page.png)
 
-### Vanguard Command Center - _Autonomous Reconnaissance Terminal_
+### Command Center - _Autonomous Reconnaissance Terminal_
 
 > Vanguard Command Stream - Empty State
 
@@ -58,7 +60,7 @@ Here is how Vanguard differs from a standard AI chat:
 
 ## ![Vanguard Command Stream - Restored Session](./docs/assets/vanguard-command-restored-session.png)
 
-### Vanguard Governance Ledger - _NIST AI RMF v1.0 Governance Report: Automated Audit Trail & Integrity Score_
+### Governance Ledger - _NIST AI RMF v1.0 Governance Report: Automated Audit Trail & Integrity Score_
 
 > Navigate from Command Centre to Governance Ledger
 
