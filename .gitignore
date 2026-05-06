@@ -1,5 +1,9 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Keep private, not committed
+SPEC*.md
+**/SECURITY_ADVISORY.md
+
 # dependencies
 /node_modules
 mcp-server/node_modules
