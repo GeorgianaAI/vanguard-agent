@@ -12,6 +12,12 @@ Built on the **Phase 2 Operational Autonomy** standard, Vanguard operates with "
 
 ---
 
+## 🧭 **Engineering Philosophy**
+
+**Vanguard Agent** demonstrates that **Autonomous Agency** does not have to mean a loss of operational control. By applying **Human-in-the-Loop (HITL)** governance and **Stateful Persistence** to the agentic loop, this project provides a blueprint for **Governed AI Systems** that prioritize **Operator Authority**, **Execution Safety**, and **Mission Traceability.**
+
+---
+
 ## 🧐 What makes Vanguard an "Agent"?
 
 Here is how Vanguard differs from a standard AI chat:
@@ -467,7 +473,3 @@ Runs `vanguard-mcp-server` over stdio for Cursor / Claude Desktop–style client
 The live demo is deployed on **Vercel**. Configure the same variables as in `.env.local` in the project’s **Settings → Environment Variables** (Production / Preview as needed), then redeploy. Do not expose provider keys in client-side code.
 
 ---
-
-## 🧭 **Engineering Philosophy**
-
-**Vanguard Agent** demonstrates that **Autonomous Agency** does not have to mean a loss of operational control. By applying **Human-in-the-Loop (HITL)** governance and **Stateful Persistence** to the agentic loop, this project provides a blueprint for **Governed AI Systems** that prioritize **Operator Authority**, **Execution Safety**, and **Mission Traceability.**
