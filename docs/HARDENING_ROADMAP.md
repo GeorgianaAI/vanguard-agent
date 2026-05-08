@@ -49,6 +49,7 @@ Legend used in this file:
 
 - **Status:** Implemented (Strong foundation), Planned (Ops formalization), Deferred (full SRE maturity)
 - **Evidence today:** CI/lint/tests/e2e, circuit-breaker loop cap, persistence/recovery, `/api/health` semantics, dependency-oriented operations runbook.
+- **Planned:** Inngest durable step functions for mission orchestration (step-level retry, crash recovery, approval-gate pause/resume, daily briefing cron).
 
 ### 5) Security and Safety
 
@@ -71,7 +72,61 @@ Legend used in this file:
 
 > These are high-value improvements aligned with Vanguard’s current scope and should be prioritized before broader enterprise expansion.
 
-### A) Retrieval Quality Hardening (Skill 3)
+### A) Workflow Durability - Inngest (Skill 4)
+
+Vanguard missions are multi-step, long-running workflows: recon →
+analysis → synthesis → brief generation. Without durable orchestration,
+a server crash or tool timeout mid-mission loses all prior work and
+restarts from zero.
+
+**Without Inngest:**
+
+- ├── Mission crashes at synthesis step → entire mission restarts
+- ├── Tavily API timeout → whole recon step fails, no retry
+- ├── No visibility into which step failed or where progress stopped
+- ├── Long missions (30-60s) block FastAPI request thread or timeout
+- └── No reliable mechanism for scheduled daily threat briefings
+
+**With Inngest:**
+
+- ├── Each mission step (recon, analysis, synthesis, brief) retried independently
+- ├── Tavily timeout → only that tool call retries, not the whole mission
+- ├── Dashboard visibility into step-level progress and failure reason
+- ├── POST /mission/run returns immediately, client polls for progress
+- └── Scheduled daily briefings via built-in Inngest cron (no external cron needed)
+
+**Steps to convert Vanguard missions to Inngest functions:**
+
+1. **Mission orchestration function** (`inngest/functions/mission_run.ts`)
+   - step 1: `recon` — Tavily web search, store raw results
+   - step 2: `analysis` — Claude Sonnet threat analysis per source
+   - step 3: `synthesis` — conflict resolution across agent outputs
+   - step 4: `brief-generation` — final structured brief
+   - step 5: `approval-gate` — pause workflow, wait for human approval
+   - step 6: `delivery` — deliver approved brief to requester
+
+2. **Daily briefing cron** (`inngest/functions/daily_brief.ts`)
+   - Schedule: `"0 7 * * *"` (7 AM UTC daily)
+   - Trigger mission_run for all active threat watch configurations
+
+3. **Approval gate as Inngest pause**
+   - Human approval currently implemented as a confirmation modal
+   - With Inngest: `await step.waitForEvent("mission/approved", { timeout: "24h" })`
+   - Mission pauses mid-workflow, resumes when approval event fires
+   - Timeout: if no approval in 24h, mission auto-expires cleanly
+
+**Why this fits Vanguard specifically:**
+
+- ├── OSINT missions are expensive to re-run (Tavily API calls cost per search)
+- ├── Step-level retry prevents paying twice for completed recon
+- ├── Approval gate maps naturally to Inngest's pause/resume pattern
+- └── Daily briefing cron removes dependency on external scheduler
+
+**Priority:** High — mission reliability directly impacts the security
+use case. A failed mid-mission with no recovery is a worse user
+experience than a slow mission with guaranteed completion.
+
+### B) Retrieval Quality Hardening (Skill 3)
 
 1. **Evidence provenance normalization**
    - Standardize retrieval artifact fields (`source`, `retrievedAt`, `confidence`, `provenanceId`).
@@ -82,7 +137,7 @@ Legend used in this file:
 4. **Freshness + source trust policy**
    - Add lightweight freshness scoring and source trust tiers for retrieved evidence.
 
-### B) Reliability Ops Formalization (Skill 4)
+### C) Reliability Ops Formalization (Skill 4)
 
 1. **Define explicit SLO starter set**
    - API success rate, p95 latency, mission completion rate, approval-gate integrity.
@@ -91,7 +146,7 @@ Legend used in this file:
 3. **Alert mapping from health semantics**
    - Tie `/api/health` dependency states to clear alert actions and escalation ownership.
 
-### C) Observability Expansion (Skill 6)
+### D) Observability Expansion (Skill 6)
 
 1. **Operational dashboard baseline**
    - Track request volume, error rates, tool failure rates, fallback rates, approval latency.
@@ -99,7 +154,7 @@ Legend used in this file:
    - Ensure request/mission IDs are consistently visible across logs/traces/governance artifacts.
 3. **Post-incident telemetry review loop**
    - Add a lightweight monthly reliability telemetry review ritual.
-4. **Sentry source maps** *(optional near-term)*
+4. **Sentry source maps** _(optional near-term)_
    - Add `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` to surface real TypeScript line numbers in Sentry stack traces instead of minified output.
 
 ---
