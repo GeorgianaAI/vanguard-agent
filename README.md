@@ -275,6 +275,41 @@ Use the live demo credentials below to test the full Command Center flow:
 
 ---
 
+## 🔌 MCP Server Architecture
+
+Vanguard ships a **standalone MCP server** (`mcp-server/`) in addition to its in-process LangGraph tooling. The two are different surfaces serving different consumers.
+
+### Why a separate package?
+
+The MCP server runs as a **stdio subprocess** — launched by an MCP client (Claude Code, Claude Desktop, Cursor) via its config file. That transport requires process-level `stdin`/`stdout`, which a Next.js HTTP server cannot provide. The separate `package.json` under `mcp-server/` isolates its own `tsx`, `typescript`, and `@modelcontextprotocol/sdk` dependencies from the main app build.
+
+### What it exposes
+
+The server registers two tools over the MCP protocol:
+
+| Tool | Description |
+| :--- | :--- |
+| `vanguard_ping` | Health check — no side effects |
+| `domain_whois` | Public RDAP domain summary — same logic as the LangGraph `domain_whois` tool |
+
+`domain_whois` reuses `src/lib/recon/rdapDomainSummary.ts` directly — the logic is shared, not duplicated.
+
+### How this differs from an in-process tool layer
+
+A project whose tools exist solely to serve its own agent (e.g. an internal `registry.ts` → typed client pattern) has no need for a standalone MCP server. Vanguard adds one because the same recon capability is useful to **external operator tooling** — an IDE, a local Claude client, or any other MCP-aware surface — independent of running a full mission.
+
+```
+External MCP client (Claude Code / Claude Desktop / Cursor)
+        ↓  stdio  (MCP protocol)
+  mcp-server/src/index.ts   ←  McpServer (vanguard_ping, domain_whois)
+        ↓
+  src/lib/recon/rdapDomainSummary.ts   ←  shared with LangGraph Scout
+```
+
+The in-process LangGraph tools remain the authoritative execution path for missions; the MCP server is a read-only operator surface on top of the same primitives.
+
+---
+
 ## 🔒 CVE scope, advisories & governance honesty (v1)
 
 This project uses a **narrow, documented** defensive posture — not generic product-wide CVE discovery.

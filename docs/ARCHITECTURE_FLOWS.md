@@ -5,6 +5,7 @@ This document captures the core runtime flows that define Vanguard’s current b
 - Human-in-the-Loop (HITL) governance and anti-tamper controls
 - Authentication and RBAC enforcement
 - Runtime dependency strictness (degraded vs fail-closed behavior)
+- MCP server — external operator tooling surface (stdio)
 
 Use this file as the engineering source of truth for flow-level behavior.  
 When implementation changes, update this doc in the same PR.
@@ -18,6 +19,7 @@ When implementation changes, update this doc in the same PR.
 - **/api/chat** = mission orchestration and HITL enforcement.
 - **LangGraph** = agent decision/flow execution engine.
 - **Redis** = lock/state/persistence substrate for mission safety controls.
+- **MCP Server** = standalone stdio subprocess exposing read-only operator tools to external MCP clients.
 
 Status code conventions used across flows:
 
@@ -160,6 +162,56 @@ H --> J
 
 ---
 
+## 4) MCP Server — External Operator Tool Surface
+
+### Why this exists
+
+Vanguard's LangGraph tools exist to serve the in-process agent. The MCP server exists to serve **external MCP clients** — Claude Code, Claude Desktop, Cursor, or any IDE that speaks the MCP protocol. It surfaces the same read-only recon primitive (`domain_whois`) through a second transport without duplicating the underlying logic.
+
+### What the operator should understand
+
+The MCP server is a **stdio subprocess**, not an HTTP service. An MCP client launches it via its config file and communicates over `stdin`/`stdout` using the MCP protocol. It has no auth layer — only read-only, no-side-effect tools are registered. It does not connect to Redis, the LangGraph state machine, or any mission execution path.
+
+### What this flow guarantees
+
+- Tool calls from external MCP clients never touch mission state or the approval gate.
+- `domain_whois` logic is shared with the LangGraph Scout — one implementation, two transport surfaces.
+- Any tool not explicitly registered in `mcp-server/src/index.ts` is unreachable by MCP clients.
+
+### Diagram
+
+```mermaid
+sequenceDiagram
+autonumber
+participant C as MCP Client<br/>(Claude Code / Claude Desktop / Cursor)
+participant M as mcp-server/src/index.ts<br/>(McpServer — stdio)
+participant R as src/lib/recon/<br/>rdapDomainSummary.ts
+
+C->>M: stdio — tool call: vanguard_ping
+M-->>C: { ok: true, server: "vanguard-mcp", version: "0.1.0" }
+
+C->>M: stdio — tool call: domain_whois { domain }
+M->>R: lookupDomainRdapJson(domain)
+R-->>M: RDAP JSON summary
+M-->>C: { content: [{ type: "text", text: rdapJson }] }
+```
+
+### Relationship to in-process LangGraph tools
+
+```
+Mission execution path (in-process)          External operator tooling (stdio)
+─────────────────────────────────────        ──────────────────────────────────
+LangGraph Scout node                         MCP Client (Claude Code / Desktop)
+       ↓                                              ↓  stdio
+  src/lib/agent/tools.ts (domain_whois)       mcp-server/src/index.ts
+       ↓                                              ↓
+  src/lib/recon/rdapDomainSummary.ts  ←───── shared ─┘
+```
+
+The shared helper is the source of truth. The MCP server adds a read-only operator surface on top; it does not replace or bypass the in-process tool layer.
+
+---
+
 ## Update Rules (Keep This Accurate)
 
 Update this document whenever any of the following changes:
@@ -168,6 +220,7 @@ Update this document whenever any of the following changes:
 - Route permission model or protected route set
 - Dependency strictness policy or health endpoint semantics
 - Actor header propagation behavior
+- MCP tool registrations, transport, or shared recon helpers
 
 If a code change alters runtime behavior but this doc is not updated, treat that as an incomplete PR.
 
