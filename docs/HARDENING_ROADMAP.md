@@ -282,6 +282,153 @@ experience than a slow mission with guaranteed completion.
 
 ---
 
+## Detailed Hardening Plan: Inngest Integration (Skill 4 — Reliability)
+
+## Context
+
+Vanguard missions are multi-step, long-running AI pipelines:
+
+```
+User requests OSINT report
+    ↓
+Supervisor: classify intent, assign tools
+    ↓
+Scout: Tavily web search + RDAP domain lookups
+    ↓
+Auditor: threat analysis, CVE enrichment
+    ↓
+Brief generation: structured governance output
+    ↓
+Approval gate: HITL authorization before delivery
+```
+
+At 3–5 agent steps with external API calls, a full mission can run 30–90 seconds.
+
+## Challenge
+
+- ├── A server crash at the Auditor step loses all prior Scout recon — expensive Tavily queries wasted
+- ├── Tavily API timeout fails the entire Scout step with no per-query retry
+- ├── The Next.js route handler timeout (default 60s) kills long missions mid-flight
+- ├── No visibility into which step is running, failed, or waiting on approval
+- └── No reliable mechanism for scheduled daily threat briefings without an external cron service
+
+## Why Not Handle This in the Existing Next.js Route
+
+- ├── Route handler timeout kills long recon pipelines regardless of LangGraph state
+- ├── LangGraph checkpointing survives state loss but does not retry failed tool calls
+- ├── No per-step retry — a Tavily timeout retries the entire Scout node, not the failed query
+- └── No dashboard visibility into step progress without building custom streaming infrastructure
+
+## Solution: Inngest
+
+Inngest converts the Vanguard mission pipeline into durable step functions.
+Each step is independently retried on failure without restarting completed prior steps.
+
+```
+POST /api/chat/ → fires Inngest event: vanguard/mission.run
+    ↓
+step 1: recon            (Tavily search queries, RDAP lookups — retried per-query)
+step 2: analysis         (Claude Sonnet threat analysis per retrieved source)
+step 3: synthesis        (Auditor cross-source conflict resolution)
+step 4: brief-generation (structured governance artifact)
+step 5: approval-gate    (pause workflow, wait for operator HITL approval)
+step 6: delivery         (release approved brief, write governance ledger entry)
+```
+
+Each step calls `step.run()` — Inngest checkpoints the return value and will not re-execute
+a completed step if the function is retried for a later failure.
+
+## What Changes for the Caller
+
+- Before: `POST /api/chat/` streams until the mission completes or the route times out
+- After: `POST /api/chat/` returns immediately with `{ missionId, status: "queued" }`
+- Client polls `GET /api/chat/[id]/status` for step-level progress
+- Approval gate implemented as `await step.waitForEvent("mission/approved", { timeout: "24h" })` — mission pauses mid-workflow and resumes when the operator submits approval; if no approval arrives in 24h the mission auto-expires cleanly
+
+## Approval Gate Mapping
+
+Vanguard's HITL approval model maps naturally to Inngest's pause/resume pattern:
+
+| Current | With Inngest |
+| :--- | :--- |
+| Approval modal blocks the streaming response | `step.waitForEvent("mission/approved")` pauses the Inngest function |
+| Approval timeout handled by client-side timer | Inngest handles timeout, emits expiry event, cleans up state |
+| Approval context hash validated in route handler | Hash validation moves into the approval-gate step — same logic, durable execution |
+
+## Daily Threat Briefing Cron
+
+Inngest's built-in schedule replaces any external cron dependency:
+
+```typescript
+// inngest/functions/daily_brief.ts
+export const dailyBrief = inngest.createFunction(
+  { id: "daily-brief" },
+  { cron: "0 7 * * *" },  // 07:00 UTC daily
+  async ({ step }) => {
+    const watchConfigs = await step.run("load-watch-configs", loadActiveWatchConfigs);
+    await Promise.all(
+      watchConfigs.map((cfg) =>
+        step.sendEvent("trigger-mission", { name: "vanguard/mission.run", data: cfg })  // handled by mission_run.ts
+      )
+    );
+  }
+);
+```
+
+No Vercel function needs to be kept warm. No external cron service.
+
+## New Routes and Files
+
+| What changes | Detail |
+| :--- | :--- |
+| `POST /api/inngest` | Inngest webhook receiver (new route, ~5 lines) |
+| `GET /api/chat/[id]/status` | Step-level progress polling (new route) |
+| `inngest/client.ts` | Inngest client instantiation |
+| `inngest/functions/mission_run.ts` | Durable mission pipeline function |
+| `inngest/functions/daily_brief.ts` | Nightly briefing cron function |
+| `POST /api/chat/` | Returns `{ missionId }` immediately instead of streaming |
+
+## What Stays the Same
+
+- ✅ All LangGraph agent logic (`src/lib/agent/`)
+- ✅ Approval policy and hash binding (`src/lib/approval/`)
+- ✅ RBAC and JWT session model (`src/lib/auth/`)
+- ✅ Governance ledger and PDF export (`src/lib/governance/`)
+- ✅ Tavily and RDAP retrieval helpers (`src/lib/recon/`)
+- ✅ Sentry error monitoring
+- ✅ LangSmith traces
+- ✅ All existing UI components and the dashboard stream view
+
+## Trade-offs
+
+| Lost | Gained |
+| :--- | :--- |
+| Simplicity — one more service to configure | Step-level retry (crash at Auditor → only Auditor retries, Scout recon preserved) |
+| Two new env vars (`INNGEST_SIGNING_KEY`, `INNGEST_EVENT_KEY`) | Inngest dashboard: see exactly which step failed and why |
+| Route no longer streams — client must poll | Reliable nightly briefing cron without external scheduler |
+| | Approval gate pause/resume is durable — server restart does not lose in-flight approvals |
+| | Tavily timeout retries the failed query, not the whole mission |
+
+## Priority
+
+High — mission reliability is core to the Vanguard security use case.
+A mid-mission crash with no recovery is a worse operator experience than a
+slightly longer mission with guaranteed step-level completion.
+Approval gate durability is especially critical: losing an in-flight approval
+context forces the operator to re-authorize, breaking the governance chain.
+
+## Env Vars Required
+
+```
+INNGEST_SIGNING_KEY=<from Inngest dashboard>
+INNGEST_EVENT_KEY=<from Inngest dashboard>
+```
+
+Add both to `.env.local` and Vercel environment before enabling.
+Run `npm run verify:env` — update the env validator to assert these are present in production.
+
+---
+
 ## Sequencing Rationale
 
 Vanguard intentionally prioritizes:
