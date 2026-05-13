@@ -1,6 +1,4 @@
-@AGENTS.md
-
-# ⬡ VANGUARD AGENT | Architecture & Governance
+# 🛰️ VANGUARD AGENT | Architecture & Governance
 
 ## 1. Project Intent
 
@@ -34,27 +32,27 @@ Thin entrypoints. Extract once a file exceeds ~200–300 lines (sequential funct
 
 ### Directory Map
 
-| Area | Purpose |
-| :--- | :--- |
-| `app/` | Routing only: `page.tsx`, `layout.tsx`, `loading.tsx`. Minimal logic. |
-| `app/api/` | Thin route handlers — validate with Zod, call `src/lib/`, stream response |
-| `app/dashboard/` | Mission UI: timeline, approval cards, tool invocation cards, command input |
-| `app/dashboard/hooks/` | `useVanguardChat.ts` — streaming, message management, approval flow |
-| `app/dashboard/components/` | `ApprovalCard`, `ToolInvocationCard`, `TimelineItem`, `AgentBadge` |
-| `app/api/chat/` | Route helpers: `approvalGuards.ts`, `locks.ts`, `missionRequest.ts`, `streaming.ts`, `telemetry.ts` |
-| `app/governance/` | NIST-aligned audit view, trust score display, PDF export |
-| `app/governance/lib/` | ViewModel builders, ledger row builders, trust score derivation |
-| `app/components/ui/` | Primitives: `MissionNavButton`, `MissionActionButton` |
-| `app/components/page-states/` | `ErrorPage`, `LoadingPage`, `EmptyStatePage`, `NotFoundPage` |
-| `src/lib/agent/` | LangGraph core: `graph.ts`, `state.ts`, `tools.ts`, `checkpointer.ts` |
-| `src/lib/approval/` | Authorization policy: `policy.ts`, `hash.ts`, `types.ts` |
-| `src/lib/auth/` | Session & RBAC: `session.ts`, `rbac.ts`, `permissions.ts`, `csrf.ts` |
-| `src/lib/governance/` | `loadGovernanceSnapshot.ts`, `renderGovernancePdf.ts` |
-| `src/lib/vulnerability/` | CVE enrichment: NVD/advisory fetching, deduplication |
-| `src/lib/recon/` | RDAP domain lookup — shared with MCP server |
-| `mcp-server/` | Standalone stdio MCP server |
-| `tests/` | Playwright E2E specs |
-| `docs/` | Architecture flows, security advisory, hardening roadmap, runbook |
+| Area                          | Purpose                                                                                             |
+| :---------------------------- | :-------------------------------------------------------------------------------------------------- |
+| `app/`                        | Routing only: `page.tsx`, `layout.tsx`, `loading.tsx`. Minimal logic.                               |
+| `app/api/`                    | Thin route handlers — validate with Zod, call `src/lib/`, stream response                           |
+| `app/dashboard/`              | Mission UI: timeline, approval cards, tool invocation cards, command input                          |
+| `app/dashboard/hooks/`        | `useVanguardChat.ts` — streaming, message management, approval flow                                 |
+| `app/dashboard/components/`   | `ApprovalCard`, `ToolInvocationCard`, `TimelineItem`, `AgentBadge`                                  |
+| `app/api/chat/`               | Route helpers: `approvalGuards.ts`, `locks.ts`, `missionRequest.ts`, `streaming.ts`, `telemetry.ts` |
+| `app/governance/`             | NIST-aligned audit view, trust score display, PDF export                                            |
+| `app/governance/lib/`         | ViewModel builders, ledger row builders, trust score derivation                                     |
+| `app/components/ui/`          | Primitives: `MissionNavButton`, `MissionActionButton`                                               |
+| `app/components/page-states/` | `ErrorPage`, `LoadingPage`, `EmptyStatePage`, `NotFoundPage`                                        |
+| `src/lib/agent/`              | LangGraph core: `graph.ts`, `state.ts`, `tools.ts`, `checkpointer.ts`                               |
+| `src/lib/approval/`           | Authorization policy: `policy.ts`, `hash.ts`, `types.ts`                                            |
+| `src/lib/auth/`               | Session & RBAC: `session.ts`, `rbac.ts`, `permissions.ts`, `csrf.ts`                                |
+| `src/lib/governance/`         | `loadGovernanceSnapshot.ts`, `renderGovernancePdf.ts`                                               |
+| `src/lib/vulnerability/`      | CVE enrichment: NVD/advisory fetching, deduplication                                                |
+| `src/lib/recon/`              | RDAP domain lookup — shared with MCP server                                                         |
+| `mcp-server/`                 | Standalone stdio MCP server                                                                         |
+| `tests/`                      | Playwright E2E specs                                                                                |
+| `docs/`                       | Architecture flows, security advisory, hardening roadmap, runbook                                   |
 
 ### Naming Conventions
 
@@ -104,22 +102,25 @@ Strict Mission Control aesthetic — mandatory. Never use ad-hoc Tailwind classe
 ## 8. Testing Protocol
 
 ### Unit / Integration (Vitest)
+
 - Colocate test files: `app/**/*.test.ts`, `src/**/*.test.ts`.
 - **No mocking business logic boundaries** — test against a real backend or explicit integration harness.
 - `as unknown as TargetType` for incomplete stubs only — document why.
 
 ### E2E (Playwright)
+
 - Specs: `tests/dashboard.spec.ts`, `tests/governance.spec.ts`, `tests/redteam.spec.ts`.
 - CI: Chromium only, 2 retries, 20-min timeout, started with `AUTH_E2E_BYPASS=true`.
 - **E2E never hits real infra in CI.** Calls intercepted via `page.route()` or `test.skip(!process.env.E2E_LIVE)`.
 - Live tests (`E2E_LIVE=1`) are local-only — never run in CI.
 
 ### CI Pipeline
+
 security-audit → lint → type-check → build → mcp-server → unit-tests → e2e. See [Tech Stack reference](memory) for full job/command table.
 
-## 9. Environment Variables
+## 10. Denied Permission to Secret File Access
 
-See [Env Vars reference](memory) for full tables. Required: `ANTHROPIC_API_KEY`, `TAVILY_API_KEY`, `UPSTASH_REDIS_REST_URL/TOKEN`, `UPSTASH_VECTOR_REST_URL/TOKEN`. Run `npm run verify:env` before deploying.
+Hard rule: **never** read, search, open, cat, grep, ripgrep, summarize, or inspect real secret-bearing files **under any circumstance** unless the user explicitly overrides this rule for the current task. This includes `.env`, `.env.local`, `.env.development`, `.env.production`, `.env.test`, any other real secret `.env.*` variants, `*.pem`, `*.key`, and `~/.ssh/**`. If a task requires knowing which keys or variables exist, read `.env.example` only. If a task appears to require actual secret values from a real env file, stop and ask the user instead of accessing that file.
 
 ## 10. Operational Commands
 
