@@ -1,24 +1,27 @@
 import Link from "next/link";
-import { Satellite, Shield, Activity, Lock } from "lucide-react";
+import { Satellite, Radar, Shield, Activity, UserCheck } from "lucide-react";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500/30">
+    <div
+      className="min-h-screen text-slate-100 font-sans selection:bg-cyan-500/30"
+      style={{ background: "radial-gradient(ellipse 90% 60% at 50% -5%, rgba(6,182,212,0.25) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 0% 100%, rgba(99,102,241,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99,102,241,0.08) 0%, transparent 60%), #020617" }}
+    >
       {/* --- Hero Section --- */}
       <main className="max-w-6xl mx-auto px-6 pt-32 pb-20 text-center">
-        {/* 🛰️ TECHNICAL CLASSIFICATION */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-bold tracking-widest uppercase mb-8">
           <Activity className="w-3 h-3 animate-pulse" />
           Agentic AI: Phase 2 Operational Autonomy
         </div>
 
-        <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-6 bg-gradient-to-b from-white to-slate-500 bg-clip-text text-transparent">
-          VANGUARD AGENT <span className="text-cyan-500">🛰️</span>
+        <h1 className="text-6xl md:text-8xl font-black tracking-tighter mb-4 bg-linear-to-b from-white to-slate-500 bg-clip-text text-transparent flex items-center justify-center gap-4">
+          VANGUARD AGENT
+          <Satellite className="w-16 h-16 md:w-20 md:h-20 text-cyan-400 shrink-0" />
         </h1>
 
         <p className="max-w-2xl mx-auto text-lg md:text-xl text-slate-400 leading-relaxed mb-10">
           An autonomous <strong>Security Reconnaissance Scout</strong> engineered for governed
-          adversarial operations. Built with LangGraph, Claude 4.6, and Human-in-the-Loop
+          adversarial operations. Built with LangGraph, Claude Sonnet 4.6, and Human-in-the-Loop
           authorization.
         </p>
 
@@ -39,22 +42,33 @@ export default function LandingPage() {
         </div>
       </main>
 
+      {/* --- Status Footer --- */}
+      <footer className="fixed bottom-8 inset-x-0 flex justify-center pointer-events-none">
+        <div className="flex items-center gap-8 font-mono text-[11px] uppercase tracking-widest">
+          <span className="text-slate-500">Engine: <span className="text-cyan-400 font-bold">v1.0</span></span>
+          <span className="text-slate-600">·</span>
+          <span className="text-slate-500">Nodes: <span className="text-cyan-400 font-bold">03</span></span>
+          <span className="text-slate-600">·</span>
+          <span className="text-slate-500">Models: <span className="text-cyan-400 font-bold">03</span></span>
+        </div>
+      </footer>
+
       {/* --- Technical Pillar Grid --- */}
       <section className="max-w-5xl mx-auto px-6 py-20 grid md:grid-cols-3 gap-8 border-t border-slate-900">
         <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
-          <Lock className="w-8 h-8 text-cyan-500 mb-4" />
+          <UserCheck className="w-8 h-8 text-cyan-500 mb-4" />
           <h3 className="font-bold text-lg mb-2">Governed Autonomy</h3>
           <p className="text-sm text-slate-500">
-            Implements a hard interrupt before tool execution. No reconnaissance is performed
-            without explicit operator authorization.
+            Every tool call triggers a Human-in-the-Loop (HITL) checkpoint — execution pauses
+            until the operator explicitly authorizes the action. Zero autonomous network activity.
           </p>
         </div>
         <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
-          <Activity className="w-8 h-8 text-cyan-500 mb-4" />
+          <Radar className="w-8 h-8 text-cyan-500 mb-4" />
           <h3 className="font-bold text-lg mb-2">Real-Time Recon</h3>
           <p className="text-sm text-slate-500">
-            Utilizes Tavily AI and direct RDAP registry queries for deep-web intelligence and domain
-            reconnaissance.
+            Utilizes Tavily AI and direct RDAP registry queries for public-source intelligence and
+            domain reconnaissance.
           </p>
         </div>
         <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800">

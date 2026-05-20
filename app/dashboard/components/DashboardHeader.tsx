@@ -54,7 +54,7 @@ export function DashboardHeader({
           />
           <div>
             <h1 className="text-3xl font-black tracking-tighter uppercase sm:text-4xl">
-              VANGUARD COMMAND CENTER <span className="text-cyan-500">🛰️</span>
+              VANGUARD COMMAND CENTER
             </h1>
             <div className="flex items-center gap-2 text-[12px] text-cyan-400 font-bold tracking-[0.25em] uppercase opacity-90">
               <Activity className="w-3.5 h-3.5" /> Autonomous Reconnaissance Terminal

@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Shield, User, Eye, EyeOff } from "lucide-react";
+import { Lock, Satellite, Radar, Shield, User, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const [username, setUsername] = useState<string>("demo");
+  const [password, setPassword] = useState<string>("RqrEBqs0C8J_nTFvBrRu-jAboMsOJC");
   const [err, setErr] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -36,25 +36,27 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
-      <div className="w-full max-w-[420px] animate-in fade-in zoom-in-95 duration-700">
+    <main
+      className="min-h-screen text-slate-100 flex items-center justify-center p-6"
+      style={{ background: "radial-gradient(ellipse 90% 60% at 50% -5%, rgba(6,182,212,0.25) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 0% 100%, rgba(99,102,241,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99,102,241,0.08) 0%, transparent 60%), #020617" }}
+    >
+      <div className="w-full max-w-105 animate-in fade-in zoom-in-95 duration-700">
         <form
           onSubmit={onSubmit}
           className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/40 p-10 shadow-2xl shadow-black/60 backdrop-blur-xl"
         >
           {/* 💎 Optical Detail: Subtle top glow */}
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-cyan-500/30 to-transparent" />
 
           <div className="mb-10 flex flex-col items-center">
             <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-slate-800 bg-slate-950 shadow-inner">
-              <Shield className="h-7 w-7 text-cyan-500" />
+              <Satellite className="h-7 w-7 text-cyan-500" />
             </div>
-            {/* 🛰️ FONT SCALE: Increased from text-xs to text-sm */}
             <h1 className="text-sm font-black tracking-[0.3em] uppercase text-white">
               Operator Authentication
             </h1>
-            <p className="mt-2 text-[12px] font-bold tracking-widest text-slate-500 uppercase">
-              Vanguard Command Center 🛰️
+            <p className="mt-2 text-[12px] font-bold tracking-widest text-slate-500 uppercase flex items-center gap-1.5">
+              Vanguard Command Center <Radar className="h-3.5 w-3.5 text-cyan-500/70" />
             </p>
           </div>
 
@@ -112,8 +114,8 @@ export default function LoginPage() {
           </div>
         </form>
 
-        <p className="mt-8 text-center text-[11px] font-bold tracking-widest text-slate-600 uppercase">
-          SECURED VIA VANGUARD PROTOCOL 🛡️
+        <p className="mt-8 text-center text-[11px] font-bold tracking-widest text-slate-600 uppercase flex items-center justify-center gap-1.5">
+          SECURED VIA VANGUARD PROTOCOL <Shield className="h-3.5 w-3.5 text-slate-600" />
         </p>
       </div>
     </main>

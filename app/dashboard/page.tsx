@@ -122,7 +122,10 @@ export default function VanguardDashboard() {
   }
 
   return (
-    <div className="isolate min-h-screen w-full overflow-x-hidden bg-slate-950 text-slate-100">
+    <div
+      className="isolate min-h-screen w-full overflow-x-hidden text-slate-100"
+      style={{ background: "radial-gradient(ellipse 90% 60% at 50% -5%, rgba(6,182,212,0.25) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 0% 100%, rgba(99,102,241,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99,102,241,0.08) 0%, transparent 60%), #020617" }}
+    >
       <DashboardHeader
         loading={loading}
         restored={surfaceMode === "restored"}

@@ -9,7 +9,10 @@ import { GovernanceDataProvider } from "./hooks/useGovernanceData";
 
 export default function VanguardGovernancePage() {
   return (
-    <div className="isolate min-h-screen w-full min-w-0 bg-slate-950 text-slate-100 selection:bg-cyan-500/30">
+    <div
+      className="isolate min-h-screen w-full min-w-0 text-slate-100 selection:bg-cyan-500/30"
+      style={{ background: "radial-gradient(ellipse 90% 60% at 50% -5%, rgba(6,182,212,0.25) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 0% 100%, rgba(99,102,241,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(99,102,241,0.08) 0%, transparent 60%), #020617" }}
+    >
       <div className="mx-auto w-full min-w-0 max-w-[min(100%,90rem)] overflow-x-clip px-4 pb-24 pt-6 sm:px-6 md:p-8">
         <GovernanceBackToDashboardButton />
 

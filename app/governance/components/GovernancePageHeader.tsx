@@ -1,6 +1,6 @@
 "use client";
 
-import { Scale } from "lucide-react";
+import { Scale, Satellite } from "lucide-react";
 
 import { useGovernanceData } from "../hooks/useGovernanceData";
 import { deriveGovernanceTrustScore } from "../lib/deriveGovernanceTrustScore";
@@ -27,7 +27,7 @@ export function GovernancePageHeader() {
           Governance Ledger
         </h1>
         <p className="mt-1 text-[13px] font-medium uppercase tracking-widest text-slate-500">
-          NIST AI RMF v1.0 Alignment • Continuous Control Monitoring 🛰️
+          NIST AI RMF v1.0 Alignment • Continuous Control Monitoring <Satellite className="inline-block w-3.5 h-3.5 align-middle ml-1 text-cyan-500/70" />
         </p>
       </div>
 
