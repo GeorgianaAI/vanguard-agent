@@ -17,4 +17,30 @@ test.describe("Governance ledger", () => {
     await expect(page.getByTestId("governance-ledger-standby")).toBeVisible();
     await expect(page.getByTestId("governance-status-brief")).toBeVisible();
   });
+
+  test("export PDF button is visible and enabled in standby state", async ({ page }) => {
+    await page.goto("/governance");
+
+    const exportBtn = page.getByTestId("governance-export-pdf");
+    await expect(exportBtn).toBeVisible();
+    await expect(exportBtn).not.toBeDisabled();
+  });
+
+  test("export PDF triggers a download when clicked", async ({ page }) => {
+    await page.goto("/governance");
+
+    const [download] = await Promise.all([
+      page.waitForEvent("download", { timeout: 15_000 }),
+      page.getByTestId("governance-export-pdf").click(),
+    ]);
+
+    expect(download.suggestedFilename()).toMatch(/\.pdf$/i);
+  });
+
+  test("Back to Command Center link navigates to /dashboard", async ({ page }) => {
+    await page.goto("/governance");
+
+    await page.getByRole("link", { name: /back to command center/i }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+  });
 });

@@ -153,4 +153,31 @@ test.describe("HITL live flow", () => {
       timeout: 180_000,
     });
   });
+
+  test("abort path: abort action produces mission aborted state", async ({ page }) => {
+    test.setTimeout(180_000);
+
+    await page.goto("/dashboard");
+    await page.getByTestId("target-input").fill("openai.com");
+    await page
+      .getByTestId("mission-input")
+      .fill(
+        "Authorized defensive OSINT only. Target: openai.com. Run one recon pass using domain_whois, then stop.",
+      );
+    await page.getByTestId("deploy-button").click();
+
+    await expect(page.getByTestId("abort-action")).toBeVisible({
+      timeout: 120_000,
+    });
+
+    await page.getByTestId("abort-action").click();
+
+    await expect(page.getByText("Mission aborted", { exact: false })).toBeVisible({
+      timeout: 10_000,
+    });
+
+    await expect(page.getByTestId("deploy-button")).toBeEnabled({
+      timeout: 60_000,
+    });
+  });
 });
