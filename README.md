@@ -36,7 +36,7 @@ Here is how Vanguard differs from a standard AI chat:
 > [!TIP]
 > **Watch Vanguard Agent in Action:** Click the link below to view the high-resolution product demo directly.
 >
-> **[▶️ Spectra AI: Operational Demo Walkthrough](https://github.com/GeorgiDS9/vanguard-agent/releases/download/v0.1.0-demo/vanguard-demo.mp4)**
+> **[▶️ Vanguard Agent: Operational Demo Walkthrough](https://github.com/GeorgiDS9/vanguard-agent/releases/download/v0.1.0-demo/vanguard-demo.mp4)**
 
 ---
 
@@ -46,7 +46,7 @@ Here is how Vanguard differs from a standard AI chat:
 
 > Vanguard Agent Landing Page
 
-## ![Vanguard Agent Landing Page](./docs/assets/vanguard-home-page.png)
+## ![Vanguard Agent Landing Page](./docs/assets/vanguard-agent-landing-page.png)
 
 ### Command Center - _Autonomous Reconnaissance Terminal_
 
@@ -233,7 +233,7 @@ Use the live demo credentials below to test the full Command Center flow:
 > [!TIP]
 > **Mission Strategy:** For deeper technical context, see [ARCHITECTURE_FLOWS.md](./docs/ARCHITECTURE_FLOWS.md) for runtime flow diagrams.
 > For planned hardening work, intentional deferrals, and 7-skill maturity sequencing, see [HARDENING_ROADMAP.md](./docs/HARDENING_ROADMAP.md).
-> For adversarial test outcomes and evidence posture, see [SECURITY_ADVISORY.md](./SECURITY_ADVISORY.md). _This document is maintained locally and intentionally not published to prevent detailed red-teaming methodology from being publicly available._
+> For adversarial test outcomes and evidence posture, see [SECURITY_ADVISORY.md](./docs/SECURITY_ADVISORY.md). _This document is maintained locally and intentionally not published to prevent detailed red-teaming methodology from being publicly available._
 
 ---
 
@@ -251,7 +251,7 @@ Use the live demo credentials below to test the full Command Center flow:
 - **Grounded Command UI:** A high-contrast, tactical dashboard designed for high-pressure security environments, featuring real-time streaming of reasoning steps.
 - **Streaming chat (Vercel AI SDK):** Dashboard uses the **`ai`** runtime and **`@ai-sdk/react`** (`useChat`, transport) with **`@ai-sdk/langchain`** to stream LangGraph events to the UI over `/api/chat`.
 - **Schema-Based Intelligence:** Uses **Zod v4** for strict data contracts, ensuring all tool outputs are validated before being ingested into the agent's memory.
-- **Multi-Model Configuration:** Leverages **Claude 4.6 Sonnet** for primary reasoning and **GPT-4o-mini** for secondary mission auditing and final reports.
+- **Multi-Model Configuration:** Leverages **Claude Sonnet 4.6** for primary reasoning and **GPT-4o-mini** for secondary mission auditing and final reports.
 - **Operator identity & RBAC:** Authenticated operators with **roles** (e.g. who may deploy missions, authorize tools, or view audit trails), enforced at the UI and API layers alongside HITL.
 
 ---
@@ -271,7 +271,7 @@ Use the live demo credentials below to test the full Command Center flow:
 - **Runtime:** Vercel Edge Functions (Distributed Compute)
 - **Testing:** **Vitest** (unit tests: Zod request contracts, mission/approval state, dashboard message utilities) · **Playwright** (dashboard e2e smoke: shell UI, empty state, mocked chat errors)
 - **MCP:** **vanguard-mcp-server** (stdio; `vanguard_ping`, `domain_whois` via shared RDAP helper)
-- **Auth & access:** Operator authentication and **RBAC** (role-based authorization for UI and server/API routes; provider TBD—e.g. session-based auth aligned with Next.js App Router).
+- **Auth & access:** HTTP-only JWT session (`__Host-vanguard-session`) signed with `jose`; **RBAC** with `viewer / analyst / admin` roles enforced at proxy layer and API routes.
 
 ---
 
@@ -287,10 +287,10 @@ The MCP server runs as a **stdio subprocess** — launched by an MCP client (Cla
 
 The server registers two tools over the MCP protocol:
 
-| Tool | Description |
-| :--- | :--- |
-| `vanguard_ping` | Health check — no side effects |
-| `domain_whois` | Public RDAP domain summary — same logic as the LangGraph `domain_whois` tool |
+| Tool            | Description                                                                  |
+| :-------------- | :--------------------------------------------------------------------------- |
+| `vanguard_ping` | Health check — no side effects                                               |
+| `domain_whois`  | Public RDAP domain summary — same logic as the LangGraph `domain_whois` tool |
 
 `domain_whois` reuses `src/lib/recon/rdapDomainSummary.ts` directly — the logic is shared, not duplicated.
 

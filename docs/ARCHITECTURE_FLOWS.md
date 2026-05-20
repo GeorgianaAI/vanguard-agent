@@ -59,13 +59,16 @@ autonumber
 participant UI as Dashboard UI
 participant MW as Proxy (proxy.ts)
 participant API as /api/chat
-participant G as LangGraph
+participant SUP as LangGraph: Supervisor
+participant SCT as LangGraph: Scout
+participant AUD as LangGraph: Auditor
 participant RS as Redis
 
 UI->>MW: POST mission request
 MW->>API: Forward + x-actor-id/x-actor-role
-API->>G: invoke(mission)
-G-->>API: AUTHORIZATION_REQUIRED + approval_context
+API->>SUP: invoke(mission)
+SUP->>SCT: delegate recon task
+SCT-->>API: AUTHORIZATION_REQUIRED + approval_context
 API-->>UI: stream approval card (approval_id, hash, risk, expiry)
 
 UI->>MW: POST approval (isApproval, approved, approval_id, approval_context_hash)
@@ -73,7 +76,9 @@ MW->>API: Forward actor headers
 API->>API: Validate body (400 malformed)
 API->>API: Verify hash/expiry/stale checks (409 mismatch/stale)
 API->>RS: SET NX lock (one-time approval)
-API->>G: continue execution
+API->>SCT: continue execution (tool runs)
+SCT->>AUD: hand off findings for synthesis
+AUD-->>API: structured brief + governance summary
 API-->>UI: stream findings / completion
 ```
 

@@ -46,6 +46,7 @@ Use only for controlled red-team runs (local security testing or CI red-team job
 REDTEAM_MODE=true
 RED_TEAM_VECTOR_NAMESPACE=redteam-ci-0000000001
 RED_TEAM_THREAD_PREFIX=redteam-ci
+```
 
 ## Immediate remediation
 

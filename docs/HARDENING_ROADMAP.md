@@ -84,7 +84,7 @@ restarts from zero.
 - ├── Mission crashes at synthesis step → entire mission restarts
 - ├── Tavily API timeout → whole recon step fails, no retry
 - ├── No visibility into which step failed or where progress stopped
-- ├── Long missions (30-60s) block FastAPI request thread or timeout
+- ├── Long missions (30-60s) block the Next.js route handler or hit the Edge function timeout
 - └── No reliable mechanism for scheduled daily threat briefings
 
 **With Inngest:**
