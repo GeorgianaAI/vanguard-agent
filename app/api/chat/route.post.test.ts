@@ -387,6 +387,67 @@ describe("POST /api/chat governance", () => {
       );
       expect(hoisted.streamEvents).toHaveBeenCalled();
     });
+
+    it("returns 409 for expired approval context (past expires_at with matching hash)", async () => {
+      const expiredContext: ApprovalContextV1 = {
+        ...TEST_APPROVAL_CONTEXT,
+        expires_at: "2000-01-01T00:00:00.000Z",
+      };
+      const expiredHash = await computeApprovalContextHash(expiredContext);
+
+      hoisted.getState.mockResolvedValue({
+        values: {
+          isPendingApproval: true,
+          scoutHasRun: false,
+          pendingApprovalContext: expiredContext,
+          pendingApprovalHash: expiredHash,
+          pendingApprovalId: expiredContext.approval_id,
+          approvalHistory: [],
+        },
+      });
+
+      const POST = await loadPost();
+      const res = await POST(
+        makePost({
+          ...baseApprovalPayload,
+          thread_id: "v-expired",
+          approval_id: expiredContext.approval_id,
+          approval_context_hash: expiredHash,
+          approval_context: expiredContext,
+        }),
+      );
+
+      expect(res.status).toBe(409);
+      const body = await res.text();
+      expect(body).toMatch(/expired/i);
+    });
+
+    it("returns 409 when inner arg_hash is tampered (outer hash claims original)", async () => {
+      // Tamper the arg_hash inside the context while claiming the hash of the original.
+      // Server recomputes hash over the tampered body → mismatch → 409 before getState.
+      const tamperedContext: ApprovalContextV1 = {
+        ...TEST_APPROVAL_CONTEXT,
+        tool: {
+          ...TEST_APPROVAL_CONTEXT.tool,
+          arg_hash: "sha256:deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+        },
+      };
+
+      const POST = await loadPost();
+      const res = await POST(
+        makePost({
+          ...baseApprovalPayload,
+          thread_id: "v-tampered-arg-hash",
+          // Claim the original (un-tampered) hash but submit the tampered body.
+          approval_context_hash: TEST_APPROVAL_CONTEXT_HASH,
+          approval_context: tamperedContext,
+        }),
+      );
+
+      expect(res.status).toBe(409);
+      expect(hoisted.getState).not.toHaveBeenCalled();
+      expect(hoisted.redisSet).not.toHaveBeenCalled();
+    });
   });
 
   describe("mission flow", () => {
