@@ -5,7 +5,7 @@ export async function setSessionCookie(token: string): Promise<void> {
   const store = await cookies();
   store.set(getAuthCookieName(), token, {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
   });
