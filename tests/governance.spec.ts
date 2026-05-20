@@ -27,6 +27,20 @@ test.describe("Governance ledger", () => {
   });
 
   test("export PDF triggers a download when clicked", async ({ page }) => {
+    // Seed a thread ID so the button doesn't bail with "no session" early return
+    await page.addInitScript(() => {
+      localStorage.setItem("vanguard-thread-id", "ci-test-thread-0001");
+    });
+
+    // Return a minimal valid PDF so the client-side blob download fires
+    await page.route("**/api/governance/export/pdf**", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/pdf",
+        body: Buffer.from("%PDF-1.4 1 0 obj<</Type/Catalog>>endobj"),
+      }),
+    );
+
     await page.goto("/governance");
 
     const [download] = await Promise.all([
