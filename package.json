@@ -60,6 +60,6 @@
   },
   "overrides": {
     "follow-redirects": "1.16.0",
-    "langsmith": "0.5.19"
+    "langsmith": "^0.6.3"
   }
 }
