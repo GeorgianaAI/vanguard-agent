@@ -607,24 +607,24 @@ describe("POST /api/chat governance", () => {
       expect(hoisted.ratelimitLimit).toHaveBeenCalledTimes(1);
     });
 
-    it("returns 429 when hourly mission rate limit fails", async () => {
+    it("returns 429 when daily mission rate limit fails", async () => {
       hoisted.ratelimitLimit.mockImplementation(async (identifier: string) =>
-        identifier === "127.0.0.1:mission:hour" ? { success: false } : { success: true },
+        identifier === "127.0.0.1:mission:day" ? { success: false } : { success: true },
       );
 
       const POST = await loadPost();
       const res = await POST(
         makePost({
           ...baseMissionPayload,
-          thread_id: "v-rate-hourly",
+          thread_id: "v-rate-daily",
         }),
       );
 
       expect(res.status).toBe(429);
       const text = await res.text();
-      expect(text).toBe("Too many missions this hour. Cool down.");
+      expect(text).toBe("Too many missions today. Try again tomorrow.");
       expect(hoisted.ratelimitLimit).toHaveBeenCalledWith("127.0.0.1:mission");
-      expect(hoisted.ratelimitLimit).toHaveBeenCalledWith("127.0.0.1:mission:hour");
+      expect(hoisted.ratelimitLimit).toHaveBeenCalledWith("127.0.0.1:mission:day");
     });
   });
 });

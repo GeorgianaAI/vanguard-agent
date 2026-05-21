@@ -4,10 +4,10 @@ import { isProductionEnv, resolveRedisEnv } from "../../../src/lib/runtime/redte
 
 const MISSION_RATE_LIMIT_WINDOW = "60 s";
 const MISSION_RATE_LIMIT_REQUESTS = 5;
-const MISSION_HOURLY_RATE_LIMIT_WINDOW = "1 h";
-const MISSION_HOURLY_RATE_LIMIT_REQUESTS = 5;
+const MISSION_DAILY_RATE_LIMIT_WINDOW = "24 h";
+const MISSION_DAILY_RATE_LIMIT_REQUESTS = 5;
 const APPROVAL_RATE_LIMIT_WINDOW = "60 s";
-const APPROVAL_RATE_LIMIT_REQUESTS = 20;
+const APPROVAL_RATE_LIMIT_REQUESTS = 3;
 
 const redisEnv = resolveRedisEnv();
 
@@ -33,15 +33,15 @@ export const missionRatelimit = redis
     })
   : null;
 
-export const missionHourlyRatelimit = redis
+export const missionDailyRatelimit = redis
   ? new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(
-        MISSION_HOURLY_RATE_LIMIT_REQUESTS,
-        MISSION_HOURLY_RATE_LIMIT_WINDOW,
+        MISSION_DAILY_RATE_LIMIT_REQUESTS,
+        MISSION_DAILY_RATE_LIMIT_WINDOW,
       ),
       analytics: true,
-      prefix: `@${redisEnv.keyPrefix}/ratelimit/mission/hourly`,
+      prefix: `@${redisEnv.keyPrefix}/ratelimit/mission/daily`,
     })
   : null;
 

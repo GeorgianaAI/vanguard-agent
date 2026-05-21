@@ -5,7 +5,7 @@ import { vanguardGraph } from "../../../src/lib/agent/graph";
 import { extractTextFromMessage, type MissionRequestInput } from "./missionRequest";
 import { vanguardChatLog, withRequestIdHeaders } from "./telemetry";
 import { getClientIp } from "./locks";
-import { missionRatelimit, missionHourlyRatelimit } from "./ratelimit";
+import { missionRatelimit, missionDailyRatelimit } from "./ratelimit";
 import { streamSingleAssistantText } from "./streaming";
 import {
   readAgentNodeFromLangchainMessage,
@@ -37,7 +37,7 @@ export type MissionFlowOpts = {
 export async function handleMissionRequest(opts: MissionFlowOpts): Promise<Response> {
   const { req, reqId, actorId, actorRole, threadId, missionId, config, messages, target } = opts;
 
-  if (!missionRatelimit || !missionHourlyRatelimit) {
+  if (!missionRatelimit || !missionDailyRatelimit) {
     vanguardChatLog({
       reqId,
       phase: "error",
@@ -75,20 +75,20 @@ export async function handleMissionRequest(opts: MissionFlowOpts): Promise<Respo
     );
   }
 
-  const { success: hourOk } = await missionHourlyRatelimit.limit(`${clientIp}:mission:hour`);
-  if (!hourOk) {
+  const { success: dailyOk } = await missionDailyRatelimit.limit(`${clientIp}:mission:day`);
+  if (!dailyOk) {
     vanguardChatLog({
       reqId,
       phase: "rate_limit",
       status: 429,
       threadId,
-      message: "Hourly rate limit exceeded",
+      message: "Daily rate limit exceeded",
       isApproval: false,
       actorId,
       actorRole,
     });
     return withRequestIdHeaders(
-      new Response("Too many missions this hour. Cool down.", { status: 429 }),
+      new Response("Too many missions today. Try again tomorrow.", { status: 429 }),
       reqId,
     );
   }
