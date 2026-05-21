@@ -68,8 +68,8 @@ Added as-and-when challenges or tradeoffs arise — not padded for completeness.
 **Design:** Separate Upstash Redis rate limit buckets:
 
 - `{ip}:mission` — sliding window limiting new mission deployments (5/rolling minute)
-- `{ip}:mission:hour` — hourly ceiling on mission deployments (5/rolling hour)
-- `{ip}:approval` — sliding window limiting approval decisions (separate budget)
+- `{ip}:mission:day` — daily ceiling on mission deployments (5/rolling 24 h)
+- `{ip}:approval` — sliding window limiting approval decisions (3/rolling minute)
 
 **Why separate buckets:** A single shared bucket creates a denial-of-service vector: an attacker who exhausts the shared budget via replay attempts would also block legitimate mission deployments. Conversely, a burst of legitimate missions could exhaust the approval budget, blocking a pending authorization at a critical moment.
 
