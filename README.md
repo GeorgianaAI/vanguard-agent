@@ -503,8 +503,47 @@ Runs `vanguard-mcp-server` over stdio for Cursor / Claude Desktop–style client
 
 **HITL live scenario (optional):** skipped in CI unless you set `E2E_LIVE=1` and supply the keys in `.env.local` required by that test.
 
+---
+
 ### Production (Vercel)
 
 The live demo is deployed on **Vercel**. Configure the same variables as in `.env.local` in the project’s **Settings → Environment Variables** (Production / Preview as needed), then redeploy. Do not expose provider keys in client-side code.
+
+---
+
+## ⬢ What’s Next: Aegis Node
+
+Vanguard is Phase 2 of a larger protocol. **Phase 3 is Aegis Node** — the autonomous remediation counterpart built to act on the intelligence Vanguard produces.
+
+### The Vanguard Protocol
+
+Vanguard is not a standalone tool — it is the intelligence layer of a two-part system. The **Vanguard Protocol** is the output contract: structured reconnaissance findings, approval records, and trace-linked evidence that a downstream remediation system can act on directly. Aegis is the first system built to consume that protocol.
+
+### What Aegis Node Does
+
+While Vanguard provides **passive observation and governed reconnaissance**, Aegis executes **autonomous remediation and perimeter hardening at the edge.** It turns Vanguard’s intelligence into automated threat neutralization through:
+
+- **Real-time patching** triggered by Vanguard-correlated CVE findings
+- **Adaptive WAF rules** derived from reconnaissance exposure signals
+- **Self-healing infrastructure** — automated rollback and recovery workflows
+- **Kernel-level enforcement** on Apple Silicon (M4) — extending protection from the cloud perimeter down to edge hardware and distributed systems
+
+Aegis is the **authorized remediation node for the local Mac-Silicon (M4) perimeter** within the Vanguard Protocol. Where Vanguard reports, Aegis acts — under the same HITL governance model, extended to active response.
+
+### Protocol Flow
+
+```
+Vanguard (Intelligence Grid)
+  → HITL-authorized reconnaissance
+  → Trace-linked, NIST-aligned findings + CVE correlation
+  → Vanguard Protocol output (machine-readable, signed)
+        ↓
+Aegis Node (Remediation Engine)
+  → Receives protocol output as authorized mission context
+  → Executes real-time patching, WAF hardening, self-healing
+  → Enforces perimeter policy at Apple Silicon (M4) edge
+```
+
+**Aegis Node** is currently in active development as a standalone platform (Next.js 15 · Ollama Llama-3 · macOS Native Enforcement · Unified Memory Optimized for M4). The Vanguard Protocol defined in this codebase is the intelligence layer it consumes.
 
 ---
