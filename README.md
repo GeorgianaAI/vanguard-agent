@@ -252,7 +252,7 @@ Use the live demo credentials below to test the full Command Center flow:
 - **Streaming chat (Vercel AI SDK):** Dashboard uses the **`ai`** runtime and **`@ai-sdk/react`** (`useChat`, transport) with **`@ai-sdk/langchain`** to stream LangGraph events to the UI over `/api/chat`.
 - **Schema-Based Intelligence:** Uses **Zod v4** for strict data contracts, ensuring all tool outputs are validated before being ingested into the agent's memory.
 - **Single-Model Pipeline:** All three agents (Supervisor, Scout, Auditor) run on **Claude Sonnet 4.6** — consistent reasoning quality and no inter-model output format drift.
-- **Operator identity & RBAC:** Authenticated operators with **roles** (e.g. who may deploy missions, authorize tools, or view audit trails), enforced at the UI and API layers alongside HITL.
+- **Operator identity & RBAC:** Authenticated operators with **roles** (`viewer`, `analyst`, `admin`). Role claim is carried in the session JWT and verified on every request. Per-route minimum-role enforcement is a planned hardening item — see `HARDENING_ROADMAP.md §E`.
 
 ---
 
@@ -270,7 +270,7 @@ Use the live demo credentials below to test the full Command Center flow:
 - **Runtime:** Vercel Edge Functions (Distributed Compute)
 - **Testing:** **Vitest** (unit tests: Zod request contracts, mission/approval state, dashboard message utilities) · **Playwright** (dashboard e2e smoke: shell UI, empty state, mocked chat errors)
 - **MCP:** **vanguard-mcp-server** (stdio; `vanguard_ping`, `domain_whois` via shared RDAP helper)
-- **Auth & access:** HTTP-only JWT session (`__Host-vanguard-session`) signed with `jose`; **RBAC** with `viewer / analyst / admin` roles enforced at proxy layer and API routes.
+- **Auth & access:** HTTP-only JWT session (`__Host-vanguard-session`) signed with `jose`; **RBAC** with `viewer / analyst / admin` roles defined — role claim carried in JWT, per-route enforcement planned (see `HARDENING_ROADMAP.md §E`).
 
 ---
 
@@ -344,7 +344,8 @@ This project uses a **narrow, documented** defensive posture — not generic pro
 - [x] **MCP server (stdio):** `mcp-server/` with **`vanguard_ping`** and **`domain_whois`** (RDAP, shared with LangGraph). Expand with **`nmap`** or other tools under explicit policy later.
 - [x] **Vercel deployment:** Production app hosted on **Vercel**; API keys and service credentials are set as **server-side environment variables** in the Vercel project (not committed to the repo).
 - [x] **Adversarial Red-Teaming:** Stress-testing the authorization gate against jailbreak attempts.
-- [x] **Auth & RBAC:** Operator authentication (sessions / identity provider) and **role-based access control** for dashboard routes, mission actions (e.g. deploy, approve tools), and audit-sensitive APIs.
+- [x] **Auth & RBAC (model):** Operator authentication with HTTP-only JWT sessions; `viewer / analyst / admin` role hierarchy defined and verified in session claims.
+- [ ] **Auth & RBAC (enforcement):** Per-route minimum-role guards (`analyst` for missions/approvals, `admin` for evidence export) — required before multi-user deployment; see `HARDENING_ROADMAP.md §E`.
 - [x] **Operational & Governance Docs:** Runbook, security advisory, and architecture flow documentation.
 - [x] **Demo Access (Recruiter-Friendly):** Add a rotating `demo_admin` account and document public demo access workflow.
 - [x] **Mission Timeline & Replay (Command Center UI):** Compact event timeline with read-only playback.

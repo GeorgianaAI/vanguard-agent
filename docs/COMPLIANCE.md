@@ -37,7 +37,7 @@ Vanguard implements the four NIST AI RMF functions as architectural primitives. 
 ### GOVERN — Policies and Accountability
 
 - **Model selection documented** — `claude-sonnet-4-6` (Anthropic) for all three agents: Supervisor routing, Scout reconnaissance, and Auditor synthesis; rationale in `CLAUDE.md §2`
-- **Roles defined** — RBAC with three roles: `viewer`, `analyst`, `admin`. Role gates enforced at both UI and API layers. Only `analyst` and above may deploy missions or authorize tool execution; only `admin` may access audit evidence export
+- **Roles defined** — RBAC with three roles: `viewer`, `analyst`, `admin`. Role hierarchy is modelled and the role claim is verified in the session JWT. Per-route enforcement (`analyst` minimum for missions/approvals, `admin` for evidence export) is a planned hardening item — see `HARDENING_ROADMAP.md §E`
 - **Change governance** — version-locked stack (Next.js 16.2.3 exact pin; model IDs not swapped without Architect decision); no tool is added to the approval allowlist without a corresponding policy entry in `src/lib/approval/policy.ts`
 - **HITL as governed invariant** — the authorization gate is on the critical execution path; it cannot be made conditional, bypassed via prompt pressure, or removed without architectural review
 - **Approval policy** — the approval allowlist (`APPROVAL_TOOL_ALLOWLIST`) is the authoritative list of tools that may be submitted for operator authorization; any tool not on this list cannot proceed through the approval path
@@ -199,7 +199,7 @@ Vanguard is designed for governed defensive security operations. Operators deplo
 ### Access Controls
 
 - **Thread namespace isolation** — `thread_id` is the only key that scopes Redis checkpoint reads and writes; no cross-thread state access is architecturally possible
-- **RBAC enforcement** — `viewer`, `analyst`, `admin` roles enforced at proxy layer and route handler level before any mission or approval operation
+- **RBAC model** — `viewer`, `analyst`, `admin` roles defined in `src/lib/auth/rbac.ts`; role claim is carried in the session JWT and verified on every request. Per-route minimum-role enforcement is a planned hardening item (see `HARDENING_ROADMAP.md §E`)
 - **API keys server-only** — `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `TAVILY_API_KEY`, `UPSTASH_REDIS_REST_TOKEN`, `UPSTASH_VECTOR_REST_TOKEN`, `LANGSMITH_API_KEY` are never exposed to the client; never prefixed `NEXT_PUBLIC_`
 - **Session HTTP-only** — JWT session token is stored in an HTTP-only `__Host-` cookie; never accessible to client-side JavaScript
 - **CSRF validation** — mutating requests validated via CSRF token (`src/lib/auth/csrf.ts`)

@@ -54,7 +54,7 @@ Legend used in this file:
 ### 5) Security and Safety
 
 - **Status:** Implemented (Strong)
-- **Evidence:** HITL authorization gate, policy checks, replay/staleness protections, rate limits, RBAC posture, red-team/adversarial testing.
+- **Evidence:** HITL authorization gate, policy checks, replay/staleness protections, rate limits, red-team/adversarial testing. RBAC role hierarchy modelled; per-route enforcement planned (see §E below).
 
 ### 6) Evaluation and Observability
 
@@ -145,6 +145,26 @@ experience than a slow mission with guaranteed completion.
    - Document thresholds and temporary change-freeze criteria after budget burn.
 3. **Alert mapping from health semantics**
    - Tie `/api/health` dependency states to clear alert actions and escalation ownership.
+
+### E) RBAC Route Enforcement (Skill 5)
+
+The role hierarchy (`viewer=1`, `analyst=2`, `admin=3`) is modelled in `src/lib/auth/rbac.ts` and the role claim is verified in session JWTs (`src/lib/auth/session.ts`). The `hasMinRole()` function exists but is not yet called from any route handler — currently all valid sessions can reach all endpoints regardless of role.
+
+**What needs to be done:**
+
+1. Add a `requireRole(req, minRole)` helper to `app/api/_shared/requestGuards.ts` that:
+   - Reads the `__Host-vanguard-session` cookie from the request
+   - Calls `verifySessionToken()` to get the claims
+   - Calls `hasMinRole(claims.role, minRole)` — returns 403 if insufficient
+2. Wire it into routes with the appropriate minimum role:
+   - `POST /api/chat` (mission start + approval) → `analyst`
+   - `GET /api/audit/evidence` → `admin`
+   - `GET /api/governance` and read-only routes → `viewer`
+3. Update Playwright E2E tests to cover role rejection (403) paths
+
+**Why deferred:** The current deployment uses a single demo account, so enforcement provides no practical access boundary today. Implementing it before multi-role user management exists adds test surface with no operational benefit. This becomes a blocking requirement before any multi-user or production deployment.
+
+**Priority:** Medium — required before any multi-user deployment; not blocking for single-account demo.
 
 ### D) Observability Expansion (Skill 6)
 
