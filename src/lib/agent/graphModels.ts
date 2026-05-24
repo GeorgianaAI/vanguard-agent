@@ -1,14 +1,14 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import { vanguardTools } from "./tools";
 
-const SUPERVISOR_MODEL = process.env.ANTHROPIC_SUPERVISOR_MODEL ?? "claude-sonnet-4-6";
+const AUDITOR_MODEL = process.env.ANTHROPIC_AUDITOR_MODEL ?? "claude-sonnet-4-6";
 const SCOUT_MODEL = process.env.ANTHROPIC_SCOUT_MODEL ?? "claude-sonnet-4-6";
 
-export function getSupervisorModel() {
+export function getAuditorModel() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("Missing ANTHROPIC_API_KEY");
   return new ChatAnthropic({
-    model: SUPERVISOR_MODEL,
+    model: AUDITOR_MODEL,
     temperature: 0,
     apiKey,
     maxRetries: 3,

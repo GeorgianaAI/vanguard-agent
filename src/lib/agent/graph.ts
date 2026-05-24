@@ -1,4 +1,4 @@
-import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
+import { AIMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
 import { END, StateGraph } from "@langchain/langgraph";
 import { getCheckpointer } from "./checkpointer";
 import { VanguardStateAnnotation, VanguardStateType } from "./state";
@@ -6,7 +6,7 @@ import { toolNode } from "./tools";
 import { attachAgentNode } from "./agentNode";
 import { reviveLangchainMessages } from "../langchain/reviveLangchainMessages";
 import { runAdvisoryEnrichment } from "../vulnerability/advisoryEnrichment";
-import { getSupervisorModel, getScoutModel } from "./graphModels";
+import { getAuditorModel, getScoutModel } from "./graphModels";
 import {
   APPROVAL_SIGNAL_PREFIX,
   buildApprovalContext,
@@ -19,7 +19,7 @@ import {
 export const runtime = "edge";
 
 async function supervisorNode(state: VanguardStateType) {
-  if (state.iterationCount > 10) {
+  if (state.iterationCount > 3) {
     return { next: "auditor" };
   }
   if (state.scoutHasRun) {
@@ -123,7 +123,7 @@ async function advisoryEnrichmentNode(state: VanguardStateType) {
 }
 
 async function auditorNode(state: VanguardStateType) {
-  const auditor = getSupervisorModel();
+  const auditor = getAuditorModel();
 
   const hasEvidence = state.messages.some((m) => ToolMessage.isInstance(m));
   const wasAborted = state.missionAborted === true;
