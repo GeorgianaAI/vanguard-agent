@@ -51,11 +51,11 @@ Added as-and-when challenges or tradeoffs arise — not padded for completeness.
 
 **Context:** Vanguard's agent loop can run indefinitely on open-ended objectives ("find everything about X"). Two termination approaches were considered: wall-clock timeout and iteration count cap.
 
-**Why iteration count, not time:** The agent runs across Vercel Edge functions and streamed HTTP responses. Wall-clock time is inconsistent — a fast mission with many quick tool calls has a different time profile than a slow mission with one expensive Tavily query. Iteration count is model-behavior-deterministic: regardless of latency, the agent cannot perform more than 10 reasoning loops. This makes the termination condition predictable and testable.
+**Why iteration count, not time:** The agent runs across Vercel Edge functions and streamed HTTP responses. Wall-clock time is inconsistent — a fast mission with many quick tool calls has a different time profile than a slow mission with one expensive Tavily query. Iteration count is model-behavior-deterministic: regardless of latency, the agent cannot perform more than 3 reasoning loops. This makes the termination condition predictable and testable.
 
-**Why 10:** 10 loops provides enough headroom for a typical multi-tool reconnaissance mission (Supervisor planning + 2–3 Scout tool calls + Auditor synthesis = ~5–6 loops) while preventing pathological cases. The cap is a constant in the agent state; changing it does not require architectural changes.
+**Why 3:** A normal mission increments `iterationCount` exactly once — Scout runs the LLM a single time, then `scoutHasRun` prevents re-entry. Anything above 1 is already a bug. 3 is a tight ceiling that gives minimal headroom for unexpected retries while cutting blast radius to near-zero. The cap is a constant in the agent state; changing it does not require architectural changes.
 
-**What "loop" means:** Each entry into the main reasoning node increments `iterationCount`. The counter is stored in LangGraph state (checkpointed in Redis), so a session resumption does not reset the counter — a mission interrupted after 8 loops will terminate after 2 more, not 10 more.
+**What "loop" means:** Each entry into the main reasoning node increments `iterationCount`. The counter is stored in LangGraph state (checkpointed in Redis), so a session resumption does not reset the counter — a mission interrupted after 2 loops will terminate after 1 more, not 3 more.
 
 **What the operator sees:** When the circuit breaker fires, the Auditor node produces a brief with the current evidence state. The governance ledger records the termination event with `iterationCount` at time of cutoff.
 
@@ -157,3 +157,21 @@ LangSmith traces from red-team runs can be routed to a separate project by setti
 **Why not duplicate:** If the RDAP query logic changes (new RDAP endpoint, response field normalization), a duplicated implementation creates two update points that can drift. A change to the Scout's behavior that is not reflected in the MCP server's tool would produce different outputs from the same logical operation depending on the consumer.
 
 **Trade-off:** The MCP server has a build-time dependency on the root `src/` tree. Running `cd mcp-server && npm install` alone is insufficient — the root package must also be installed. `npm run mcp` from the project root handles this correctly.
+
+---
+
+## 12. LLM-as-Judge: Why It Is Not in the Runtime Pipeline
+
+**Context:** LLM-as-judge is a pattern where a second model evaluates the output of a primary model — scoring it, flagging low-quality responses, or triggering a retry. It is commonly used in eval pipelines and self-refinement loops where output quality is variable and hard to validate structurally.
+
+**Why it does not apply to Vanguard's runtime path:** The auditor receives deterministic, structured inputs — WHOIS records with fixed fields, Tavily JSON responses, and Zod-validated CVE findings with CVSS scores. The auditor is not reasoning creatively; it is summarizing constrained inputs into a constrained output format across four known system prompt strategies. A well-defined system prompt already handles this reliably. Adding a runtime judge would introduce latency and cost on every mission without addressing a real quality gap.
+
+**Where a judge would genuinely add value:** The one meaningful gap is the auditor's self-reported confidence annotation (low / medium / high). The auditor assigns this unilaterally with no external check. A judge model could evaluate whether the stated confidence is well-calibrated against the available evidence — flagging cases where "high confidence" is claimed on thin WHOIS data or a single Tavily result. This is a real governance gap.
+
+**Current decision:** Address this as an offline eval in CI rather than a runtime node. A CI job runs a fixture set of missions (canned WHOIS + Tavily responses, no real network calls), feeds them through the auditor, and uses a second Claude call to verify confidence calibration. This gives the quality signal without adding latency or cost to the live request path.
+
+**Near-term UI opportunity:** The natural home for a calibration signal is the Governance Ledger — surfaced alongside the existing trust score. This would require a new state field, a new graph node, a UI component, and governance ledger integration. Deferred for now; flagged as a near-term hardening item in `HARDENING_ROADMAP.md`.
+
+**Model choice for the judge — CI eval:** `claude-haiku-4-5`. The task is narrow and well-defined — compare a confidence label against a structured evidence set and return a verdict. Haiku is significantly cheaper, which matters for a job that runs on every push against a fixture set. It does not need deeper reasoning for a pass/fail signal. Staying on Anthropic also avoids adding a second API key to the CI environment.
+
+**Model choice for the judge — runtime UI feature:** `gpt-4o` (OpenAI). Using a different provider as judge is a deliberate choice — same-model judging introduces bias, as a model tends to agree with its own outputs. GPT-4o provides a genuinely independent cross-provider verdict. It is also cheaper than `claude-sonnet-4-6` ($2.50/1M input vs $3/1M), making it the right call for an operator-facing calibration signal where both verdict quality and cost efficiency matter.

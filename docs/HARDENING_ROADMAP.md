@@ -429,6 +429,15 @@ Run `npm run verify:env` — update the env validator to assert these are presen
 
 ---
 
+## Auditor Confidence Calibration (LLM-as-Judge)
+
+- **Status:** Deferred — CI eval planned, UI feature near-term
+- **Gap:** The auditor self-reports confidence (low / medium / high) with no external validation. A miscalibrated confidence rating flows directly into the governance brief and trust score with no check.
+- **Planned (CI):** Offline eval job in CI — fixture missions with canned tool outputs fed through the auditor, with a second Claude call verifying whether the stated confidence matches the evidence quality. Pass/fail signal, no runtime cost.
+- **Near-term (UI):** Surface a calibration score in the Governance Ledger alongside the existing trust score. Requires new state field, new graph node, UI component, and ledger integration. See `TECHNICAL_ADVISORY.md §12` for full rationale.
+
+---
+
 ## Sequencing Rationale
 
 Vanguard intentionally prioritizes:

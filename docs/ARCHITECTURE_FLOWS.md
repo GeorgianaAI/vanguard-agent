@@ -12,6 +12,42 @@ When implementation changes, update this doc in the same PR.
 
 ---
 
+## LangGraph Node Topology
+
+Vanguard exposes **3 agents** to operators but runs **5 LangGraph nodes** internally. The distinction matters: `tools` and `advisory_enrichment` are implementation nodes, not agents — they have no LLM, no system prompt, and are not addressable by the supervisor routing logic.
+
+| Node | Type | Description |
+| :--- | :--- | :--- |
+| `supervisor` | Routing agent | Pure routing — no LLM. Reads `iterationCount` and `scoutHasRun` to decide whether to send the mission to `scout` or close it out via `auditor`. Circuit breaker fires here at `iterationCount > 3`. |
+| `scout` | LLM agent | Runs the RDAP preflight check, emits the HITL approval payload (pausing the graph), and — once authorized — invokes the Claude model with `domain_whois` and `tavily_search` tools. |
+| `tools` | Executor | Standard LangGraph tool executor. Runs the tool calls requested by Scout's LLM response. No LLM involved. |
+| `advisory_enrichment` | Data enrichment | Parses tool results from message history, fetches public CVE/advisory data from NVD, and writes findings to `state.vulnerabilities`. No LLM involved. |
+| `auditor` | LLM agent | Synthesizes all evidence into a structured defensive intelligence brief. Adapts its system prompt based on mission outcome (aborted / unresolvable target / evidence present / no evidence). |
+
+**Fixed execution path for a completed mission:**
+
+```
+__start__ → supervisor → scout → tools → advisory_enrichment → auditor → END
+```
+
+**Approval pause path (HITL gate):**
+
+```
+__start__ → supervisor → scout → END   (graph suspended, approval pending)
+<operator approves>
+__start__ → scout → tools → advisory_enrichment → auditor → END
+```
+
+**Early-exit paths:**
+
+```
+Target unresolvable:   __start__ → supervisor → scout → auditor → END
+Mission aborted:       __start__ → auditor → END
+Circuit breaker:       __start__ → supervisor → auditor → END
+```
+
+---
+
 ## How to Read These Diagrams
 
 - **UI** = operator-facing dashboard and login pages.
