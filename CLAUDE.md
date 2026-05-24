@@ -79,7 +79,7 @@ Thin entrypoints. Extract once a file exceeds ~200–300 lines (sequential funct
 
 ## 5. Agent Architecture
 
-Three-node LangGraph state machine: **Supervisor → (approval gate) → Scout → Auditor**. See [Agent Architecture reference](memory) for full state schema, node descriptions, tool allowlist, approval binding, and checkpointing.
+**3 agents, 5 LangGraph nodes.** The conceptual pipeline is **Supervisor → (approval gate) → Scout → Auditor**. The full graph also includes `tools` (executes Scout's tool calls) and `advisory_enrichment` (fetches CVE/advisory data from tool results) as implementation nodes between Scout and Auditor. See [Agent Architecture reference](memory) for full state schema, node descriptions, tool allowlist, approval binding, and checkpointing. See `docs/ARCHITECTURE_FLOWS.md §LangGraph Node Topology` for the complete node map.
 
 ## 6. Auth & RBAC
 

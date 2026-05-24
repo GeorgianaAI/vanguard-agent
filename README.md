@@ -239,19 +239,19 @@ Use the live demo credentials below to test the full Command Center flow:
 
 ## 🏗️ Core Agentic Architecture
 
-- **Supervisor-Worker Pattern:** Implements a dual-node hierarchy where a **Supervisor (The General)** plans the mission and a **Scout (The Worker)** executes specialized reconnaissance tasks.
+- **3-Agent, 5-Node Pipeline:** Three agents (Supervisor, Scout, Auditor) backed by a 5-node LangGraph graph — the `tools` node executes Scout's calls and `advisory_enrichment` fetches CVE data before Auditor synthesizes the final brief.
 - **Approval-Gated Execution (HITL):** Tool execution is paused until operator authorization, with approval/abort events captured in mission state and UI.
 - **Edge-Native Reconnaissance:** Optimized for the **Vercel Edge Runtime**, providing globally distributed, low-latency intelligence gathering.
 - **Satellite Intelligence (Tavily):** Integration with Tavily AI for real-time, AI-optimized web search to identify live threat indicators and CVE data.
 - **Direct Registry Access (RDAP):** Specialized tools for direct domain reconnaissance, querying global registries for registrar data and registration events.
 - **Mission Persistence:** Powered by **Upstash Redis**, allowing complex reconnaissance missions to "sleep" and "wake" across sessions with 100% context retention.
-- **Economic Shield (Circuit Breaker):** A state-managed `iterationCount` that auto-terminates the agent after 10 loops to prevent "Hallucination Spirals" and budget drain.
+- **Economic Shield (Circuit Breaker):** A state-managed `iterationCount` that auto-terminates the agent after 3 loops to prevent "Hallucination Spirals" and budget drain.
 - **Stateful Mission Log:** Utilizes **LangGraph** message reducers to maintain an immutable history of reasoning, tool calls, and operator approvals.
 - **Observability as Evidence:** Full integration with **LangSmith** to provide a verifiable audit trail of the agent's "Internal Monologue" and tool outputs.
 - **Grounded Command UI:** A high-contrast, tactical dashboard designed for high-pressure security environments, featuring real-time streaming of reasoning steps.
 - **Streaming chat (Vercel AI SDK):** Dashboard uses the **`ai`** runtime and **`@ai-sdk/react`** (`useChat`, transport) with **`@ai-sdk/langchain`** to stream LangGraph events to the UI over `/api/chat`.
 - **Schema-Based Intelligence:** Uses **Zod v4** for strict data contracts, ensuring all tool outputs are validated before being ingested into the agent's memory.
-- **Multi-Model Configuration:** Leverages **Claude Sonnet 4.6** for primary reasoning and **GPT-4o-mini** for secondary mission auditing and final reports.
+- **Single-Model Pipeline:** All three agents (Supervisor, Scout, Auditor) run on **Claude Sonnet 4.6** — consistent reasoning quality and no inter-model output format drift.
 - **Operator identity & RBAC:** Authenticated operators with **roles** (e.g. who may deploy missions, authorize tools, or view audit trails), enforced at the UI and API layers alongside HITL.
 
 ---
@@ -260,8 +260,7 @@ Use the live demo credentials below to test the full Command Center flow:
 
 - **Frontend:** Next.js 16 (App Router), Tailwind CSS 4, Lucide Icons (Tactical Set) — **Command Center** at `/dashboard`, **Governance Ledger** (NIST-aligned shell) at `/governance`.
 - **Vercel AI SDK:** **`ai`**, **`@ai-sdk/react`**, **`@ai-sdk/langchain`** — streaming UI messages, chat transport, and LangGraph → UI message stream bridging for `/dashboard`.
-- **Agentic Brain:** Anthropic Claude Sonnet 4.6 (Primary Scout)
-- **Autonomous Auditor:** OpenAI GPT-4o-mini (The Judge)
+- **Agentic Brain:** Anthropic Claude Sonnet 4.6 (Supervisor, Scout, Auditor)
 - **Logic Engine:** LangGraph.js (State Machine Orchestration)
 - **Mission Persistence:** Upstash Redis (HTTP-based State Checkpointing)
 - **Intelligence Vault:** Upstash Vector (CVE & Recon Knowledge Storage)
@@ -398,12 +397,6 @@ npm install
 # Powers the core Agentic Reasoning and Tool-Calling logic.
 
 ANTHROPIC_API_KEY=sk-ant-api03-xxxx...
-
-# ⚖️ Autonomous Auditor (OpenAI GPT-4o-Mini)
-
-# Provides secondary semantic validation and final mission reports.
-
-OPENAI_API_KEY=sk-proj-xxxx...
 
 # 📡 Reconnaissance Intelligence (Tavily AI Scout)
 

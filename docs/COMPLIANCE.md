@@ -36,7 +36,7 @@ Vanguard implements the four NIST AI RMF functions as architectural primitives. 
 
 ### GOVERN — Policies and Accountability
 
-- **Model selection documented** — `claude-sonnet-4-6` (Anthropic) for Supervisor and Scout reasoning; `gpt-4o-mini` (OpenAI) for Auditor synthesis and final brief generation; rationale in `CLAUDE.md §2`
+- **Model selection documented** — `claude-sonnet-4-6` (Anthropic) for all three agents: Supervisor routing, Scout reconnaissance, and Auditor synthesis; rationale in `CLAUDE.md §2`
 - **Roles defined** — RBAC with three roles: `viewer`, `analyst`, `admin`. Role gates enforced at both UI and API layers. Only `analyst` and above may deploy missions or authorize tool execution; only `admin` may access audit evidence export
 - **Change governance** — version-locked stack (Next.js 16.2.3 exact pin; model IDs not swapped without Architect decision); no tool is added to the approval allowlist without a corresponding policy entry in `src/lib/approval/policy.ts`
 - **HITL as governed invariant** — the authorization gate is on the critical execution path; it cannot be made conditional, bypassed via prompt pressure, or removed without architectural review
@@ -47,7 +47,7 @@ NIST Controls: `GOVERN 1.1` (accountability structures), `GOVERN 1.2` (roles and
 ### MAP — Context and Risk Documentation
 
 - **Purpose documented** — Vanguard performs governed defensive reconnaissance (OSINT) on public-source data (WHOIS/RDAP, web search via Tavily). It does not perform offensive operations, does not cross network boundaries without operator authorization, and does not access private or confidential systems
-- **Known limitations documented** — single embedding model (Upstash Vector), circuit breaker caps at 10 iterations (does not guarantee complete coverage of complex targets), LangSmith trace completeness depends on `LANGCHAIN_CALLBACKS_BACKGROUND=false` being set
+- **Known limitations documented** — single embedding model (Upstash Vector), circuit breaker caps at 3 iterations (does not guarantee complete coverage of complex targets), LangSmith trace completeness depends on `LANGCHAIN_CALLBACKS_BACKGROUND=false` being set
 - **Risk boundaries** — Vanguard's risk is bounded to public-source data; it cannot read across mission namespaces, escalate privileges beyond the HITL gate, or invoke tools not on the allowlist
 - **Threat surface mapped** — approval bypass, replay attacks, hash collision attempts, prompt-pressure social engineering, and rate-limit abuse are documented in `docs/SECURITY_ADVISORY.md`
 
@@ -64,7 +64,7 @@ NIST Controls: `MEASURE 1.1` (evaluation approaches established), `MEASURE 2.1` 
 
 ### MANAGE — Risk Treatment and Response
 
-- **Circuit breaker** — `iterationCount` state cap (10 loops) terminates runaway agent cycles deterministically; prevents hallucination spirals and unbounded API cost
+- **Circuit breaker** — `iterationCount` state cap (3 loops) terminates runaway agent cycles deterministically; prevents hallucination spirals and unbounded API cost
 - **Rate limiting** — Upstash Redis sliding-window counters enforce per-IP mission rate limits (5/rolling minute, 5/rolling 24 h) and per-IP approval rate limits (3/rolling minute); all counters checked before any AI pipeline runs
 - **HITL-first enforcement** — no external tool call executes without a valid, fresh, hash-bound operator authorization
 - **Replay prevention** — Redis `SET NX` one-time lock on `approval_id` prevents the same approval from being processed twice, even under concurrent request conditions
@@ -139,12 +139,12 @@ Vanguard is designed for governed defensive security operations. Operators deplo
 - Model ID is pinned in `CLAUDE.md §2`; changing it requires Architect decision and full regression of HITL gate behavior
 - The system prompt is an architectural invariant — changes require Architect review and adversarial re-validation via the red team CI suite
 
-### gpt-4o-mini — Auditor (Mission Synthesis)
+### claude-sonnet-4-6 — Auditor (Mission Synthesis)
 
 | Property         | Value                                                                                          |
 | :--------------- | :--------------------------------------------------------------------------------------------- |
 | **Role**         | Auditor node — synthesizes Scout findings into structured final brief and governance summary   |
-| **Provider**     | OpenAI                                                                                         |
+| **Provider**     | Anthropic                                                                                      |
 | **Input**        | Scout recon results, tool output, mission objective                                            |
 | **Output**       | Structured mission brief with evidence citations, confidence annotations, defensive next steps |
 | **Tracing**      | LangSmith — Auditor calls logged with mission context                                          |
@@ -153,7 +153,7 @@ Vanguard is designed for governed defensive security operations. Operators deplo
 
 **Governance decisions:**
 
-- `gpt-4o-mini` is deliberately a lower-cost model for the synthesis pass, which is post-execution and does not require the same reasoning depth as the Scout
+- The same model (`claude-sonnet-4-6`) is used across all three agents — Supervisor, Scout, and Auditor — for consistency and to avoid inter-model output format drift
 - Auditor output is not in the approval critical path — it cannot authorize or execute tools; its role is summarization only
 
 ### Tavily Search API — Retrieval Layer
@@ -189,8 +189,7 @@ Vanguard is designed for governed defensive security operations. Operators deplo
 
 | Subprocessor  | Role                                                               | Compliance                                         |
 | :------------ | :----------------------------------------------------------------- | :------------------------------------------------- |
-| **Anthropic** | claude-sonnet-4-6 — Supervisor and Scout reasoning                 | Usage policies; data processing terms available    |
-| **OpenAI**    | gpt-4o-mini — Auditor synthesis                                    | SOC 2 Type II; data processing agreement available |
+| **Anthropic** | claude-sonnet-4-6 — Supervisor, Scout, and Auditor (all agents)    | Usage policies; data processing terms available    |
 | **Upstash**   | Redis (checkpoints, rate limits, locks) + Vector (knowledge store) | SOC 2 Type II                                      |
 | **Tavily AI** | Retrieval — AI-optimized web search for Scout tool calls           | Usage policies; enterprise terms available         |
 | **LangSmith** | Observability — mission trace audit trail                          | Enterprise-grade data handling; EU endpoint        |
@@ -324,14 +323,14 @@ Honest assessment of Vanguard against the OWASP LLM Top 10. The threat model her
 | :-------- | :----------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **LLM01** | **Prompt Injection**                 | **Strong.** The HITL gate is enforced server-side regardless of prompt content — tool execution never proceeds based on model output alone. System prompt is a governed invariant. Red team CI (prompt pressure tests) verify gate integrity under adversarial inputs. _Gap: sufficiently sophisticated injection into tool output could influence Auditor synthesis; not currently tested at that layer._                                                             |
 | **LLM02** | **Insecure Output Handling**         | **Partial.** Model outputs are streamed as text + structured JSON (approval context, evidence package). No HTML rendering path in the tactical dashboard. Approval context schema is Zod-validated before any downstream action. _Gap: no formal schema validation on raw Auditor synthesis text before it reaches the governance ledger row builder._                                                                                                                 |
-| **LLM03** | **Training Data Poisoning**          | **Not applicable.** Vanguard uses Anthropic and OpenAI inference APIs only — no custom training, fine-tuning, or model weight control. Risk sits with Anthropic and OpenAI.                                                                                                                                                                                                                                                                                            |
-| **LLM04** | **Model Denial of Service**          | **Strong.** Dual-bucket Redis rate limiting (5/min, 5/day per IP for missions; 3/min per IP for approvals) runs before any AI pipeline. Circuit breaker terminates at 10 agent iterations. Edge function timeout provides a secondary wall-clock bound. _Gap: no per-mission token budget enforcement — a complex target with many tool calls increases token consumption per mission._                                                                             |
-| **LLM05** | **Supply Chain Vulnerabilities**     | **Partial.** `npm audit --audit-level=high` runs in CI on both root and `mcp-server/` packages; `package-lock.json` committed. _Gap: no SBOM; no cryptographic verification of model API responses; transitive dependency on Anthropic, OpenAI, Upstash, Tavily, and LangSmith infrastructure._                                                                                                                                                                        |
+| **LLM03** | **Training Data Poisoning**          | **Not applicable.** Vanguard uses the Anthropic inference API only — no custom training, fine-tuning, or model weight control. Risk sits with Anthropic.                                                                                                                                                                                                                                                                                            |
+| **LLM04** | **Model Denial of Service**          | **Strong.** Dual-bucket Redis rate limiting (5/min, 5/day per IP for missions; 3/min per IP for approvals) runs before any AI pipeline. Circuit breaker terminates at 3 agent iterations. Edge function timeout provides a secondary wall-clock bound. _Gap: no per-mission token budget enforcement — a complex target with many tool calls increases token consumption per mission._                                                                             |
+| **LLM05** | **Supply Chain Vulnerabilities**     | **Partial.** `npm audit --audit-level=high` runs in CI on both root and `mcp-server/` packages; `package-lock.json` committed. _Gap: no SBOM; no cryptographic verification of model API responses; transitive dependency on Anthropic, Upstash, Tavily, and LangSmith infrastructure._                                                                                                                                                                        |
 | **LLM06** | **Sensitive Information Disclosure** | **Partial.** Vanguard operates on public OSINT targets, so the primary risk is not PII disclosure but **operator credential exposure** and **approval context leakage**. All API keys are server-only. Session JWT is HTTP-only. Approval context is bound to `thread_id` and not cross-accessible. _Gap: if an operator supplies personal data as a mission target, it is not redacted and will appear in traces and checkpoint state._                               |
 | **LLM07** | **Insecure Plugin Design**           | **Strong.** Tool execution is governed by an explicit allowlist (`APPROVAL_TOOL_ALLOWLIST` in `src/lib/approval/policy.ts`). Every tool call requires a valid HITL authorization before execution. Tool args are Zod-validated against per-tool schemas before submission. `arg_hash` binds the approved args to the approval context — any post-approval arg modification is detectable.                                                                              |
 | **LLM08** | **Excessive Agency**                 | **Strong. This is the primary threat model.** The HITL authorization gate is the central control — no tool executes without explicit operator approval. The circuit breaker caps iteration. The abort path provides a clean non-execution governance record. The allowlist limits what tools can even be proposed. _Gap: if an operator approves a `tavily_search` query, the Scout executes it without further per-result filtering of what is retrieved and stored._ |
 | **LLM09** | **Overreliance**                     | **Partial.** Mission output is framed as intelligence, not authoritative fact. Confidence annotations and "defensive next steps" structure encourage verification discipline. The Governance Ledger shows what was authorized, what ran, and what was aborted — this surfaces the scope of evidence directly. _Gap: no per-finding confidence intervals surfaced to end users; the governance trust score is a summary signal, not a per-claim quality metric._        |
-| **LLM10** | **Model Theft**                      | **Not applicable.** Anthropic and OpenAI APIs are used; model weights are not hosted or exposed. Rate limiting incidentally limits automated probing behavior.                                                                                                                                                                                                                                                                                                         |
+| **LLM10** | **Model Theft**                      | **Not applicable.** Anthropic API is used; model weights are not hosted or exposed. Rate limiting incidentally limits automated probing behavior.                                                                                                                                                                                                                                                                                                         |
 
 **Summary:** LLM07, LLM08 (the two highest-priority risks for an agentic execution platform) are well-covered. LLM01 and LLM04 are strong. LLM03 and LLM10 do not apply to the current architecture. LLM02, LLM05, LLM06, and LLM09 have partial coverage with documented gaps.
 
