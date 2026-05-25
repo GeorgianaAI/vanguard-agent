@@ -524,6 +524,8 @@ While Vanguard provides **passive observation and governed reconnaissance**, Aeg
 
 Aegis is the **authorized remediation node for the local Mac-Silicon (M4) perimeter** within the Vanguard Protocol. Where Vanguard reports, Aegis acts — under the same HITL governance model, extended to active response.
 
+Vanguard (autonomous agent) → generates reconnaissance intelligence autonomously → Aegis Node → transforms it into defensive actions, with HITL gates specifically at the hardware remediation execution layer.
+
 ### Protocol Flow
 
 ```
