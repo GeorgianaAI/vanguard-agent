@@ -171,3 +171,34 @@ LangSmith traces from red-team runs can be routed to a separate project by setti
 **Current decision:** Address this in the runtime pipeline as a new graph node surfacing a calibration score in the Governance Ledger alongside the existing trust score. This requires a new state field, a new graph node, a UI component, and governance ledger integration. Flagged as a near-term hardening item in `HARDENING_ROADMAP.md`.
 
 **Model choice for the judge:** `gpt-4o` (OpenAI). Using a different provider as judge is a deliberate choice — same-model judging introduces bias, as a model tends to agree with its own outputs. GPT-4o provides a genuinely independent cross-provider verdict. It is also cheaper than `claude-sonnet-4-6` ($2.50/1M input vs $3/1M), making it the right call for an operator-facing calibration signal where both verdict quality and cost efficiency matter.
+
+---
+
+## 13. MCP Server: Client vs Server, and Why `domain_whois` Is an Educational Artifact
+
+**Context:** Vanguard ships a standalone stdio MCP server (`mcp-server/`) exposing two tools: `vanguard_ping` and `domain_whois`. The MCP server is sometimes confused with the MCP client pattern used in other applications (e.g., a voice assistant that connects to Google Calendar, Gmail, and Tavily MCP servers). These are opposite roles in the same protocol.
+
+**The distinction:**
+
+| Role | What it does | Vanguard equivalent |
+|---|---|---|
+| MCP Client | Connects to external MCP servers and calls their tools | Not present in Vanguard |
+| MCP Server | Exposes tools for any MCP-compatible client to call | `mcp-server/src/index.ts` |
+
+A voice app that reads Google Calendar is an MCP **client** — it consumes tools that already exist. Vanguard's MCP server is the opposite: it **exposes** tools that external clients (Claude Desktop, another agent) can call.
+
+**Why `domain_whois` is not a compelling example:** Claude Desktop could perform an RDAP lookup itself by fetching `rdap.org` directly. There is nothing proprietary about the lookup — it is a thin wrapper over a public API. The tool was chosen for the MCP server because it is simple, safe, and self-contained: a good shape for learning the server pattern without wiring up auth, Redis, and LangGraph into the MCP layer.
+
+**When a custom MCP server is genuinely warranted:**
+
+| Capability | Why it requires a custom server |
+|---|---|
+| Internal database query | The client has no network access to the private DB |
+| Proprietary scoring or enrichment logic | The algorithm is not public |
+| Authenticated internal API | Credentials must live server-side |
+| Multi-step orchestration the client cannot replicate | Complex pipeline owned by the server |
+| Vanguard's full mission graph | Run Scout/Auditor from Claude Desktop — the client cannot do this alone |
+
+**What would make a meaningful Vanguard MCP server:** Exposing `run_mission`, `get_audit_ledger`, and `approve_action` as MCP tools. Claude Desktop would then be able to kick off a full governed recon mission, retrieve its audit evidence, and submit a HITL authorization — all through the MCP protocol — without any web UI. That surface is genuinely proprietary: the governed pipeline, approval binding, and governance ledger are Vanguard's value, not an RDAP query.
+
+**Current decision:** The MCP server remains scoped to `domain_whois` as a pattern demonstration. Expanding it to expose mission-level tools is flagged as a near-term hardening item in `HARDENING_ROADMAP.md §F`.

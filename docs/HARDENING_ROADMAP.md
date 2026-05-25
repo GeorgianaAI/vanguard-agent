@@ -166,6 +166,22 @@ The role hierarchy (`viewer=1`, `analyst=2`, `admin=3`) is modelled in `src/lib/
 
 **Priority:** Medium — required before any multi-user deployment; not blocking for single-account demo.
 
+### F) MCP Server: Expose Mission-Level Tools (Skill 2 — Tool and Contract Design)
+
+The current MCP server exposes only `domain_whois` — a thin wrapper over a public API that any HTTP client could replicate. The server's value should come from Vanguard's proprietary pipeline, not a public lookup.
+
+**What to add:**
+
+- `run_mission` — trigger the full Supervisor/Scout/Auditor graph from any MCP-compatible client (Claude Desktop, external agent)
+- `get_audit_ledger` — retrieve the governance ledger for a completed mission
+- `approve_action` — submit a HITL authorization decision, completing the approval gate
+
+This would let an operator drive an entire governed recon mission through Claude Desktop without the web UI. The approval flow, hash binding, Redis lock, and governance ledger remain intact — the MCP layer is just a new entry point.
+
+**Why deferred:** Requires wiring auth (JWT session or API key), Redis, and LangGraph into the MCP server's stdio process. Non-trivial dependency surface. The current `domain_whois` tool serves as a pattern proof and learning artifact; mission-level tools are the meaningful expansion.
+
+**Priority:** Medium — not blocking for current scope; becomes high value if Vanguard is used as a headless backend by other agents or Claude Desktop workflows.
+
 ### D) Observability Expansion (Skill 6)
 
 1. **Operational dashboard baseline**
@@ -369,10 +385,10 @@ a completed step if the function is retried for a later failure.
 
 Vanguard's HITL approval model maps naturally to Inngest's pause/resume pattern:
 
-| Current | With Inngest |
-| :--- | :--- |
-| Approval modal blocks the streaming response | `step.waitForEvent("mission/approved")` pauses the Inngest function |
-| Approval timeout handled by client-side timer | Inngest handles timeout, emits expiry event, cleans up state |
+| Current                                          | With Inngest                                                                      |
+| :----------------------------------------------- | :-------------------------------------------------------------------------------- |
+| Approval modal blocks the streaming response     | `step.waitForEvent("mission/approved")` pauses the Inngest function               |
+| Approval timeout handled by client-side timer    | Inngest handles timeout, emits expiry event, cleans up state                      |
 | Approval context hash validated in route handler | Hash validation moves into the approval-gate step — same logic, durable execution |
 
 ## Daily Threat Briefing Cron
@@ -383,15 +399,15 @@ Inngest's built-in schedule replaces any external cron dependency:
 // inngest/functions/daily_brief.ts
 export const dailyBrief = inngest.createFunction(
   { id: "daily-brief" },
-  { cron: "0 7 * * *" },  // 07:00 UTC daily
+  { cron: "0 7 * * *" }, // 07:00 UTC daily
   async ({ step }) => {
     const watchConfigs = await step.run("load-watch-configs", loadActiveWatchConfigs);
     await Promise.all(
-      watchConfigs.map((cfg) =>
-        step.sendEvent("trigger-mission", { name: "vanguard/mission.run", data: cfg })  // handled by mission_run.ts
-      )
+      watchConfigs.map(
+        (cfg) => step.sendEvent("trigger-mission", { name: "vanguard/mission.run", data: cfg }), // handled by mission_run.ts
+      ),
     );
-  }
+  },
 );
 ```
 
@@ -399,14 +415,14 @@ No Vercel function needs to be kept warm. No external cron service.
 
 ## New Routes and Files
 
-| What changes | Detail |
-| :--- | :--- |
-| `POST /api/inngest` | Inngest webhook receiver (new route, ~5 lines) |
-| `GET /api/chat/[id]/status` | Step-level progress polling (new route) |
-| `inngest/client.ts` | Inngest client instantiation |
-| `inngest/functions/mission_run.ts` | Durable mission pipeline function |
-| `inngest/functions/daily_brief.ts` | Nightly briefing cron function |
-| `POST /api/chat/` | Returns `{ missionId }` immediately instead of streaming |
+| What changes                       | Detail                                                   |
+| :--------------------------------- | :------------------------------------------------------- |
+| `POST /api/inngest`                | Inngest webhook receiver (new route, ~5 lines)           |
+| `GET /api/chat/[id]/status`        | Step-level progress polling (new route)                  |
+| `inngest/client.ts`                | Inngest client instantiation                             |
+| `inngest/functions/mission_run.ts` | Durable mission pipeline function                        |
+| `inngest/functions/daily_brief.ts` | Nightly briefing cron function                           |
+| `POST /api/chat/`                  | Returns `{ missionId }` immediately instead of streaming |
 
 ## What Stays the Same
 
@@ -421,13 +437,13 @@ No Vercel function needs to be kept warm. No external cron service.
 
 ## Trade-offs
 
-| Lost | Gained |
-| :--- | :--- |
-| Simplicity — one more service to configure | Step-level retry (crash at Auditor → only Auditor retries, Scout recon preserved) |
-| Two new env vars (`INNGEST_SIGNING_KEY`, `INNGEST_EVENT_KEY`) | Inngest dashboard: see exactly which step failed and why |
-| Route no longer streams — client must poll | Reliable nightly briefing cron without external scheduler |
-| | Approval gate pause/resume is durable — server restart does not lose in-flight approvals |
-| | Tavily timeout retries the failed query, not the whole mission |
+| Lost                                                          | Gained                                                                                   |
+| :------------------------------------------------------------ | :--------------------------------------------------------------------------------------- |
+| Simplicity — one more service to configure                    | Step-level retry (crash at Auditor → only Auditor retries, Scout recon preserved)        |
+| Two new env vars (`INNGEST_SIGNING_KEY`, `INNGEST_EVENT_KEY`) | Inngest dashboard: see exactly which step failed and why                                 |
+| Route no longer streams — client must poll                    | Reliable nightly briefing cron without external scheduler                                |
+|                                                               | Approval gate pause/resume is durable — server restart does not lose in-flight approvals |
+|                                                               | Tavily timeout retries the failed query, not the whole mission                           |
 
 ## Priority
 
