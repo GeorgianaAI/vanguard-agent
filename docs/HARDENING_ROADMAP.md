@@ -53,8 +53,8 @@ Legend used in this file:
 
 ### 5) Security and Safety
 
-- **Status:** Implemented (Strong)
-- **Evidence:** HITL authorization gate, policy checks, replay/staleness protections, rate limits, red-team/adversarial testing. RBAC role hierarchy modelled; per-route enforcement planned (see §E below).
+- **Status:** Implemented (Strong), Planned (prompt injection hardening — see §G)
+- **Evidence:** HITL authorization gate, policy checks, replay/staleness protections, rate limits, red-team/adversarial testing. RBAC role hierarchy modelled; per-route enforcement planned (see §E below). System prompt hardening against indirect prompt injection via tool results implemented; structural RDAP field extraction planned (§G).
 
 ### 6) Evaluation and Observability
 
@@ -181,6 +181,18 @@ This would let an operator drive an entire governed recon mission through Claude
 **Why deferred:** Requires wiring auth (JWT session or API key), Redis, and LangGraph into the MCP server's stdio process. Non-trivial dependency surface. The current `domain_whois` tool serves as a pattern proof and learning artifact; mission-level tools are the meaningful expansion.
 
 **Priority:** Medium — not blocking for current scope; becomes high value if Vanguard is used as a headless backend by other agents or Claude Desktop workflows.
+
+### G) RDAP Structural Field Extraction — Prompt Injection Hardening (Skill 5)
+
+Vanguard's Scout fetches RDAP data and passes the raw JSON response into the agent context. RDAP includes attacker-controlled free-text fields (`remarks`, `vcardArray`, `eventActor`) that a domain owner can populate with prompt injection payloads. System prompt hardening (Layer 1) is already implemented. Layer 2 eliminates the attack surface at the data layer by extracting only structurally safe RDAP fields before the string reaches the LLM.
+
+**What to do:** Modify `src/lib/recon/rdapDomainSummary.ts` to return a typed `RdapSummary` containing only safe fields (domain name, status codes, registration/expiry dates, nameservers, DNSSEC flag). Exclude all free-text fields. Benefit propagates to the MCP server's `domain_whois` tool automatically via the shared helper.
+
+See `TECHNICAL_ADVISORY.md §14` for full attack analysis, field-by-field inclusion/exclusion rationale, and trade-offs.
+
+**Priority:** Medium — Layer 1 is active; this eliminates residual model-behavior risk.
+
+---
 
 ### D) Observability Expansion (Skill 6)
 
