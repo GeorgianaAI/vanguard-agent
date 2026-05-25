@@ -1,4 +1,4 @@
-# 📘 Operations Runbook
+# 📘 Vanguard Agent: Operations Runbook
 
 ## Health endpoint semantics
 
@@ -71,4 +71,7 @@ RED_TEAM_THREAD_PREFIX=redteam-ci
 - Health endpoint: `/api/health`
 - Structured runtime logs: `component=vanguard.api.health`
 - CI checks: `npm run verify:env`, `npm run verify:ready`, test and e2e jobs
+
+```
+
 ```

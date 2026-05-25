@@ -1,4 +1,4 @@
-# 🛰️🛡️ Vanguard Hardening Roadmap
+# 🧱 Vanguard Agent: Hardening Roadmap
 
 ## Purpose
 
