@@ -70,8 +70,5 @@ RED_TEAM_THREAD_PREFIX=redteam-ci
 
 - Health endpoint: `/api/health`
 - Structured runtime logs: `component=vanguard.api.health`
-- CI checks: `npm run verify:env`, `npm run verify:ready`, test and e2e jobs
-
-```
-
-```
+- CI checks (build-time, no server required): `npm run verify:env`, test and e2e jobs
+- Post-deploy check (manual, requires a running deployment): `VERIFY_READY_BASE_URL=<vercel-url> npm run verify:ready`
