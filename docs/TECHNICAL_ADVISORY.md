@@ -59,6 +59,35 @@ Added as-and-when challenges or tradeoffs arise — not padded for completeness.
 
 **What the operator sees:** When the circuit breaker fires, the Auditor node produces a brief with the current evidence state. The governance ledger records the termination event with `iterationCount` at time of cutoff.
 
+**Production gaps — what the current implementation does not cover:**
+
+1. **No `recursionLimit` on `.compile()`** — the graph relies on LangGraph's default of 25 steps. The application-level `iterationCount > 3` check fires first in practice, but if the supervisor node were bypassed or a graph bug occurred, the LangGraph default would be the only backstop. Defense-in-depth fix: set `recursionLimit: 10` in the `invoke()` call so the graph-level cap is explicit and tighter than the default.
+
+```typescript
+// In the API route invoking the graph:
+const result = await vanguardGraph.invoke(input, {
+  configurable: { thread_id: missionId },
+  recursionLimit: 10,
+});
+```
+
+2. **No tool-error circuit breaker** — if Tavily or another tool returns repeated errors, the supervisor will keep routing to Scout until `iterationCount` trips at 3. A tool-error counter in state would let the supervisor detect a broken tool path and route directly to Auditor with the current evidence, rather than exhausting the iteration budget on failed calls.
+
+```typescript
+// In state.ts — add:
+toolErrorCount: Annotation<number>({
+  reducer: (x, y) => x + y,
+  default: () => 0,
+}),
+
+// In supervisorNode — add:
+if (state.toolErrorCount >= 2) {
+  return { next: "auditor" }; // tool is broken, don't keep retrying
+}
+```
+
+3. **No cost-based circuit breaker** — at portfolio scale this is not a risk, but at production scale (many concurrent missions) a runaway mission that keeps calling Claude should be stoppable by a per-mission token budget, not just an iteration count.
+
 ---
 
 ## 5. Rate Limit Bucket Separation: Mission vs Approval

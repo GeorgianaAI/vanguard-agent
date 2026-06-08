@@ -48,7 +48,8 @@ Legend used in this file:
 ### 4) Reliability Engineering
 
 - **Status:** Implemented (Strong foundation), Planned (Ops formalization), Deferred (full SRE maturity)
-- **Evidence today:** CI/lint/tests/e2e, circuit-breaker loop cap, persistence/recovery, `/api/health` semantics, dependency-oriented operations runbook.
+- **Evidence today:** CI/lint/tests/e2e, circuit-breaker loop cap (`iterationCount > 3` in supervisor node, checkpointed in Redis so session resumption does not reset the counter), persistence/recovery, `/api/health` semantics, dependency-oriented operations runbook.
+- **Production gaps:** no explicit `recursionLimit` on `.compile()` (relies on LangGraph default of 25 — application cap fires first in practice but is not defense-in-depth); no tool-error circuit breaker (repeated Tavily failures exhaust the iteration budget rather than tripping a separate error counter); no cost-based circuit breaker. Fix documented in [TECHNICAL_ADVISORY §4](./TECHNICAL_ADVISORY.md#4-circuit-breaker-iteration-count-over-wall-clock-time).
 - **Planned:** Inngest durable step functions for mission orchestration (step-level retry, crash recovery, approval-gate pause/resume, daily briefing cron).
 
 ### 5) Security and Safety
