@@ -476,6 +476,52 @@ INNGEST_EVENT_KEY=<from Inngest dashboard>
 Add both to `.env.local` and Vercel environment before enabling.
 Run `npm run verify:env` — update the env validator to assert these are present in production.
 
+### H) Cost Controls (Skill 4 — Reliability Engineering)
+
+Vanguard makes two LLM calls per mission (Scout + Auditor) plus advisory enrichment HTTP calls. Three levers apply at current single-operator scale:
+
+#### H1) Model Routing — Not Implemented (Planned)
+
+**Current state:** Both Scout and Auditor use `claude-sonnet-4-6` via `ANTHROPIC_SCOUT_MODEL` / `ANTHROPIC_AUDITOR_MODEL` env vars (both default to Sonnet). The env vars allow routing via config but no routing logic exists.
+
+**Gap:** Scout's job is structured tool dispatch (RDAP + Tavily) and deterministic tool-call parsing — well within Haiku's capability. Auditor synthesizes multi-source findings into a governance narrative — Sonnet is appropriate there. Using Sonnet for both is 3–10× overspend on Scout.
+
+**What to do:**
+- Change `ANTHROPIC_SCOUT_MODEL` default to `claude-haiku-4-5-20251001` in `src/lib/agent/graphModels.ts`
+- Keep `ANTHROPIC_AUDITOR_MODEL` defaulting to `claude-sonnet-4-6`
+- Validate in `npm run verify:env` that both vars are set and point to valid model IDs
+
+**Priority:** High — single config change, immediate cost reduction, no architectural impact.
+
+---
+
+#### H2) Prompt Caching — Not Implemented (Planned)
+
+**Current state:** Scout and Auditor system prompts are reconstructed and sent in full on every invocation. No `cache_control` headers are set anywhere in `src/lib/agent/graphModels.ts`.
+
+**Gap:** System prompts and tool definitions are identical across all missions — the canonical use case for Anthropic prompt caching (~90% cost reduction on the stable prefix). Each mission currently pays full price for ~400–600 prompt tokens that never change.
+
+**What to do:**
+- Add `clientOptions: { defaultHeaders: { "anthropic-beta": "prompt-caching-2024-07-31" } }` to both `ChatAnthropic` constructors in `graphModels.ts`
+- Pass system prompt as a `SystemMessage` with `cache_control: { type: "ephemeral" }` on the first block
+- Tool definitions are already stable — mark them cacheable via the same mechanism
+
+**Priority:** High — pure cost reduction, no behavior change, ~3 lines per model constructor.
+
+---
+
+#### H3) Token Cap (`maxTokens`) — Not Implemented (Planned)
+
+**Current state:** Neither model constructor sets `maxTokens`. Large RDAP payloads or verbose Tavily responses can inflate per-call token spend with no hard ceiling.
+
+**Gap:** The iteration circuit breaker (`iterationCount ≤ 3`) limits reasoning loops but not token volume per call. A single mission against a data-heavy target can produce unexpectedly large outputs.
+
+**What to do:**
+- Set `maxTokens` on both constructors in `graphModels.ts`: Scout `2048`, Auditor `4096`
+- Set a spend alert in the Anthropic Console (email at 80% of monthly budget) as the last line of defence
+
+**Priority:** Medium — low risk at current scale; a hard requirement before any production deployment.
+
 ---
 
 ## Auditor Confidence Calibration (LLM-as-Judge)
