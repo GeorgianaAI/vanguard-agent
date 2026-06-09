@@ -59,34 +59,29 @@ Added as-and-when challenges or tradeoffs arise — not padded for completeness.
 
 **What the operator sees:** When the circuit breaker fires, the Auditor node produces a brief with the current evidence state. The governance ledger records the termination event with `iterationCount` at time of cutoff.
 
-**Production gaps — what the current implementation does not cover:**
+**Implementation status:**
 
-1. **No `recursionLimit` on `.compile()`** — the graph relies on LangGraph's default of 25 steps. The application-level `iterationCount > 3` check fires first in practice, but if the supervisor node were bypassed or a graph bug occurred, the LangGraph default would be the only backstop. Defense-in-depth fix: set `recursionLimit: 10` in the `invoke()` call so the graph-level cap is explicit and tighter than the default.
+1. ~~**No `recursionLimit` on `invoke()`**~~ — **Fixed** (`feat/loop-safety-guards`). `recursionLimit: 10` is now set explicitly on both `invoke()` call sites: `missionFlow.ts` (initial mission) and `approvalFlow.ts` (post-authorization stream). The existing `iterationCount > 3` application guard fires first and routes gracefully; `recursionLimit` is the framework-level backstop if a future graph change introduced a cycle. Max traversal on the longest valid path is 5–6 steps; limit of 10 has clear headroom and will never fire on a valid run. 216 tests pass.
 
 ```typescript
-// In the API route invoking the graph:
-const result = await vanguardGraph.invoke(input, {
-  configurable: { thread_id: missionId },
-  recursionLimit: 10,
+// missionFlow.ts
+const nextState = await vanguardGraph.invoke(inputState, {
+  ...config,
+  recursionLimit: 10,   // ← added
+  metadata: { ... },
+});
+
+// approvalFlow.ts
+const stream = vanguardGraph.streamEvents(payload, {
+  ...config,
+  recursionLimit: 10,   // ← added
+  tags: [...],
 });
 ```
 
-2. **No tool-error circuit breaker** — if Tavily or another tool returns repeated errors, the supervisor will keep routing to Scout until `iterationCount` trips at 3. A tool-error counter in state would let the supervisor detect a broken tool path and route directly to Auditor with the current evidence, rather than exhausting the iteration budget on failed calls.
+2. **No tool-error circuit breaker** — deferred. Tools run exactly once per mission in the current single-pass graph (`scout → tools → advisory_enrichment → auditor`). There are no consecutive calls to break a circuit on. A circuit breaker would only be meaningful if the graph were restructured to allow tool retries. Documented for awareness; no code change needed today.
 
-```typescript
-// In state.ts — add:
-toolErrorCount: Annotation<number>({
-  reducer: (x, y) => x + y,
-  default: () => 0,
-}),
-
-// In supervisorNode — add:
-if (state.toolErrorCount >= 2) {
-  return { next: "auditor" }; // tool is broken, don't keep retrying
-}
-```
-
-3. **No cost-based circuit breaker** — at portfolio scale this is not a risk, but at production scale (many concurrent missions) a runaway mission that keeps calling Claude should be stoppable by a per-mission token budget, not just an iteration count.
+3. **No cost-based circuit breaker** — deferred. At portfolio scale this is not a risk. At production scale (many concurrent missions) a `tokenSpend` accumulator in state with a per-mission budget cap would be the right approach, but this is not a current gap.
 
 ---
 

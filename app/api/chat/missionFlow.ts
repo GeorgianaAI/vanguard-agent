@@ -142,6 +142,7 @@ export async function handleMissionRequest(opts: MissionFlowOpts): Promise<Respo
 
   const nextState = await vanguardGraph.invoke(inputState, {
     ...config,
+    recursionLimit: 10,
     metadata: {
       ...config.metadata,
       vector_probe_verified: vectorProbeVerified,

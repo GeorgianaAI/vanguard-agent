@@ -343,6 +343,7 @@ export async function handleApprovalRequest(opts: ApprovalFlowOpts): Promise<Res
     },
     {
       ...config,
+      recursionLimit: 10,
       tags: [
         ...config.tags,
         isAuthorized ? "vanguard-agent-approval-authorized" : "vanguard-agent-approval-aborted",

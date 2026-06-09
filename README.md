@@ -245,7 +245,7 @@ Use the live demo credentials below to test the full Command Center flow:
 - **Satellite Intelligence (Tavily):** Integration with Tavily AI for real-time, AI-optimized web search to identify live threat indicators and CVE data.
 - **Direct Registry Access (RDAP):** Specialized tools for direct domain reconnaissance, querying global registries for registrar data and registration events.
 - **Mission Persistence:** Powered by **Upstash Redis**, allowing complex reconnaissance missions to "sleep" and "wake" across sessions with 100% context retention.
-- **Economic Shield (Circuit Breaker):** A state-managed `iterationCount` that auto-terminates the agent after 3 loops to prevent "Hallucination Spirals" and budget drain.
+- **Economic Shield (Circuit Breaker):** A state-managed `iterationCount` that auto-terminates the agent after 3 loops to prevent "Hallucination Spirals" and budget drain. Backed by an explicit `recursionLimit: 10` on all `invoke()` call sites as a framework-level fuse — defense-in-depth if a future graph change introduced an unexpected cycle.
 - **Stateful Mission Log:** Utilizes **LangGraph** message reducers to maintain an immutable history of reasoning, tool calls, and operator approvals.
 - **Observability as Evidence:** Full integration with **LangSmith** to provide a verifiable audit trail of the agent's "Internal Monologue" and tool outputs.
 - **Grounded Command UI:** A high-contrast, tactical dashboard designed for high-pressure security environments, featuring real-time streaming of reasoning steps.
