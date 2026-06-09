@@ -8,9 +8,11 @@ const server = new McpServer({
   version: "0.1.0",
 });
 
-server.tool(
+server.registerTool(
   "vanguard_ping",
-  "Health check for the Vanguard MCP server (no side effects).",
+  {
+    description: "Health check for the Vanguard MCP server (no side effects).",
+  },
   async () => ({
     content: [
       {
@@ -25,10 +27,13 @@ server.tool(
   }),
 );
 
-server.tool(
+server.registerTool(
   "domain_whois",
-  "Public RDAP domain summary (registrar, status, key events)—same source as the Vanguard LangGraph domain_whois tool.",
-  { domain: z.string().min(1) },
+  {
+    description:
+      "Public RDAP domain summary (registrar, status, key events)—same source as the Vanguard LangGraph domain_whois tool.",
+    inputSchema: { domain: z.string().min(1) },
+  },
   async ({ domain }) => {
     const text = await lookupDomainRdapJson(domain);
     return { content: [{ type: "text", text }] };
