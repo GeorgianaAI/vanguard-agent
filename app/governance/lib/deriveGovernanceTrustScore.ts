@@ -59,6 +59,10 @@ export function deriveGovernanceTrustScore(model: GovernanceViewModel): Governan
     blended -= Math.min(10, model.advisoryOverflowCount * 2);
   }
 
+  if (model.faithfulnessWarnings.length > 0) {
+    blended -= Math.min(18, model.faithfulnessWarnings.length * 6);
+  }
+
   const percent = clampPercent(blended);
   return {
     mode: "derived",

@@ -37,11 +37,13 @@ export type GovernanceViewModel = {
   evidenceStatus: "complete" | "degraded" | "unknown";
   evidenceWarnings: string[];
   advisoryEnrichmentWarnings: string[];
+  faithfulnessWarnings: string[];
 };
 
 export type GovernanceCheckpointExtras = {
   vulnerabilities?: unknown;
   advisoryWarnings?: string[];
+  faithfulnessWarnings?: string[];
 };
 
 export type GovernanceBuildOptions = {

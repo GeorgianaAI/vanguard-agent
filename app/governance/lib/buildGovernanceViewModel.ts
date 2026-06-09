@@ -71,6 +71,7 @@ function buildEvidenceTrailDerived(
   evidence: EvidencePackage | null,
   vulnerabilities: VulnerabilityFinding[],
   advisoryEnrichmentWarnings: string[],
+  faithfulnessWarnings: string[],
 ): GovernanceEvidenceItem[] {
   const traceCount = evidence?.traces.length ?? 0;
   const warningCount = evidence?.warnings.length ?? 0;
@@ -102,6 +103,17 @@ function buildEvidenceTrailDerived(
         ]
       : [];
 
+  const faithfulnessPipe: GovernanceEvidenceItem[] =
+    faithfulnessWarnings.length > 0
+      ? [
+          {
+            label: "Auditor Faithfulness",
+            desc: faithfulnessWarnings.join(" • "),
+            id: "GOV-FAITH",
+          },
+        ]
+      : [];
+
   const hitl: GovernanceEvidenceItem = {
     label: "Human-in-the-Loop Gate",
     desc:
@@ -123,7 +135,7 @@ function buildEvidenceTrailDerived(
     id: "GOV-AUD",
   };
 
-  return [triage, ...cveEvents, ...advisoryPipe, hitl, aud];
+  return [triage, ...cveEvents, ...advisoryPipe, ...faithfulnessPipe, hitl, aud];
 }
 
 export function buildGovernanceViewModelFromData(
@@ -134,6 +146,7 @@ export function buildGovernanceViewModelFromData(
 ): GovernanceViewModel {
   const checkpointFindings = parseCheckpointVulnerabilities(extras?.vulnerabilities);
   const advisoryWarn = extras?.advisoryWarnings ?? [];
+  const faithfulnessWarn = extras?.faithfulnessWarnings ?? [];
 
   if (messages.length === 0) {
     const adv = deriveAdvisorySignals([], null, checkpointFindings);
@@ -195,6 +208,7 @@ export function buildGovernanceViewModelFromData(
       evidence,
       checkpointFindings,
       advisoryWarn,
+      faithfulnessWarn,
     ),
     nistMeasure: buildNistMeasureCard(auditorPresent, evidence, checkpointFindings),
     nistManage: buildNistManageCard(decision, manageCtx),
@@ -204,5 +218,6 @@ export function buildGovernanceViewModelFromData(
     evidenceStatus: evidence?.evidence_status ?? "unknown",
     evidenceWarnings: evidence?.warnings ?? [],
     advisoryEnrichmentWarnings: advisoryWarn,
+    faithfulnessWarnings: faithfulnessWarn,
   };
 }

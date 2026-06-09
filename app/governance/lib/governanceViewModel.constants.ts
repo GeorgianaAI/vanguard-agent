@@ -21,4 +21,5 @@ export const EMPTY_EXPORT_FIELDS = {
   evidenceStatus: "unknown" as const,
   evidenceWarnings: [] as string[],
   advisoryEnrichmentWarnings: [] as string[],
+  faithfulnessWarnings: [] as string[],
 };

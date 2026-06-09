@@ -55,6 +55,7 @@ export async function loadGovernanceSnapshotForThread(
     | {
         vulnerabilities?: unknown;
         advisoryEnrichmentWarnings?: string[];
+        faithfulnessWarnings?: string[];
       }
     | undefined;
 
@@ -69,6 +70,7 @@ export async function loadGovernanceSnapshotForThread(
     {
       vulnerabilities: values?.vulnerabilities,
       advisoryWarnings: values?.advisoryEnrichmentWarnings,
+      faithfulnessWarnings: values?.faithfulnessWarnings,
     },
     { threadId },
   );
