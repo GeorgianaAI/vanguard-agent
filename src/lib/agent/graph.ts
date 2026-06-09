@@ -6,6 +6,7 @@ import { toolNode } from "./tools";
 import { attachAgentNode } from "./agentNode";
 import { reviveLangchainMessages } from "../langchain/reviveLangchainMessages";
 import { runAdvisoryEnrichment } from "../vulnerability/advisoryEnrichment";
+import { checkAuditorFaithfulness } from "./auditorFaithfulness";
 import { getAuditorModel, getScoutModel } from "./graphModels";
 import {
   APPROVAL_SIGNAL_PREFIX,
@@ -189,6 +190,18 @@ async function auditorNode(state: VanguardStateType) {
 
   const response = await auditor.invoke([systemPrompt, ...auditorMessages]);
 
+  let faithfulnessWarnings: string[] = [];
+  if (hasEvidence && !wasAborted && !targetUnresolvable) {
+    const responseText =
+      typeof response.content === "string"
+        ? response.content
+        : (response.content as Array<{ type: string; text?: string }>)
+            .filter((c) => c.type === "text" && typeof c.text === "string")
+            .map((c) => c.text as string)
+            .join("\n");
+    faithfulnessWarnings = checkAuditorFaithfulness(responseText, state.vulnerabilities ?? []);
+  }
+
   return {
     messages: [attachAgentNode(response, "auditor")],
     next: "end",
@@ -198,6 +211,7 @@ async function auditorNode(state: VanguardStateType) {
     pendingApprovalId: null,
     isAuthorized: false,
     missionAborted: false,
+    faithfulnessWarnings,
   };
 }
 
