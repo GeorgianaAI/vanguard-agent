@@ -37,6 +37,7 @@ function minimalModel(over: Partial<GovernanceViewModel> = {}): GovernanceViewMo
     evidenceStatus: "complete",
     evidenceWarnings: [],
     advisoryEnrichmentWarnings: [],
+    faithfulnessWarnings: [],
     ...over,
   };
 }
